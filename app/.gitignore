@@ -1,0 +1,60 @@
+# Python 解释器缓存
+__pycache__/
+*.py[cod]
+*$py.class
+
+# pip 缓存和打包构建
+*.egg-info/
+dist/
+build/
+
+# 虚拟环境
+venv/
+.venv/
+env/
+.env/
+
+# Jupyter Notebook 检查点
+.ipynb_checkpoints/
+
+# 单元测试缓存
+htmlcov/
+.tox/
+.coverage
+.cache
+pytest_cache/
+
+# 环境变量文件（建议不要提交敏感配置）
+.env
+.env.*
+
+# FastAPI 文档缓存（一般不存在，但以防万一）
+*.sqlite3
+
+# IDE / 编辑器配置
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS 系统文件
+.DS_Store
+Thumbs.db
+
+# mypy / Pylint / pyright 缓存
+.mypy_cache/
+.pyright/
+.pylint.d/
+
+# VSCode 调试配置
+.vscode/
+
+# uvicorn PID 或日志（如果生成的话）
+*.log
+*.pid
+
+# 固定数据
+data/
+
+# 测试脚本
+scripts/

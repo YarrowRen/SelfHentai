@@ -1,0 +1,587 @@
+
+body {
+    background-color: #34353a;
+    /* 设置为深灰色背景 */
+    margin: 0;
+    /* 移除默认外边距 */
+    padding: 0;
+    /* 移除默认内边距 */
+}
+
+#app {
+    position: relative;
+    /* 保持流式布局 */
+    margin:  auto;
+    margin-top: 0px;
+    width: 100%;
+    max-width: 1500px;
+    /* 设置最大宽度 */
+    padding: 5px; /* 将 padding 设置为 20px，可以根据需要调整 */
+
+}
+
+/* 修改 Popover 箭头颜色 */
+.p-popover::after {
+    border-color: transparent transparent #34353a transparent !important; /* 修改箭头颜色为与框体一致 */
+}
+
+/* 如果箭头是通过 ::before 设置的，也需要修改 */
+.p-popover::before {
+    border-color: transparent transparent #34353a transparent !important; /* 修改箭头颜色为与框体一致 */
+}
+.p-popover {
+
+    background-color: #34353a !important;
+    border: none !important;
+}
+
+/* 针对按钮的颜色定制 */
+.p-paginator {
+    background-color: #515359 !important;
+    /* 修改分页器整体背景色 */
+}
+
+/* 未选中按钮的默认样式 */
+.p-paginator-page {
+    background-color: #6c6f75 !important;
+    /* 按钮背景色（未选中） */
+    color: white !important;
+    /* 按钮文字颜色 */
+    border: none !important;
+    /* 去掉边框 */
+    transition: background-color 0.3s ease;
+    /* 添加平滑过渡效果 */
+}
+
+/* 选中状态的按钮样式 */
+.p-paginator-page-selected {
+    background-color: #42464d !important;
+    /* 选中按钮背景色（蓝色） */
+    color: white !important;
+    /* 选中文字颜色 */
+    font-weight: bold !important;
+    /* 加粗文字（可选） */
+    border: none !important;
+    /* 去掉边框 */
+}
+
+/* 悬停时按钮的样式 */
+.p-paginator-page:hover {
+    background-color: #42464d !important;
+    /* 按钮悬停时背景色（稍深） */
+    color: white !important;
+    /* 按钮悬停时文字颜色 */
+    cursor: pointer !important;
+    /* 鼠标指针样式 */
+}
+
+.p-paginator-current {
+    color: white !important;
+}
+
+.control-panel {
+    width: 70%;
+    margin: auto;
+    background-color: #515359;
+    /* 背景颜色 */
+    padding: 20px;
+    /* 内边距 */
+    border-radius: 8px;
+    /* 圆角 */
+    border: 2px solid #000;
+    /* 设置黑色边界 */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    /* 每个子元素之间的间距 */
+}
+
+.container {
+    width: 100%;
+    max-width: 1300px;
+    /* 限制最大宽度 */
+    background-color: #50535a;
+    padding: 20px;
+    margin: 0 auto;
+    /* 水平居中 */
+    border-radius: 8px;
+    color: white;
+    font-family: Arial, sans-serif;
+    box-sizing: border-box;
+    /* 确保 padding 不影响宽高 */
+}
+
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    /* 自动换行 */
+    justify-content: space-between;
+    /* 在每行之间均匀分布按钮 */
+    gap: 10px;
+}
+
+.btn {
+    height: 38px;
+    /* 修改高度，例如设置为 60px */
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    /* 添加动画效果 */
+    cursor: pointer;
+}
+
+.active {
+    border: 3px solid #ffffff;
+    /* 边框更粗 */
+    box-shadow: 0 0 10px 3px #ffffff;
+    /* 更大的白色光晕效果 */
+    background-color: rgba(255, 255, 255, 0.2);
+    /* 半透明背景色 */
+    transform: scale(1.01);
+    /* 选中时按钮稍微放大 */
+    transition: all 0.2s ease-in-out;
+    /* 添加过渡动画 */
+}
+
+.type-btn {
+    height: 25px;
+    flex: 1 1 calc(20% - 10px);
+    /* 每行5个按钮：100% ÷ 5 - 间距 */
+    max-width: calc(20% - 10px);
+}
+
+
+
+
+.red {
+    background-color: #a22 !important;
+    border-color: #a22 !important;
+    color: white !important;
+}
+
+.red:hover,
+.btn.red:hover {
+    background-color: #811 !important;
+    /* 悬停时颜色更深 */
+    border-color: #811 !important;
+    color: white !important;
+}
+
+.orange {
+    background-color: #d67e22 !important;
+    border-color: #d67e22 !important;
+    color: white !important;
+}
+
+.orange:hover,
+.btn.orange:hover {
+    background-color: #a65511 !important;
+    /* 悬停时颜色更深 */
+    border-color: #a65511 !important;
+    color: white !important;
+}
+
+.yellow {
+    background-color: #d6a922 !important;
+    border-color: #d6a922 !important;
+    color: white !important;
+}
+
+.yellow:hover,
+.btn.yellow:hover {
+    background-color: #a68411 !important;
+    /* 悬停时颜色更深 */
+    border-color: #a68411 !important;
+    color: white !important;
+}
+
+.green {
+    background-color: #4caf50 !important;
+    border-color: #4caf50 !important;
+    color: white !important;
+}
+
+.green:hover,
+.btn.green:hover {
+    background-color: #3a8f40 !important;
+    /* 悬停时颜色更深 */
+    border-color: #3a8f40 !important;
+    color: white !important;
+}
+
+.gold {
+    background-color: #d4af37 !important;
+    border-color: #d4af37 !important;
+    color: white !important;
+}
+
+.gold:hover,
+.btn.gold:hover {
+    background-color: #a68427 !important;
+    /* 悬停时颜色更深 */
+    border-color: #a68427 !important;
+    color: white !important;
+}
+
+.lightblue {
+    background-color: #4ca3dd !important;
+    border-color: #4ca3dd !important;
+    color: white !important;
+}
+
+.lightblue:hover,
+.btn.lightblue:hover {
+    background-color: #3a7da8 !important;
+    /* 悬停时颜色更深 */
+    border-color: #3a7da8 !important;
+    color: white !important;
+}
+
+.blue {
+    background-color: #2a78d6 !important;
+    border-color: #2a78d6 !important;
+    color: white !important;
+}
+
+.blue:hover,
+.btn.blue:hover {
+    background-color: #1f5ba8 !important;
+    /* 悬停时颜色更深 */
+    border-color: #1f5ba8 !important;
+    color: white !important;
+}
+
+.purple {
+    background-color: #7e57c2 !important;
+    border-color: #7e57c2 !important;
+    color: white !important;
+}
+
+.purple:hover,
+.btn.purple:hover {
+    background-color: #5e4398 !important;
+    /* 悬停时颜色更深 */
+    border-color: #5e4398 !important;
+    color: white !important;
+}
+
+.pink {
+    background-color: #d81b60 !important;
+    border-color: #d81b60 !important;
+    color: white !important;
+}
+
+.pink:hover,
+.btn.pink:hover {
+    background-color: #a11548 !important;
+    /* 悬停时颜色更深 */
+    border-color: #a11548 !important;
+    color: white !important;
+}
+
+.gray {
+    background-color: #757575 !important;
+    border-color: #757575 !important;
+    color: white !important;
+}
+
+.gray:hover,
+.btn.gray:hover {
+    background-color: #545454 !important;
+    /* 悬停时颜色更深 */
+    border-color: #545454 !important;
+    color: white !important;
+}
+
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.custom-input {
+    flex: 1;
+    background-color: #222;
+    border: 1px solid #444;
+    border-radius: 5px;
+    color: #fff;
+    padding: 8px 12px;
+    font-size: 16px;
+}
+
+.custom-input:focus {
+    border-color: #4caf50;
+    outline: none;
+}
+
+.search-btn {
+    background-color: #4caf50;
+    color: white;
+}
+
+.clear-btn {
+    background-color: #f44336;
+    color: white;
+}
+
+.options {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    /* 水平居中 */
+}
+
+.options-btn {
+    background-color: #666;
+    color: white;
+}
+
+
+
+/* 表格样式 */
+.results-table {
+    margin-top: 20px;
+    border: 1px solid #444;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+table {
+    width: 100%;
+    table-layout: fixed;
+    /* 固定布局 */
+    border-collapse: collapse;
+}
+
+thead {
+    background-color: #333;
+    color: #fff;
+}
+
+th,
+td {
+    padding: 10px;
+    border-top: 1px solid #444;
+    color: #fff;
+    font-size: 14px;
+    /* 字体大小 */
+    text-align: left;
+    /* 左对齐 */
+    overflow: hidden;
+    /* 超出隐藏 */
+    text-overflow: ellipsis;
+    /* 超出部分显示省略号 */
+    white-space: nowrap;
+    /* 单行显示 */
+}
+
+tr:nth-child(even) {
+    background-color: #2d2d2d;
+}
+
+tr:nth-child(odd) {
+    background-color: #1e1e1e;
+}
+
+/* 固定列宽 */
+th:nth-child(1),
+td:nth-child(1) {
+    width: 10%;
+    /* Type 列占15% */
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+    width: 70%;
+    /* Title 列占50% */
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+    width: 10%;
+    /* Published 列占20% */
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+    width: 10%;
+    /* Uploader 列占15% */
+}
+
+/* 标签容器，确保单行显示并省略超出部分 */
+.tags-container {
+    display: block;
+    /* 确保作为块级容器 */
+    text-align: left;
+    /* 左对齐 */
+    white-space: nowrap;
+    /* 单行显示 */
+    overflow: hidden;
+    /* 超出隐藏 */
+    text-overflow: ellipsis;
+    /* 超出部分显示省略号 */
+    width: 100%;
+    /* 容器宽度 */
+}
+
+/* 标签样式 */
+.tags-container .tag {
+    display: inline-block;
+    /* 标签单独显示 */
+    margin-right: 5px;
+    /* 标签之间的水平间距 */
+    white-space: nowrap;
+    /* 禁止换行 */
+    vertical-align: middle;
+    /* 垂直对齐 */
+}
+
+/* 标题容器 */
+.title-container {
+    text-align: left;
+    /* 左对齐 */
+    white-space: nowrap;
+    /* 单行显示 */
+    overflow: hidden;
+    /* 超出隐藏 */
+    margin-bottom: 5px;
+    text-overflow: ellipsis;
+    /* 超出部分显示省略号 */
+}
+
+/* 标签颜色 */
+.badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+}
+
+.badge-red {
+    background-color: #a22;
+}
+
+.badge-yellow {
+    background-color: #d6a922;
+}
+
+.badge-gray {
+    background-color: #757575;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.pagination Button {
+    margin: 0 5px;
+}
+
+
+.results-table table td:first-child {
+    width: 120px;
+    /* 固定宽度 */
+    white-space: nowrap;
+    /* 禁止换行 */
+}
+
+.badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+    width: 100px;
+    /* 固定宽度 */
+    white-space: nowrap;
+    /* 禁止换行 */
+}
+
+.badge-red {
+    background-color: #a22;
+}
+
+.badge-orange {
+    background-color: #d67e22;
+}
+
+.badge-yellow {
+    background-color: #d6a922;
+}
+
+.badge-green {
+    background-color: #4caf50;
+}
+
+.badge-gold {
+    background-color: #d4af37;
+}
+
+.badge-lightblue {
+    background-color: #4ca3dd;
+}
+
+.badge-blue {
+    background-color: #2a78d6;
+}
+
+.badge-purple {
+    background-color: #7e57c2;
+}
+
+.badge-pink {
+    background-color: #d81b60;
+}
+
+.badge-gray {
+    background-color: #757575;
+}
+
+.badge-default {
+    background-color: #333;
+}
+
+
+
+.tag {
+    font-size: 10px;
+    line-height: 0.8;
+    /* 控制高度 */
+}
+
+.cell-content {
+    display: flex;
+    flex-direction: column;
+    /* 纵向排列 */
+    align-items: flex-start;
+    /* 左对齐 */
+    gap: 5px;
+    /* 上下间距 */
+}
+
+.p-rating .p-rating-icon {
+    color: #f9dc80 !important; /* 设置星星为黄色 */
+  }
+
+  .horizontal-layout {
+    display: flex;
+    align-items: center; /* 垂直居中 */
+    justify-content: center; /* 水平居中 */
+    gap: 10px; /* 设置子元素之间的间距 */
+    flex-wrap: nowrap; /* 禁止换行 */
+  }
+  .page-input-number {
+    width: 150px !important;
+  }
+  
+  .container .p-paginator {
+    --p-paginator-jump-to-page-input-max-width: 100px; /* 设置最大宽度为100px */
+  }

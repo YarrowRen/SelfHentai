@@ -1,0 +1,379 @@
+body {
+    background-color: #34353a;
+    /* 设置为深灰色背景 */
+    margin: 0;
+    /* 移除默认外边距 */
+    padding: 0;
+    /* 移除默认内边距 */
+    
+}
+
+#app {
+    position: relative;
+    /* 保持流式布局 */
+    margin: auto;
+    margin-top: 0px;
+    width: 100%;
+    max-width: 1500px;
+    /* 设置最大宽度 */
+    padding: 5px;
+    /* 将 padding 设置为 20px，可以根据需要调整 */
+
+}
+
+
+.container {
+    width: 100%;
+    max-width: 1300px;
+    /* 限制最大宽度 */
+    background-color: #50535a;
+    padding: 20px;
+    margin: 0 auto;
+    /* 水平居中 */
+    border-radius: 8px;
+    color: white;
+    font-family: Arial, sans-serif;
+    box-sizing: border-box;
+    /* 确保 padding 不影响宽高 */
+
+}
+
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    /* 自动换行 */
+    justify-content: space-between;
+    /* 在每行之间均匀分布按钮 */
+    gap: 10px;
+}
+
+.btn {
+    height: 38px;
+    /* 修改高度，例如设置为 60px */
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    /* 添加动画效果 */
+    cursor: pointer;
+}
+
+.active {
+    border: 3px solid #ffffff;
+    /* 边框更粗 */
+    box-shadow: 0 0 10px 3px #ffffff;
+    /* 更大的白色光晕效果 */
+    background-color: rgba(255, 255, 255, 0.2);
+    /* 半透明背景色 */
+    transform: scale(1.01);
+    /* 选中时按钮稍微放大 */
+    transition: all 0.2s ease-in-out;
+    /* 添加过渡动画 */
+}
+
+.type-btn {
+    height: 25px;
+    flex: 1 1 calc(20% - 10px);
+    /* 每行5个按钮：100% ÷ 5 - 间距 */
+    max-width: calc(20% - 10px);
+}
+
+
+
+
+.red {
+    background-color: #a22 !important;
+    border-color: #a22 !important;
+    color: white !important;
+}
+
+.red:hover,
+.btn.red:hover {
+    background-color: #811 !important;
+    /* 悬停时颜色更深 */
+    border-color: #811 !important;
+    color: white !important;
+}
+
+.orange {
+    background-color: #d67e22 !important;
+    border-color: #d67e22 !important;
+    color: white !important;
+}
+
+.orange:hover,
+.btn.orange:hover {
+    background-color: #a65511 !important;
+    /* 悬停时颜色更深 */
+    border-color: #a65511 !important;
+    color: white !important;
+}
+
+.yellow {
+    background-color: #d6a922 !important;
+    border-color: #d6a922 !important;
+    color: white !important;
+}
+
+.yellow:hover,
+.btn.yellow:hover {
+    background-color: #a68411 !important;
+    /* 悬停时颜色更深 */
+    border-color: #a68411 !important;
+    color: white !important;
+}
+
+.green {
+    background-color: #4caf50 !important;
+    border-color: #4caf50 !important;
+    color: white !important;
+}
+
+.green:hover,
+.btn.green:hover {
+    background-color: #3a8f40 !important;
+    /* 悬停时颜色更深 */
+    border-color: #3a8f40 !important;
+    color: white !important;
+}
+
+.gold {
+    background-color: #d4af37 !important;
+    border-color: #d4af37 !important;
+    color: white !important;
+}
+
+.gold:hover,
+.btn.gold:hover {
+    background-color: #a68427 !important;
+    /* 悬停时颜色更深 */
+    border-color: #a68427 !important;
+    color: white !important;
+}
+
+.lightblue {
+    background-color: #4ca3dd !important;
+    border-color: #4ca3dd !important;
+    color: white !important;
+}
+
+.lightblue:hover,
+.btn.lightblue:hover {
+    background-color: #3a7da8 !important;
+    /* 悬停时颜色更深 */
+    border-color: #3a7da8 !important;
+    color: white !important;
+}
+
+.blue {
+    background-color: #2a78d6 !important;
+    border-color: #2a78d6 !important;
+    color: white !important;
+}
+
+.blue:hover,
+.btn.blue:hover {
+    background-color: #1f5ba8 !important;
+    /* 悬停时颜色更深 */
+    border-color: #1f5ba8 !important;
+    color: white !important;
+}
+
+.purple {
+    background-color: #7e57c2 !important;
+    border-color: #7e57c2 !important;
+    color: white !important;
+}
+
+.purple:hover,
+.btn.purple:hover {
+    background-color: #5e4398 !important;
+    /* 悬停时颜色更深 */
+    border-color: #5e4398 !important;
+    color: white !important;
+}
+
+.pink {
+    background-color: #d81b60 !important;
+    border-color: #d81b60 !important;
+    color: white !important;
+}
+
+.pink:hover,
+.btn.pink:hover {
+    background-color: #a11548 !important;
+    /* 悬停时颜色更深 */
+    border-color: #a11548 !important;
+    color: white !important;
+}
+
+.gray {
+    background-color: #757575 !important;
+    border-color: #757575 !important;
+    color: white !important;
+}
+
+.gray:hover,
+.btn.gray:hover {
+    background-color: #545454 !important;
+    /* 悬停时颜色更深 */
+    border-color: #545454 !important;
+    color: white !important;
+}
+
+
+.result-table {
+    margin-top: 20px;
+    border: 1px solid #444;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.tag-table {
+    width: 100%;
+    table-layout: fixed;
+    /* 固定布局 */
+    border-collapse: collapse;
+}
+
+
+.tag-table thead {
+    background-color: #333 !important;
+    color: #fff;
+  }
+
+.tag-table th,
+.tag-table td {
+    padding: 10px;
+    border: none;
+}
+
+.tag-table th {
+    background-color: #333 !important;
+    color: #fff;
+}
+
+.no-results {
+    margin-top: 20px;
+    font-size: 16px;
+    color: #666;
+}
+
+/* 设置每列的宽度百分比 */
+.tag-table th:nth-child(1),
+.tag-table td:nth-child(1) {
+  width: 10%; /* Namespace 列占 15% */
+}
+
+.tag-table th:nth-child(2),
+.tag-table td:nth-child(2) {
+  width: 10%; /* Tag 列占 15% */
+}
+
+.tag-table th:nth-child(3),
+.tag-table td:nth-child(3) {
+  width: 10%; /* Tag (CN) 列占 15% */
+}
+
+.tag-table th:nth-child(4),
+.tag-table td:nth-child(4) {
+  width: 45%; /* Intro 列占 35% */
+}
+
+.tag-table th:nth-child(5),
+.tag-table td:nth-child(5) {
+  width: 10%; /* Input Keyword 列占 10% */
+}
+
+.tag-table th:nth-child(6),
+.tag-table td:nth-child(6) {
+  width: 10%; /* Similarity 列占 10% */
+}
+
+.tag-table th:nth-child(7),
+.tag-table td:nth-child(7) {
+  width: 5%; /* Similarity 列占 10% */
+}
+
+/* Gallery 列表样式 */
+.gallery-list {
+    margin-top: 20px;
+}
+
+.gallery-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.gallery-thumb {
+    width: 160px;
+    height: auto;
+    object-fit: cover;
+    margin-right: 15px;
+}
+.gallery-info {
+    width: 100%;
+}
+
+.gallery-info h4 {
+    margin: 0 0 5px;
+}
+
+.gallery-info p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.no-gallery-results {
+    margin-top: 20px;
+    font-size: 16px;
+    color: #666;
+}
+
+.tag {
+    display: inline-block;
+    /* 标签单独显示 */
+    margin-right: 5px;
+    /* 标签之间的水平间距 */
+    white-space: nowrap;
+    /* 禁止换行 */
+    vertical-align: middle;
+    /* 垂直对齐 */
+}
+
+.gallery-search {
+    margin-top: 10px;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-overlay p {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+
+.p-inputnumber-input {
+    width: 100px;
+    margin-left: 16px; /* 调整这个值以控制空隙大小 */
+
+}
