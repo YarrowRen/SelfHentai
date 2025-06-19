@@ -24,9 +24,10 @@ htmlcov/
 .cache
 pytest_cache/
 
-# 环境变量文件（建议不要提交敏感配置）
+# 环境变量文件（建议不要提交敏感配置，忽略模版文件）
 .env
 .env.*
+!.env.example
 
 # FastAPI 文档缓存（一般不存在，但以防万一）
 *.sqlite3
