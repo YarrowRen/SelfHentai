@@ -59,3 +59,6 @@ data/
 
 # 测试脚本
 scripts/
+
+# 日志记录
+logs/

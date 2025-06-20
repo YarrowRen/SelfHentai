@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../components/Home.vue';
-import RagSearch from '../components/RagSearch.vue'
+import SyncData from '../components/SyncData.vue'
 import DataAnalys from '../components/DataAnalys.vue';
 import GalleryDetail from '../components/GalleryDetail.vue'; // 导入新的组件
 import Favorites from '../components/Favorites.vue'; // 导入新的组件
@@ -17,9 +17,9 @@ const routes = [
     component: DataAnalys,
   },
   {
-    path: '/rag',
-    name: 'RagSearch',
-    component: RagSearch,
+    path: '/sync',
+    name: 'SyncData',
+    component: SyncData,
   },
   {
     path: '/gallery/:gid',  // 添加动态路由

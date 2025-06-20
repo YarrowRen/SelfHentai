@@ -8,12 +8,9 @@
     <ul class="nav-menu">
       <li><a href="/">Front Page</a></li>
       <li><a href="/data">Data Analys</a></li>
-      <li><a href="/rag">RAG Search</a></li>
+      <li><a href="/sync">Sync Data</a></li>
       <li><a href="/favorites">Favorites</a></li>
-      <li><a href="#popular">Popular</a></li>
-      <li><a href="#torrents">Torrents</a></li>
       <li><a href="#settings">Settings</a></li>
-      <li><a href="#my-tags">My Tags</a></li>
       <li><a href="https://exhentai.org/">ExHentai</a></li>
     </ul>
   </div>

@@ -5,10 +5,13 @@ import json
 from typing import List, Optional
 
 from core.config import settings
+from core.logger import get_logger
 
 # 全局缓存变量（初始为空）
 gallery_data = []
 tag_translate_data = {}
+
+logger = get_logger(__name__)
 
 
 def load_gallery_data(force_reload=False):
