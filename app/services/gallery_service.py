@@ -1,12 +1,15 @@
 # app/services/gallery_service.py
 
-import json, copy
+import copy
+import json
 from typing import List, Optional
+
 from core.config import settings
 
 # 全局缓存变量（初始为空）
 gallery_data = []
 tag_translate_data = {}
+
 
 def load_gallery_data(force_reload=False):
     """
@@ -17,6 +20,7 @@ def load_gallery_data(force_reload=False):
         with open(settings.GALLERY_DATA_PATH, encoding="utf-8") as f:
             gallery_data = json.load(f)
 
+
 def load_tag_translate_data(force_reload=False):
     """
     加载或重新加载标签翻译数据。
@@ -25,6 +29,7 @@ def load_tag_translate_data(force_reload=False):
     if not tag_translate_data or force_reload:
         with open(settings.TAG_TRANSLATE_PATH, encoding="utf-8") as f:
             tag_translate_data = json.load(f)
+
 
 # 初始加载
 load_gallery_data()
@@ -39,31 +44,38 @@ def enrich_tags(tags: List[str]) -> List[dict]:
         namespace, value = tag.split(":", 1)
         try:
             tag_detail = next(
-                item for item in tag_translate_data["data"]
+                item
+                for item in tag_translate_data["data"]
                 if item.get("namespace") == namespace
             )["data"].get(value)
 
             if tag_detail:
-                enriched_tags.append({
-                    "tag": tag,
-                    "namespace": namespace,
-                    "value": value,
-                    "tag_cn": tag_detail.get("name", ""),
-                    "intro": tag_detail.get("intro", ""),
-                    "links": tag_detail.get("links", ""),
-                })
+                enriched_tags.append(
+                    {
+                        "tag": tag,
+                        "namespace": namespace,
+                        "value": value,
+                        "tag_cn": tag_detail.get("name", ""),
+                        "intro": tag_detail.get("intro", ""),
+                        "links": tag_detail.get("links", ""),
+                    }
+                )
         except (StopIteration, KeyError):
             continue
     return enriched_tags
 
 
-def get_gallery_data(page: int, per_page: int, keyword: Optional[str], type_: Optional[str]):
+def get_gallery_data(
+    page: int, per_page: int, keyword: Optional[str], type_: Optional[str]
+):
     filtered = gallery_data
     if keyword:
         kw = keyword.lower()
         filtered = [
-            item for item in filtered
-            if kw in item["title"].lower() or any(kw in tag.lower() for tag in item.get("tags", []))
+            item
+            for item in filtered
+            if kw in item["title"].lower()
+            or any(kw in tag.lower() for tag in item.get("tags", []))
         ]
     if type_:
         filtered = [item for item in filtered if item["category"] == type_]

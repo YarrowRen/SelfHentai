@@ -1,10 +1,11 @@
-import re
-import requests
 import csv
-from bs4 import BeautifulSoup
 import json
-import requests
 import os
+import re
+
+import requests
+from bs4 import BeautifulSoup
+
 
 class ExHentaiUtils:
     def __init__(self, base_url, cookies: dict):
@@ -109,7 +110,7 @@ class ExHentaiUtils:
                 print(f"请求失败: {e}")
 
         return all_metadata
-    
+
     def get_favorites_metadata(self):
         favorites = self.extract_favorites()
         return self.fetch_gallery_metadatas(favorites)
@@ -136,4 +137,3 @@ class ExHentaiUtils:
             print(f"已保存至 {os.path.abspath(output_path)}")
         except Exception as e:
             print(f"保存失败: {e}")
-
