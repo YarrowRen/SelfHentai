@@ -3,7 +3,13 @@
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
-from services.gallery_service import get_gallery_data, get_gallery_data_by_gid
+from services.gallery_service import (
+    get_gallery_data,
+    get_gallery_data_by_gid,
+    get_gallery_stats,
+    get_quarterly_stats,
+    get_top_tags,
+)
 from services.sync_service import sync_favorites
 
 router = APIRouter()
@@ -19,14 +25,29 @@ def get_gallery(
     return get_gallery_data(page, per_page, keyword, type)
 
 
-@router.get("/{gid}", response_model=dict)
+@router.post("/sync")
+def sync_now():
+    return sync_favorites()
+
+
+@router.get("/stats")
+def gallery_stats():
+    return get_gallery_stats()
+
+
+@router.get("/quarterly-stats")
+def quarterly_stats():
+    return get_quarterly_stats()
+
+
+@router.get("/top-tags")
+def top_tags(n: int = Query(20, ge=1, le=100), type: Optional[str] = Query(None)):
+    return get_top_tags(n=n, type_=type)
+
+
+@router.get("/item/{gid}", response_model=dict)
 def get_gallery_by_gid(gid: int):
     data = get_gallery_data_by_gid(gid)
     if not data:
         raise HTTPException(status_code=404, detail="Gallery not found")
     return data
-
-
-@router.post("/sync")
-def sync_now():
-    return sync_favorites()

@@ -106,7 +106,7 @@ export default {
   methods: {
     async fetchGalleryData() {
       try {
-        const response = await axios.get(`http://localhost:5001/api/gallery/${this.gid}`);
+        const response = await axios.get(`http://localhost:5001/api/gallery/item/${this.gid}`);
         this.galleryData = response.data;
 
         // 获取相关的 Galleries

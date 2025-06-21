@@ -35,10 +35,10 @@
             </div>
         </div>
 
-        <!-- 底部行：Language (左) 和 Artist (右) -->
+        <!-- 底部行 -->
         <div style="display:flex; border:1px solid #444; border-radius:8px; overflow:hidden;">
             <div style="width:25%; background:#222; padding:1rem; box-sizing:border-box;">
-                <h2 style="font-size:1.125rem; font-weight:bold; margin:0 0 10px;">Language</h2>
+                <h2 style="font-size:1.125rem; font-weight:bold; margin:0 0 10px;">Other</h2>
                 <table
                     style="width:100%; border-collapse:collapse; color:#eee; white-space:normal; word-break:break-all; table-layout:fixed;">
                     <colgroup>
@@ -52,7 +52,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="tag in tags.language" :key="tag.tag" v-tooltip.bottom="[
+                        <tr v-for="tag in tags.other" :key="tag.tag" v-tooltip.bottom="[
                             `${tag.tag}`,
                             `翻译: ${tag.tag_cn || 'N/A'}`,
                             tag.intro ? `介绍: ${tag.intro.length > 100 ? tag.intro.slice(0, 100) + '...' : tag.intro}` : null // 限制 intro 长度
@@ -178,13 +178,13 @@ export default {
             },
             tags: {
                 artist: [],
-                language: [],
+                other: [],
                 female: [],
                 male: [],
                 character: [],
                 parody: []
             },
-            types: ["artist", "language", "female", "male", "character", "parody"],
+            types: ["artist", "other", "female", "male", "character", "parody"],
             chartData: null,
             chartOptions: null,
             femaleChartData: null,

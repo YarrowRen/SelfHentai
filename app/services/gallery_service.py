@@ -2,6 +2,8 @@
 
 import copy
 import json
+from collections import Counter, defaultdict
+from datetime import datetime
 from typing import List, Optional
 
 from core.config import settings
@@ -106,3 +108,88 @@ def get_gallery_data_by_gid(gid: int):
                 item_copy["tags"] = enrich_tags(raw_tags)
             return item_copy
     return None
+
+
+def get_gallery_stats():
+    """
+    返回图库总数量及每个固定分类的数量。
+    """
+    fixed_categories = [
+        "Doujinshi",
+        "Manga",
+        "Artist CG",
+        "Game CG",
+        "Western",
+        "Non-H",
+        "Image Set",
+        "Cosplay",
+        "Asian Porn",
+        "Misc",
+    ]
+
+    # 统计总数量
+    total_count = len(gallery_data)
+
+    # 初始化分类统计
+    category_counts = {cat: 0 for cat in fixed_categories}
+
+    # 遍历 gallery_data 分类计数
+    for item in gallery_data:
+        category = item.get("category")
+        if category in category_counts:
+            category_counts[category] += 1
+
+    return {"total": total_count, "categories": category_counts}
+
+
+def get_quarterly_stats():
+    """
+    统计每个季度的 gallery 数量。
+    返回格式：[{ "quarter": "2022-Q1", "count": 123 }, ...]
+    """
+    stats = defaultdict(int)
+
+    for item in gallery_data:
+        posted_str = item.get("posted")
+        if not posted_str:
+            continue
+        try:
+            ts = int(posted_str)
+            dt = datetime.utcfromtimestamp(ts)  # 使用 UTC 时间
+            quarter = (dt.month - 1) // 3 + 1
+            key = f"{dt.year}-Q{quarter}"
+            stats[key] += 1
+        except (ValueError, TypeError):
+            continue
+
+    # 返回排序后的结果
+    return {"data": [{"quarter": k, "count": v} for k, v in sorted(stats.items())]}
+
+
+def get_top_tags(n: int = 20, type_: Optional[str] = None):
+    tag_counter = Counter()
+
+    for item in gallery_data:
+        tags = item.get("tags", [])
+        if not isinstance(tags, list):
+            continue
+        for tag in tags:
+            if not isinstance(tag, str):
+                continue
+            if type_:
+                if not tag.startswith(f"{type_}:"):
+                    continue
+            tag_counter[tag] += 1
+
+    # 获取最常见的前 n 个标签
+    top_tags = tag_counter.most_common(n)
+
+    # enrich_tags 要求传入 list[str]，返回 list[dict]
+    enriched = enrich_tags([tag for tag, _ in top_tags])
+
+    # 将计数信息合并进 enrich_tags 的结果
+    count_map = dict(top_tags)
+    for tag in enriched:
+        tag["count"] = count_map.get(tag["tag"], 0)
+
+    return {"top_tags": enriched}
