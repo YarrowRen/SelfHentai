@@ -8,7 +8,6 @@ load_dotenv()  # 加载 .env 文件
 
 
 class Settings:
-    FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
     GALLERY_DATA_PATH = os.getenv(
         "GALLERY_DATA_PATH", "data/exhentai_favs_metadata.json"
     )

@@ -1,9 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import Home from '../components/Home.vue';
-import SyncData from '../components/SyncData.vue'
-import DataAnalys from '../components/DataAnalys.vue';
-import GalleryDetail from '../components/GalleryDetail.vue'; // 导入新的组件
-import Favorites from '../components/Favorites.vue'; // 导入新的组件
+import Home from '@/components/Home.vue';
+import SyncData from '@/components/SyncData.vue'
+import DataAnalys from '@/components/DataAnalys.vue';
+import GalleryDetail from '@/components/GalleryDetail.vue'; 
 
 const routes = [
   {
@@ -26,11 +25,6 @@ const routes = [
     name: 'GalleryDetail',
     component: GalleryDetail,
     props: true,  // 将参数作为props传递给组件
-  },
-  {
-    path: '/favorites',  // 添加动态路由
-    name: 'Favorites',
-    component: Favorites
   },
 ];
 

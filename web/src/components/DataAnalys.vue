@@ -168,6 +168,7 @@ import { ref, onMounted } from "vue";
 import Chart from "primevue/chart";
 import axios from "axios";
 
+const API = import.meta.env.VITE_API_BASE;
 export default {
     components: { Chart },
     data() {
@@ -215,7 +216,7 @@ export default {
     methods: {
         async fetchStats() {
             try {
-                const response = await axios.get("http://127.0.0.1:5001/api/gallery/stats");
+                const response = await axios.get(`${API}/api/gallery/stats`);
                 this.stats = response.data;
                 this.updateChart();
             } catch (error) {
@@ -225,7 +226,7 @@ export default {
         async fetchTags() {
             for (const type of this.types) {
                 try {
-                    const response = await axios.get(`http://127.0.0.1:5001/api/gallery/top-tags?n=20&type=${type}`);
+                    const response = await axios.get(`${API}/api/gallery/top-tags?n=20&type=${type}`);
                     this.tags[type] = response.data.top_tags;
                 } catch (error) {
                     console.error(`Failed to fetch tags for ${type}:`, error);
@@ -235,7 +236,7 @@ export default {
         },
         async fetchQuarterlyStats() {
             try {
-                const response = await axios.get("http://127.0.0.1:5001/api/gallery/quarterly-stats");
+                const response = await axios.get(`${API}/api/gallery/quarterly-stats`);
                 const data = response.data.data || [];
                 this.initQuarterlyLineChart(data);
             } catch (error) {

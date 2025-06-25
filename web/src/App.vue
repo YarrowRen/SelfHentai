@@ -9,7 +9,6 @@
       <li><a href="/">Front Page</a></li>
       <li><a href="/data">Data Analys</a></li>
       <li><a href="/sync">Sync Data</a></li>
-      <li><a href="/favorites">Favorites</a></li>
       <li><a href="#settings">Settings</a></li>
       <li><a href="https://exhentai.org/">ExHentai</a></li>
     </ul>

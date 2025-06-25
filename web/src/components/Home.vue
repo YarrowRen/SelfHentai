@@ -123,6 +123,7 @@ export default {
     const activeType = ref(null);
     const popover = ref();
     const popoverData = ref(null);
+    const API = import.meta.env.VITE_API_BASE;
 
     const typeList = ref([
       { name: "Doujinshi", color: "red" },
@@ -141,7 +142,7 @@ export default {
 
     const fetchData = async (page = 1, keyword = "", type = null) => {
       try {
-        const { data } = await axios.get("http://127.0.0.1:5001/api/gallery", {
+        const { data } = await axios.get(`${API}/api/gallery`, {
           params: {
             page,
             per_page: perPage.value,
@@ -208,7 +209,7 @@ export default {
     };
 
     const navigateToGallery = (gid, token) => {
-      const url = `http://localhost:5173/gallery/${gid}/`;
+      const url = `/gallery/${gid}/`;
       window.open(url, "_blank");
     };
 

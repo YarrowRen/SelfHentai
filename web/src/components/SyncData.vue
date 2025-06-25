@@ -13,7 +13,8 @@ import { ref, onBeforeUnmount, nextTick } from 'vue'
 const logs = ref([])
 const syncing = ref(false)
 const terminalContent = ref(null)
-
+const API = import.meta.env.VITE_API_BASE;
+const WS = import.meta.env.VITE_WS_BASE;
 let ws = null
 
 async function startSync() {
@@ -21,7 +22,7 @@ async function startSync() {
   logs.value = []
 
   // 建立 WebSocket 连接
-  ws = new WebSocket("ws://localhost:5001/ws/logs")
+  ws = new WebSocket(`${WS}/ws/logs`)
   ws.onmessage = (event) => {
     logs.value.push(event.data)
     nextTick(() => {
@@ -43,7 +44,7 @@ async function startSync() {
   ws.onopen = async () => {
     // logs.value.push("[INFO] 开始同步任务...")
     try {
-      const res = await fetch("http://localhost:5001/api/gallery/sync", {
+      const res = await fetch(`${API}/api/gallery/sync`, {
         method: "POST"
       })
       const data = await res.json()
