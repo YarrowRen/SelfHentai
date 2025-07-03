@@ -1,5 +1,6 @@
 # app/api/gallery.py
 
+import asyncio
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
@@ -11,6 +12,8 @@ from services.gallery_service import (
     get_top_tags,
 )
 from services.sync_service import sync_favorites
+from starlette.concurrency import run_in_threadpool
+from utils.sync_lock import sync_lock
 
 router = APIRouter()
 
@@ -26,8 +29,17 @@ def get_gallery(
 
 
 @router.post("/sync")
-def sync_now():
-    return sync_favorites()
+async def sync_now():
+    if sync_lock.locked():
+        raise HTTPException(status_code=409, detail="已有同步任务正在进行中")
+    async with sync_lock:
+        result = await run_in_threadpool(sync_favorites)
+        return result
+
+
+@router.get("/sync/status")
+def get_sync_status():
+    return {"syncing": sync_lock.locked()}
 
 
 @router.get("/stats")
