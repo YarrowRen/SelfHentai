@@ -5,9 +5,10 @@ import json
 from collections import Counter, defaultdict
 from datetime import datetime
 from typing import List, Optional
-
+import os
 from core.config import settings
 from core.logger import get_logger
+import requests
 
 # 全局缓存变量（初始为空）
 gallery_data = []
@@ -19,21 +20,63 @@ logger = get_logger(__name__)
 def load_gallery_data(force_reload=False):
     """
     加载或重新加载 gallery 数据。
+    如果文件不存在，则使用空数据并记录警告。
     """
     global gallery_data
+
     if not gallery_data or force_reload:
-        with open(settings.GALLERY_DATA_PATH, encoding="utf-8") as f:
-            gallery_data = json.load(f)
+        if not os.path.exists(settings.GALLERY_DATA_PATH):
+            logger.warning(f"找不到图库数据文件: {settings.GALLERY_DATA_PATH}，使用空数据。")
+            gallery_data = []
+            return
+
+        try:
+            with open(settings.GALLERY_DATA_PATH, encoding="utf-8") as f:
+                gallery_data = json.load(f)
+                logger.info(f"成功加载图库数据，共 {len(gallery_data)} 项。")
+        except json.JSONDecodeError as e:
+            logger.error(f"解析图库数据文件失败: {e}")
+            gallery_data = []
 
 
 def load_tag_translate_data(force_reload=False):
     """
     加载或重新加载标签翻译数据。
+    若本地文件不存在，则自动从 GitHub 下载。
     """
     global tag_translate_data
+
     if not tag_translate_data or force_reload:
-        with open(settings.TAG_TRANSLATE_PATH, encoding="utf-8") as f:
-            tag_translate_data = json.load(f)
+        # 如果本地文件不存在，或强制 reload
+        need_download = not os.path.exists(settings.TAG_TRANSLATE_PATH) or force_reload
+        if need_download:
+            logger.info(f"下载最新标签翻译数据：{settings.TRANSLATE_LATEST_URL}")
+            try:
+                os.makedirs(os.path.dirname(settings.TAG_TRANSLATE_PATH), exist_ok=True)
+
+                resp = requests.get(settings.TRANSLATE_LATEST_URL, timeout=20)
+                resp.raise_for_status()
+
+                # 使用二进制写入并确保以 utf-8 解码（防乱码）
+                with open(settings.TAG_TRANSLATE_PATH, "w", encoding="utf-8") as f:
+                    json_data = resp.content.decode("utf-8")  # 明确指定 UTF-8 解码
+                    f.write(json_data)
+
+                logger.info("标签翻译数据已成功下载并保存到本地。")
+            except Exception as e:
+                logger.error(f"下载标签翻译数据失败: {e}")
+                if not os.path.exists(settings.TAG_TRANSLATE_PATH):
+                    tag_translate_data = {}
+                    return
+
+        # 加载 JSON 数据
+        try:
+            with open(settings.TAG_TRANSLATE_PATH, encoding="utf-8") as f:
+                tag_translate_data = json.load(f)
+                logger.info(f"成功加载标签翻译数据")
+        except json.JSONDecodeError as e:
+            logger.error(f"标签翻译数据解析失败: {e}")
+            tag_translate_data = {}
 
 
 # 初始加载
@@ -48,11 +91,7 @@ def enrich_tags(tags: List[str]) -> List[dict]:
             continue
         namespace, value = tag.split(":", 1)
         try:
-            tag_detail = next(
-                item
-                for item in tag_translate_data["data"]
-                if item.get("namespace") == namespace
-            )["data"].get(value)
+            tag_detail = next(item for item in tag_translate_data["data"] if item.get("namespace") == namespace)["data"].get(value)
 
             if tag_detail:
                 enriched_tags.append(
@@ -70,18 +109,11 @@ def enrich_tags(tags: List[str]) -> List[dict]:
     return enriched_tags
 
 
-def get_gallery_data(
-    page: int, per_page: int, keyword: Optional[str], type_: Optional[str]
-):
+def get_gallery_data(page: int, per_page: int, keyword: Optional[str], type_: Optional[str]):
     filtered = gallery_data
     if keyword:
         kw = keyword.lower()
-        filtered = [
-            item
-            for item in filtered
-            if kw in item["title"].lower()
-            or any(kw in tag.lower() for tag in item.get("tags", []))
-        ]
+        filtered = [item for item in filtered if kw in item["title"].lower() or any(kw in tag.lower() for tag in item.get("tags", []))]
     if type_:
         filtered = [item for item in filtered if item["category"] == type_]
 

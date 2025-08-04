@@ -2,8 +2,11 @@
 
 import logging
 import sys
+import os
 from functools import lru_cache
 from os import getenv
+from core.config import settings
+
 
 LOG_LEVEL = getenv("LOG_LEVEL", "INFO").upper()
 
@@ -27,8 +30,12 @@ def get_logger(name: str = __name__) -> logging.Logger:
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
 
+    # 确保 logs 目录存在
+    os.makedirs(settings.LOG_DIR, exist_ok=True)
+
     # 写入文件
-    file_handler = logging.FileHandler("logs/app.log", encoding="utf-8")
+    file_path = os.path.join(settings.LOG_DIR, settings.LOG_FILE)
+    file_handler = logging.FileHandler(file_path, encoding="utf-8")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
