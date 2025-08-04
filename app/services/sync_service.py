@@ -7,7 +7,6 @@ import time
 
 from core.config import settings
 from core.logger import get_logger
-from main import main_event_loop
 from services.gallery_service import load_gallery_data
 from utils.exhentai_utils import ExHentaiUtils
 from utils.websocket_logger import WebSocketLogHandler
@@ -35,6 +34,7 @@ def backup_json_file(target_file, backup_dir, keep_count=5):
 
 
 def sync_favorites():
+    from main import main_event_loop
     """执行收藏夹数据同步流程，并通过 WebSocket 实时发送日志"""
     logger = get_logger("sync_metadata")
 
