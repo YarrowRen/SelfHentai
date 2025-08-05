@@ -1,14 +1,12 @@
 # app/core/logger.py
 
 import logging
-import sys
 import os
+import sys
 from functools import lru_cache
 from os import getenv
+
 from core.config import settings
-
-
-LOG_LEVEL = getenv("LOG_LEVEL", "INFO").upper()
 
 
 @lru_cache()
@@ -18,7 +16,7 @@ def get_logger(name: str = __name__) -> logging.Logger:
     if logger.handlers:
         return logger  # 避免重复添加 handler
 
-    logger.setLevel(LOG_LEVEL)
+    logger.setLevel(settings.LOG_LEVEL)
 
     formatter = logging.Formatter(
         "[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s",

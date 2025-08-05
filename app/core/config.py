@@ -18,6 +18,7 @@ class Settings:
     TRANSLATE_LATEST_URL = os.getenv("TRANSLATE_LATEST_URL")
     LOG_DIR = os.getenv("LOG_DIR", "logs")
     LOG_FILE = os.getenv("LOG_FILE", "app.log")
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     BACKUP_HISTORY_COUNT = int(os.getenv("BACKUP_HISTORY_COUNT"))
     PORT = int(os.getenv("PORT", 5001))
 

@@ -48,19 +48,11 @@ class ExHentaiUtils:
 
                     # 提取分类
                     fav_category_elem = row.select_one("div[title]")
-                    fav_category = (
-                        fav_category_elem["title"].strip()
-                        if fav_category_elem
-                        else "Unknown"
-                    )
+                    fav_category = fav_category_elem["title"].strip() if fav_category_elem else "Unknown"
 
                     # 提取收藏时间
                     fav_time_elem = row.select("td.glfc p")
-                    fav_time = (
-                        " ".join(p.text.strip() for p in fav_time_elem)
-                        if fav_time_elem
-                        else "Unknown"
-                    )
+                    fav_time = " ".join(p.text.strip() for p in fav_time_elem) if fav_time_elem else "Unknown"
 
                     result.append(
                         {

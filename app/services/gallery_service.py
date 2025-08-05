@@ -2,13 +2,14 @@
 
 import copy
 import json
+import os
 from collections import Counter, defaultdict
 from datetime import datetime
 from typing import List, Optional
-import os
+
+import requests
 from core.config import settings
 from core.logger import get_logger
-import requests
 
 # 全局缓存变量（初始为空）
 gallery_data = []
@@ -91,7 +92,9 @@ def enrich_tags(tags: List[str]) -> List[dict]:
             continue
         namespace, value = tag.split(":", 1)
         try:
-            tag_detail = next(item for item in tag_translate_data["data"] if item.get("namespace") == namespace)["data"].get(value)
+            tag_detail = next(item for item in tag_translate_data["data"] if item.get("namespace") == namespace)["data"].get(
+                value
+            )
 
             if tag_detail:
                 enriched_tags.append(
@@ -113,7 +116,9 @@ def get_gallery_data(page: int, per_page: int, keyword: Optional[str], type_: Op
     filtered = gallery_data
     if keyword:
         kw = keyword.lower()
-        filtered = [item for item in filtered if kw in item["title"].lower() or any(kw in tag.lower() for tag in item.get("tags", []))]
+        filtered = [
+            item for item in filtered if kw in item["title"].lower() or any(kw in tag.lower() for tag in item.get("tags", []))
+        ]
     if type_:
         filtered = [item for item in filtered if item["category"] == type_]
 

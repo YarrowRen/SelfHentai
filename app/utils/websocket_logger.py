@@ -30,16 +30,11 @@ class WebSocketLogHandler(logging.Handler):
 
         try:
             # 在线程中调度协程到事件循环中执行
-            future = asyncio.run_coroutine_threadsafe(
-                self.broadcast(log_entry), self.loop
-            )
+            future = asyncio.run_coroutine_threadsafe(self.broadcast(log_entry), self.loop)
 
             # 添加回调用于捕获异常（可选）
             future.add_done_callback(
-                lambda f: f.exception()
-                and logging.getLogger(__name__).error(
-                    f"WebSocketLogHandler error: {f.exception()}"
-                )
+                lambda f: f.exception() and logging.getLogger(__name__).error(f"WebSocketLogHandler error: {f.exception()}")
             )
 
         except Exception as e:
