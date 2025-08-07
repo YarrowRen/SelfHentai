@@ -1,6 +1,5 @@
 # app/api/gallery.py
 
-import asyncio
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query

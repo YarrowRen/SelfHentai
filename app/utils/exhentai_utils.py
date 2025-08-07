@@ -1,6 +1,5 @@
 # app/utils/exhentai_utils.py
 
-import csv
 import json
 import os
 import re

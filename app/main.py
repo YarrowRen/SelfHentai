@@ -7,7 +7,6 @@ main_event_loop = asyncio.get_event_loop()
 
 from api import websocket  # 导入 websocket 路由
 from api import gallery, root
-from core.config import settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

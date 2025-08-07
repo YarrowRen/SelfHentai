@@ -4,7 +4,6 @@ import logging
 import os
 import sys
 from functools import lru_cache
-from os import getenv
 
 from core.config import settings
 
