@@ -17,7 +17,7 @@ from services.jm_gallery_service import (
     get_jm_quarterly_stats,
     get_jm_top_tags,
 )
-from services.sync_service import sync_ex_favorites
+from services.sync_service import sync_ex_favorites, sync_jm_favorites
 from starlette.concurrency import run_in_threadpool
 from utils.sync_lock import sync_lock
 
@@ -63,14 +63,23 @@ def get_gallery(
 
 
 @router.post("/sync")
-async def sync_now():
+async def sync_now(
+    provider: str = Query("ex", pattern="^(ex|jm)$"),
+):
     """
-    仅同步 EX 收藏。
+    同步收藏数据：
+      - provider=ex：同步 EX 收藏（默认）
+      - provider=jm：同步 JM 收藏
     """
     if sync_lock.locked():
         raise HTTPException(status_code=409, detail="已有同步任务正在进行中")
     async with sync_lock:
-        result = await run_in_threadpool(sync_ex_favorites)
+        if provider == "ex":
+            result = await run_in_threadpool(sync_ex_favorites)
+        elif provider == "jm":
+            result = await run_in_threadpool(sync_jm_favorites)
+        else:
+            raise HTTPException(status_code=400, detail="Invalid provider, must be 'ex' or 'jm'.")
         return result
 
 
