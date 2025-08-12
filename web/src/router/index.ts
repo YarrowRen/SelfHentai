@@ -21,8 +21,14 @@ const routes = [
     component: SyncData,
   },
   {
-    path: '/gallery/:gid',  // 添加动态路由
+    path: '/gallery/:gid',  // EX 动态路由
     name: 'GalleryDetail',
+    component: GalleryDetail,
+    props: true,  // 将参数作为props传递给组件
+  },
+  {
+    path: '/jm/:id',  // JM 动态路由
+    name: 'JMGalleryDetail',
     component: GalleryDetail,
     props: true,  // 将参数作为props传递给组件
   },

@@ -1,0 +1,274 @@
+/* ============ Gallery Detail Styles ============ */
+
+/* Main Container */
+.gallery-detail-container {
+  display: flex;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #50535a;
+  border-radius: 8px;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+/* Data Source Indicator */
+.data-source-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+}
+
+.data-source-indicator.ex {
+  background: #3498db;
+}
+
+.data-source-indicator.jm {
+  background: #e74c3c;
+}
+
+/* Cover Section */
+.cover {
+  flex: 0 0 20%;
+  padding-right: 20px;
+  position: relative;
+}
+
+.cover img {
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.category span {
+  background: #3498db;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+/* JM 特殊样式 */
+.jm-category span {
+  background: #e74c3c;
+}
+
+/* Details Section */
+.details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-weight: bold;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.info-tags {
+  display: flex;
+  gap: 20px;
+}
+
+/* Info List */
+.info-list {
+  list-style: none;
+  padding: 0;
+  flex: 1;
+  text-align: left;
+}
+
+.info-list li {
+  margin: 5px 0;
+  padding: 2px 0;
+}
+
+.info-list li strong {
+  color: #3498db;
+  min-width: 100px;
+  display: inline-block;
+}
+
+.info-list a {
+  color: #5dade2;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.info-list a:hover {
+  color: #aed6f1;
+  text-decoration: underline;
+}
+
+/* Tags Section */
+.tags {
+  flex: 1;
+  text-align: left;
+}
+
+.language-toggle {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tag-group {
+  margin-bottom: 10px;
+}
+
+.tag-group strong {
+  color: #f39c12;
+  display: inline-block;
+  margin-right: 8px;
+  margin-bottom: 5px;
+  text-transform: capitalize;
+  min-width: 80px;
+}
+
+.tag {
+  display: inline-block;
+  margin-right: 5px;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  vertical-align: middle;
+  font-size: 12px;
+  padding: 3px 8px;
+}
+
+/* JM Tags - 普通标签显示 */
+.jm-tags {
+  margin-top: 15px;
+}
+
+.jm-tags strong {
+  color: #e74c3c;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.jm-tag {
+  background: #34495e;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 3px;
+  margin-right: 5px;
+  margin-bottom: 5px;
+  display: inline-block;
+  font-size: 12px;
+}
+
+/* Loading State */
+.loading {
+  text-align: center;
+  padding: 50px;
+  font-size: 1.5em;
+  color: #ccc;
+}
+
+/* Error State */
+.error {
+  text-align: center;
+  padding: 50px;
+  font-size: 1.2em;
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 8px;
+  margin: 20px;
+}
+
+/* Torrents Section */
+.torrents {
+  margin-top: 30px;
+  max-width: 1300px;
+  margin-left: auto;
+  margin-right: auto;
+  background: #3a3d45;
+  padding: 20px;
+  border-radius: 8px;
+  color: white;
+}
+
+.torrents h4 {
+  margin-bottom: 15px;
+  color: #3498db;
+}
+
+.torrent-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.torrent-table th,
+.torrent-table td {
+  padding: 10px;
+  border: 1px solid #666;
+  text-align: left;
+  font-size: 14px;
+}
+
+.torrent-table th {
+  background-color: #444;
+  color: #3498db;
+  font-weight: bold;
+}
+
+.torrent-table td a {
+  color: #5dade2;
+  text-decoration: none;
+}
+
+.torrent-table td a:hover {
+  color: #aed6f1;
+  text-decoration: underline;
+}
+
+/* JM Stats Section */
+.jm-stats {
+  margin-top: 20px;
+  max-width: 1300px;
+  margin-left: auto;
+  margin-right: auto;
+  background: #50535a;
+  padding: 20px;
+  border-radius: 8px;
+  color: white;
+}
+
+.jm-stats h4 {
+  margin-bottom: 15px;
+  color: #3498db;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 15px;
+  background: rgba(58, 61, 69, 0.8);
+  border-radius: 8px;
+  border: 1px solid #666;
+}
+
+.stat-value {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #3498db;
+}
+
+.stat-label {
+  font-size: 0.9em;
+  color: #bdc3c7;
+  margin-top: 8px;
+}

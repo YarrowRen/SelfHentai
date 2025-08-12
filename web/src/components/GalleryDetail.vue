@@ -1,21 +1,29 @@
 <template>
-  <div v-if="galleryData" class="container">
+  <div v-if="galleryData" class="gallery-detail-container">
+    <!-- 数据源指示器 -->
+    <div :class="['data-source-indicator', provider]">
+      {{ provider.toUpperCase() }}
+    </div>
+
     <!-- 左侧封面 -->
     <div class="cover">
-      <img :src="galleryData.thumb" alt="Cover" />
-      <div class="category"><span>{{ galleryData.category }}</span></div>
+      <img :src="galleryData.thumb || galleryData.image || '/placeholder.png'" alt="Cover" />
+      <div :class="['category', { 'jm-category': provider === 'jm' }]">
+        <span>{{ getDisplayCategory() }}</span>
+      </div>
     </div>
 
     <!-- 右侧信息 -->
     <div class="details">
       <h3 class="title">
-        {{ galleryData.title }}
+        {{ getDisplayTitle() }}
         <br />
         <small v-if="galleryData.title_jpn">{{ galleryData.title_jpn }}</small>
       </h3>
 
       <div class="info-tags">
-        <ul class="info-list">
+        <!-- EX 数据信息列表 -->
+        <ul v-if="provider === 'ex'" class="info-list">
           <li><strong>Uploader:</strong> {{ galleryData.uploader }}</li>
           <li><strong>Posted:</strong> {{ formatDate(galleryData.posted) }}</li>
           <li><strong>File Size:</strong> {{ formatFileSize(galleryData.filesize) }}</li>
@@ -29,15 +37,26 @@
           </li>
           <li>
             <strong>Link:</strong>
-            <a :href="`https://exhentai.org/g/${gid}/${galleryData.token}`" target="_blank">
-              https://exhentai.org/g/{{ gid }}/{{ galleryData.token }}
+            <a :href="`https://exhentai.org/g/${itemId}/${galleryData.token}`" target="_blank">
+              https://exhentai.org/g/{{ itemId }}/{{ galleryData.token }}
             </a>
           </li>
         </ul>
 
+        <!-- JM 数据信息列表 -->
+        <ul v-else-if="provider === 'jm'" class="info-list">
+          <li><strong>ID:</strong> {{ galleryData.id }}</li>
+          <li><strong>Author:</strong> {{ galleryData.author || '未知作者' }}</li>
+          <li><strong>Category:</strong> {{ galleryData.category?.title || '未知分类' }}</li>
+          <li><strong>Subcategory:</strong> {{ galleryData.category_sub?.title || '无' }}</li>
+          <li><strong>Added:</strong> {{ formatJMDate(galleryData.addtime) }}</li>
+          <li v-if="galleryData.latest_ep"><strong>Latest Episode:</strong> {{ galleryData.latest_ep }}</li>
+        </ul>
+
         <Divider layout="vertical" class="!hidden md:!flex" />
 
-        <div class="tags">
+        <!-- EX Tags -->
+        <div v-if="provider === 'ex'" class="tags">
           <ToggleSwitch v-model="isChinese" :onLabel="'中文'" :offLabel="'英文'" class="language-toggle" />
           <div v-for="(tags, group) in groupedTags" :key="group" class="tag-group">
             <strong>{{ group }}</strong>:
@@ -50,10 +69,29 @@
             />
           </div>
         </div>
+
+        <!-- JM Tags -->
+        <div v-else-if="provider === 'jm'" class="jm-tags">
+          <strong>Tags:</strong>
+          <div v-if="galleryData.tags && galleryData.tags.length">
+            <span
+              v-for="(tag, index) in galleryData.tags"
+              :key="index"
+              class="jm-tag"
+            >
+              {{ tag }}
+            </span>
+          </div>
+          <div v-else style="color: #bdc3c7; font-style: italic;">
+            No tags available
+          </div>
+        </div>
       </div>
     </div>
   </div>
-  <section v-if="galleryData.torrents?.length" class="torrents">
+
+  <!-- EX Torrents Section -->
+  <section v-if="provider === 'ex' && galleryData.torrents?.length" class="torrents">
     <h4>Torrent Downloads</h4>
     <table class="torrent-table">
       <thead>
@@ -78,7 +116,35 @@
       </tbody>
     </table>
   </section>
-  <div v-else class="loading">Loading...</div>
+
+  <!-- JM Stats Section -->
+  <section v-if="provider === 'jm'" class="jm-stats">
+    <h4>Statistics</h4>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value">{{ formatNumber(galleryData.total_views) }}</div>
+        <div class="stat-label">Total Views</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ formatNumber(galleryData.likes) }}</div>
+        <div class="stat-label">Likes</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ formatNumber(galleryData.comment_total) }}</div>
+        <div class="stat-label">Comments</div>
+      </div>
+    </div>
+    
+    <!-- Description Section for JM -->
+    <div v-if="galleryData.description" style="margin-top: 20px;">
+      <h4>Description</h4>
+      <div style="background: rgba(52, 73, 94, 0.3); padding: 15px; border-radius: 8px; line-height: 1.6;">
+        {{ galleryData.description }}
+      </div>
+    </div>
+  </section>
+  <div v-else-if="loading" class="loading">Loading...</div>
+  <div v-else-if="error" class="error">{{ error }}</div>
 </template>
 
 <script>
@@ -95,37 +161,116 @@ export default {
   components: { Divider, Tag, Rating, ToggleSwitch },
   data() {
     return {
-      gid: null,
+      itemId: null,
+      provider: 'ex', // 默认为 EX
       galleryData: null,
       isChinese: true,
+      loading: true,
+      error: null,
     };
   },
   created() {
-    this.gid = this.$route.params.gid || this.$route.query.gid;
-    if (this.gid) this.fetchGalleryData();
+    this.initializeFromRoute();
+    if (this.itemId) this.fetchGalleryData();
+  },
+  watch: {
+    '$route'() {
+      this.initializeFromRoute();
+      if (this.itemId) this.fetchGalleryData();
+    }
   },
   methods: {
+    initializeFromRoute() {
+      // 支持多种路由格式：
+      // /gallery/:gid (EX)
+      // /jm/:id (JM)
+      // 或者通过查询参数 ?provider=jm&id=xxx
+      const path = this.$route.path;
+      const params = this.$route.params;
+      const query = this.$route.query;
+
+      if (path.startsWith('/jm/') || query.provider === 'jm') {
+        this.provider = 'jm';
+        this.itemId = params.id || query.id;
+      } else {
+        this.provider = 'ex';
+        this.itemId = params.gid || query.gid;
+      }
+    },
+
     async fetchGalleryData() {
+      this.loading = true;
+      this.error = null;
+      
       try {
-        const { data } = await axios.get(`${API}/api/gallery/item/${this.gid}`);
+        let url;
+        if (this.provider === 'ex') {
+          url = `${API}/api/gallery/item/${this.itemId}`;
+        } else if (this.provider === 'jm') {
+          url = `${API}/api/gallery/jm/item/${this.itemId}`;
+        }
+
+        const { data } = await axios.get(url);
         this.galleryData = data;
       } catch (error) {
         console.error("Error fetching gallery data:", error);
+        this.error = `Failed to load ${this.provider.toUpperCase()} data: ${error.message}`;
+      } finally {
+        this.loading = false;
       }
     },
+
+    getDisplayTitle() {
+      if (this.provider === 'ex') {
+        return this.galleryData.title;
+      } else if (this.provider === 'jm') {
+        return this.galleryData.name || this.galleryData.title;
+      }
+      return 'Unknown Title';
+    },
+
+    getDisplayCategory() {
+      if (this.provider === 'ex') {
+        return this.galleryData.category;
+      } else if (this.provider === 'jm') {
+        return this.galleryData.category?.title || 'Unknown Category';
+      }
+      return 'Unknown';
+    },
+
     formatDate(timestamp) {
       const date = new Date(timestamp * 1000);
       return date.toISOString().replace("T", " ").split(".")[0];
     },
+
+    formatJMDate(timestamp) {
+      if (!timestamp) return 'Unknown';
+      const date = new Date(parseInt(timestamp) * 1000);
+      return date.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).replace(/\//g, '-');
+    },
+
     formatFileSize(bytes) {
       if (bytes === 0) return "0 B";
       const sizes = ["B", "KB", "MB", "GB", "TB"];
       const i = Math.floor(Math.log(bytes) / Math.log(1024));
       return (bytes / Math.pow(1024, i)).toFixed(2) + " " + sizes[i];
     },
+
+    formatNumber(num) {
+      if (!num) return '0';
+      return parseInt(num).toLocaleString();
+    },
   },
   computed: {
     groupedTags() {
+      if (this.provider !== 'ex' || !this.galleryData?.tags) {
+        return {};
+      }
+
       const groups = {
         language: [],
         artist: [],
@@ -139,123 +284,16 @@ export default {
         character: [],
         other_tags: [],
       };
-      (this.galleryData?.tags || []).forEach(tag => {
-        const ns = tag.namespace.toLowerCase();
+      
+      this.galleryData.tags.forEach(tag => {
+        const ns = tag.namespace?.toLowerCase() || 'other_tags';
         (groups[ns] ?? groups.other_tags).push(tag);
       });
+      
       return Object.fromEntries(Object.entries(groups).filter(([, v]) => v.length > 0));
     },
   },
 };
 </script>
 
-<style scoped>
-.container {
-  display: flex;
-  max-width: 1300px;
-  margin: 0 auto;
-  padding: 20px;
-  background: #50535a;
-  border-radius: 8px;
-  color: white;
-  font-family: Arial, sans-serif;
-}
-
-.cover {
-  flex: 0 0 20%;
-  padding-right: 20px;
-}
-
-.cover img {
-  width: 100%;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.category span {
-  background: #3498db;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  display: inline-block;
-  margin-top: 10px;
-}
-
-.details {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.title {
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.info-tags {
-  display: flex;
-  gap: 20px;
-}
-
-.info-list {
-  list-style: none;
-  padding: 0;
-  flex: 1;
-  text-align: left;
-}
-
-.info-list li {
-  margin: 5px 0;
-}
-
-.tags {
-  flex: 1;
-  text-align: left;
-}
-
-.tag {
-  display: inline-block;
-  margin-right: 5px;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-
-.loading {
-  text-align: center;
-  padding: 50px;
-  font-size: 1.5em;
-  color: #ccc;
-}
-
-.torrents {
-  margin-top: 30px;
-  max-width: 1300px;
-  margin-left: auto;
-  margin-right: auto;
-  background: #3a3d45;
-  padding: 20px;
-  border-radius: 8px;
-  color: white;
-}
-
-.torrents h4 {
-  margin-bottom: 15px;
-}
-
-.torrent-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.torrent-table th,
-.torrent-table td {
-  padding: 10px;
-  border: 1px solid #666;
-  text-align: left;
-  font-size: 14px;
-}
-
-.torrent-table th {
-  background-color: #444;
-}
-</style>
+<style src="../assets/GalleryDetail.css"></style>

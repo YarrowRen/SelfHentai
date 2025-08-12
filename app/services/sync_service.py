@@ -1,4 +1,4 @@
-# app/services/sync_service.py
+# app/services/ex_sync_service.py
 
 import json
 import os
@@ -7,7 +7,7 @@ import time
 
 from core.config import settings
 from core.logger import get_logger
-from services.gallery_service import load_gallery_data
+from services.ex_gallery_service import load_ex_gallery_data
 from utils.exhentai_utils import ExHentaiUtils
 from utils.websocket_logger import WebSocketLogHandler
 
@@ -33,7 +33,7 @@ def backup_json_file(target_file, backup_dir, keep_count=5):
         os.remove(os.path.join(backup_dir, old_file))
 
 
-def sync_favorites():
+def sync_ex_favorites():
     from main import main_event_loop
 
     """执行收藏夹数据同步流程，并通过 WebSocket 实时发送日志"""
@@ -70,7 +70,7 @@ def sync_favorites():
             json.dump(data, f, ensure_ascii=False, indent=2)
 
         # 重新加载图库数据
-        load_gallery_data(force_reload=True)
+        load_ex_gallery_data(force_reload=True)
 
         logger.info(f"同步完成，共 {len(data)} 项")
         return {"status": "success", "count": len(data)}

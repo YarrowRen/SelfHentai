@@ -1,4 +1,4 @@
-# app/services/gallery_service.py
+# app/services/ex_gallery_service.py
 
 import copy
 import json
@@ -12,32 +12,32 @@ from core.config import settings
 from core.logger import get_logger
 
 # 全局缓存变量（初始为空）
-gallery_data = []
+ex_gallery_data: List[dict] = []
 tag_translate_data = {}
 
 logger = get_logger(__name__)
 
 
-def load_gallery_data(force_reload=False):
+def load_ex_gallery_data(force_reload=False):
     """
     加载或重新加载 gallery 数据。
     如果文件不存在，则使用空数据并记录警告。
     """
-    global gallery_data
+    global ex_gallery_data
 
-    if not gallery_data or force_reload:
+    if not ex_gallery_data or force_reload:
         if not os.path.exists(settings.GALLERY_DATA_PATH):
             logger.warning(f"找不到图库数据文件: {settings.GALLERY_DATA_PATH}，使用空数据。")
-            gallery_data = []
+            ex_gallery_data = []
             return
 
         try:
             with open(settings.GALLERY_DATA_PATH, encoding="utf-8") as f:
-                gallery_data = json.load(f)
-                logger.info(f"成功加载图库数据，共 {len(gallery_data)} 项。")
+                ex_gallery_data = json.load(f)
+                logger.info(f"成功加载图库数据，共 {len(ex_gallery_data)} 项。")
         except json.JSONDecodeError as e:
             logger.error(f"解析图库数据文件失败: {e}")
-            gallery_data = []
+            ex_gallery_data = []
 
 
 def load_tag_translate_data(force_reload=False):
@@ -81,7 +81,7 @@ def load_tag_translate_data(force_reload=False):
 
 
 # 初始加载
-load_gallery_data()
+load_ex_gallery_data()
 load_tag_translate_data()
 
 
@@ -112,8 +112,8 @@ def enrich_tags(tags: List[str]) -> List[dict]:
     return enriched_tags
 
 
-def get_gallery_data(page: int, per_page: int, keyword: Optional[str], type_: Optional[str]):
-    filtered = gallery_data
+def get_ex_gallery_data(page: int, per_page: int, keyword: Optional[str], type_: Optional[str]):
+    filtered = ex_gallery_data
     if keyword:
         kw = keyword.lower()
         filtered = [
@@ -136,8 +136,8 @@ def get_gallery_data(page: int, per_page: int, keyword: Optional[str], type_: Op
     return {"page": page, "per_page": per_page, "total": total, "results": results}
 
 
-def get_gallery_data_by_gid(gid: int):
-    for item in gallery_data:
+def get_ex_gallery_data_by_gid(gid: int):
+    for item in ex_gallery_data:
         if item.get("gid") == gid:
             item_copy = copy.deepcopy(item)
             raw_tags = item_copy.get("tags", [])
@@ -147,7 +147,7 @@ def get_gallery_data_by_gid(gid: int):
     return None
 
 
-def get_gallery_stats():
+def get_ex_gallery_stats():
     """
     返回图库总数量及每个固定分类的数量。
     """
@@ -165,13 +165,13 @@ def get_gallery_stats():
     ]
 
     # 统计总数量
-    total_count = len(gallery_data)
+    total_count = len(ex_gallery_data)
 
     # 初始化分类统计
     category_counts = {cat: 0 for cat in fixed_categories}
 
-    # 遍历 gallery_data 分类计数
-    for item in gallery_data:
+    # 遍历 ex_gallery_data 分类计数
+    for item in ex_gallery_data:
         category = item.get("category")
         if category in category_counts:
             category_counts[category] += 1
@@ -179,14 +179,14 @@ def get_gallery_stats():
     return {"total": total_count, "categories": category_counts}
 
 
-def get_quarterly_stats():
+def get_ex_quarterly_stats():
     """
     统计每个季度的 gallery 数量。
     返回格式：[{ "quarter": "2022-Q1", "count": 123 }, ...]
     """
     stats = defaultdict(int)
 
-    for item in gallery_data:
+    for item in ex_gallery_data:
         posted_str = item.get("posted")
         if not posted_str:
             continue
@@ -203,10 +203,10 @@ def get_quarterly_stats():
     return {"data": [{"quarter": k, "count": v} for k, v in sorted(stats.items())]}
 
 
-def get_top_tags(n: int = 20, type_: Optional[str] = None):
+def get_ex_top_tags(n: int = 20, type_: Optional[str] = None):
     tag_counter = Counter()
 
-    for item in gallery_data:
+    for item in ex_gallery_data:
         tags = item.get("tags", [])
         if not isinstance(tags, list):
             continue

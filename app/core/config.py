@@ -16,6 +16,8 @@ class Settings:
     EXHENTAI_COOKIE_PASS_HASH = os.getenv("EXHENTAI_COOKIE_PASS_HASH")
     EXHENTAI_COOKIE_IGNEOUS = os.getenv("EXHENTAI_COOKIE_IGNEOUS")
     TRANSLATE_LATEST_URL = os.getenv("TRANSLATE_LATEST_URL")
+    JM_GALLERY_DATA_PATH = os.getenv("JM_GALLERY_DATA_PATH", "data/jm_favs_metadata_enriched.json")
+    JM_COVER_URL_TEMPLATE = os.getenv("JM_COVER_URL_TEMPLATE", "https://cdn-msp.18comic.vip/media/albums/{id}_3x4.jpg")
     LOG_DIR = os.getenv("LOG_DIR", "logs")
     LOG_FILE = os.getenv("LOG_FILE", "app.log")
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
