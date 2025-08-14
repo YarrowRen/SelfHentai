@@ -26,12 +26,14 @@ body {
 }
 
 .provider-btn {
-  padding: 8px 16px;
+  padding: 6px 32px;
   background-color: #515359;
   color: #fff;
   border: 1px solid #666;
   border-radius: 5px;
   transition: all 0.3s ease;
+  min-width: 60px;
+  height: 36px;
 }
 
 .provider-btn:hover {
@@ -57,6 +59,20 @@ body {
 }
 .p-popover::before {
   border-color: transparent transparent #34353a transparent !important;
+}
+
+/* 封面图片尺寸控制 */
+.image-popover img {
+  max-width: 300px;
+  max-height: 600px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.image-popover {
+  padding: 2px;
 }
 
 /* ============ Paginator (PrimeVue) ============ */
@@ -279,10 +295,10 @@ th:nth-child(6), td:nth-child(6) { width: 10%; }
 
 /* JM表格调整前面列宽 */
 table.jm-table th:nth-child(1), table.jm-table td:nth-child(1) { width: 10%; }  /* Type */
-table.jm-table th:nth-child(2), table.jm-table td:nth-child(2) { width: 10%; }  /* ID */
-table.jm-table th:nth-child(3), table.jm-table td:nth-child(3) { width: 43%; }  /* Title */
+table.jm-table th:nth-child(2), table.jm-table td:nth-child(2) { width: 8%; }  /* ID */
+table.jm-table th:nth-child(3), table.jm-table td:nth-child(3) { width: 50%; }  /* Title */
 table.jm-table th:nth-child(4), table.jm-table td:nth-child(4) { width: 15%; }  /* Author */
-table.jm-table th:nth-child(5), table.jm-table td:nth-child(5) { width: 12%; }  /* Category */
+table.jm-table th:nth-child(5), table.jm-table td:nth-child(5) { width: 7%; }  /* Category */
 table.jm-table th:nth-child(6), table.jm-table td:nth-child(6) { width: 10%; }  /* AddTime */
 
 /* JM表格ID列居中对齐 */

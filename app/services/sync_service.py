@@ -43,18 +43,18 @@ API_BASE = None
 LOGIN_LOCK = threading.Lock()
 
 
-def backup_json_file(target_file, backup_dir, keep_count=5):
+def backup_json_file(target_file, backup_dir, keep_count=5, prefix="backup"):
     """将目标文件备份到指定目录，并保留最近 keep_count 个备份"""
     os.makedirs(backup_dir, exist_ok=True)
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    backup_file = os.path.join(backup_dir, f"backup_{timestamp}.json")
+    backup_file = os.path.join(backup_dir, f"{prefix}_{timestamp}.json")
 
     if os.path.exists(target_file):
         shutil.copy2(target_file, backup_file)
 
-    # 清理旧备份文件
+    # 清理旧备份文件（只清理相同前缀的文件）
     backups = sorted(
-        [f for f in os.listdir(backup_dir) if f.endswith(".json")],
+        [f for f in os.listdir(backup_dir) if f.startswith(f"{prefix}_") and f.endswith(".json")],
         key=lambda x: os.path.getmtime(os.path.join(backup_dir, x)),
         reverse=True,
     )
@@ -90,8 +90,9 @@ def sync_ex_favorites():
         # 备份旧文件
         backup_json_file(
             settings.GALLERY_DATA_PATH,
-            backup_dir=settings.GALLERY_BACKUP_PATH,
+            backup_dir=settings.EX_BACKUP_PATH,
             keep_count=settings.BACKUP_HISTORY_COUNT,
+            prefix="ex_backup",
         )
 
         # 保存新数据
@@ -343,8 +344,9 @@ def sync_jm_favorites():
         # 备份旧文件
         backup_json_file(
             settings.JM_GALLERY_DATA_PATH,
-            backup_dir=settings.GALLERY_BACKUP_PATH,
+            backup_dir=settings.JM_BACKUP_PATH,
             keep_count=settings.BACKUP_HISTORY_COUNT,
+            prefix="jm_backup",
         )
 
         # 并发补充详情信息

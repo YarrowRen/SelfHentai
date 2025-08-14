@@ -244,11 +244,8 @@ const jmTypeList = [
   { name: '同人', color: 'red' },
   { name: '单本', color: 'orange' },
   { name: '短篇', color: 'yellow' },
-  { name: '长篇', color: 'green' },
-  { name: 'CG', color: 'blue' },
   { name: '韩漫', color: 'purple' },
-  { name: '美漫', color: 'pink' },
-  { name: '其他', color: 'gray' }
+  { name: '其他类', color: 'gray' }
 ]
 
 // 预计算类型->颜色映射

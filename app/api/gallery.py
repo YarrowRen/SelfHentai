@@ -170,22 +170,21 @@ def debug_jm_data():
     """
     from core.config import settings
     from services.jm_gallery_service import jm_gallery_data
-    
+
     result = {
         "data_path": getattr(settings, "JM_GALLERY_DATA_PATH", "未设置"),
         "data_count": len(jm_gallery_data),
         "first_item_keys": [],
-        "first_item_sample": {}
+        "first_item_sample": {},
     }
-    
+
     if jm_gallery_data:
         result["first_item_keys"] = list(jm_gallery_data[0].keys())
         first_item = jm_gallery_data[0]
         result["first_item_sample"] = {
-            k: first_item.get(k) for k in ["id", "addtime", "tags", "total_views"]
-            if k in first_item
+            k: first_item.get(k) for k in ["id", "addtime", "tags", "total_views"] if k in first_item
         }
-    
+
     return result
 
 
@@ -195,5 +194,6 @@ def reload_jm_data():
     JM：重新加载数据。
     """
     from services.jm_gallery_service import load_jm_gallery_data
+
     load_jm_gallery_data(force_reload=True)
     return {"message": "JM数据已重新加载"}
