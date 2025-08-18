@@ -1,0 +1,259 @@
+/* ============ DataAnalys Component Styles ============ */
+
+/* 基础样式 */
+* {
+  box-sizing: border-box;
+}
+
+/* 主题变量定义 - 默认深色模式 */
+:root {
+  --data-bg-color: #1e293b;
+  --data-text-color: #f1f5f9;
+  --data-section-bg: #334155;
+  --data-border-color: #475569;
+}
+
+.my-app-light {
+  --data-bg-color: #faf8f5;
+  --data-text-color: #1a202c;
+  --data-section-bg: #ffffff;
+  --data-border-color: #d6d3d1;
+}
+
+.my-app-dark {
+  --data-bg-color: #1e293b;
+  --data-text-color: #f1f5f9;
+  --data-section-bg: #334155;
+  --data-border-color: #475569;
+}
+
+/* 容器样式 */
+.container {
+  width: 100%;
+  max-width: 1300px;
+  background-color: var(--data-bg-color);
+  padding: 20px;
+  margin: 0 auto;
+  border-radius: 8px;
+  color: var(--data-text-color);
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* 统计区域布局 */
+.stats-row {
+  display: flex;
+  border: 1px solid var(--data-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.stats-left {
+  width: 60%;
+  background: var(--data-section-bg);
+  padding: 1rem;
+  box-sizing: border-box;
+  transition: background-color 0.3s ease;
+}
+
+.stats-right {
+  width: 40%;
+  background: var(--data-section-bg);
+  padding: 1rem;
+  box-sizing: border-box;
+  border-left: 1px solid var(--data-border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* 标题样式 */
+.section-title-large {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0 0 10px;
+  color: var(--data-text-color);
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: bold;
+  margin: 0 0 10px;
+  color: var(--data-text-color);
+}
+
+.stats-text {
+  margin: 0;
+  color: var(--data-text-color);
+}
+
+/* 图表容器 */
+.line-chart-container {
+  margin-top: 1rem;
+  height: 300px;
+}
+
+.chart-container {
+  max-width: 100%;
+  overflow: auto;
+}
+
+.chart-full {
+  width: 100%;
+  height: 100%;
+}
+
+.chart-responsive {
+  max-width: 100%;
+}
+
+/* 标签区域布局 */
+.tags-row {
+  display: flex;
+  border: 1px solid var(--data-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.tags-section-half {
+  width: 50%;
+  background: var(--data-section-bg);
+  padding: 1rem;
+  box-sizing: border-box;
+  transition: background-color 0.3s ease;
+}
+
+.tags-section-half:not(:first-child) {
+  border-left: 1px solid var(--data-border-color);
+  transition: border-color 0.3s ease;
+}
+
+/* 底部四列布局 */
+.bottom-row {
+  display: flex;
+  border: 1px solid var(--data-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+
+.bottom-section {
+  width: 25%;
+  background: var(--data-section-bg);
+  padding: 1rem;
+  box-sizing: border-box;
+  transition: background-color 0.3s ease;
+}
+
+.bottom-section:not(:first-child) {
+  border-left: 1px solid var(--data-border-color);
+  transition: border-color 0.3s ease;
+}
+
+/* 表格样式 */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--data-text-color);
+  white-space: normal;
+  word-break: break-all;
+  table-layout: fixed;
+  transition: color 0.3s ease;
+}
+
+.data-table colgroup .tag-col {
+  width: 70%;
+}
+
+.data-table colgroup .count-col {
+  width: 30%;
+}
+
+.data-table thead tr {
+  background: transparent;
+}
+
+.data-table th {
+  border-bottom: 1px solid var(--data-border-color);
+  padding: 8px;
+  color: var(--data-text-color);
+  font-weight: bold;
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.data-table th.left-align {
+  text-align: left;
+}
+
+.data-table th.right-align {
+  text-align: right;
+}
+
+.data-table td {
+  border-bottom: 1px solid var(--data-border-color);
+  padding: 8px;
+  color: var(--data-text-color);
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.data-table td.left-align {
+  text-align: left;
+}
+
+.data-table td.right-align {
+  text-align: right;
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+/* 浅色模式下的表格优化 */
+.my-app-light .data-table tbody tr:hover {
+  background-color: #e7e2dc;
+}
+
+/* 深色模式下的表格优化 */
+.my-app-dark .data-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+  .stats-row,
+  .tags-row {
+    flex-direction: column;
+  }
+  
+  .stats-left,
+  .stats-right,
+  .tags-section-half {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--data-border-color);
+  }
+  
+  .stats-left,
+  .tags-section-half:first-child {
+    border-top: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .bottom-row {
+    flex-direction: column;
+  }
+  
+  .bottom-section {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--data-border-color);
+  }
+  
+  .bottom-section:first-child {
+    border-top: none;
+  }
+}

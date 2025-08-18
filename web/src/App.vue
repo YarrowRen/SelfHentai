@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { useTheme } from '@/composables/useTheme'
+import ThemeToggle from '@/components/ThemeToggle.vue'
+
+// 初始化主题
+const { isDark } = useTheme()
 </script>
 
 <template>
@@ -12,6 +17,9 @@
       <li><a href="#settings">Settings</a></li>
       <li><a href="https://exhentai.org/">ExHentai</a></li>
     </ul>
+    <div class="theme-toggle-nav">
+      <ThemeToggle />
+    </div>
   </div>
   <router-view></router-view> <!-- 路由出口 -->
 </template>
@@ -33,8 +41,13 @@
 
   /* Navigation Bar Styles */
   .navigation-bar {
-    background-color: #34353a;
-    padding: 10px 0;
+    background-color: var(--surface-color);
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
   
   .nav-menu {
@@ -43,6 +56,12 @@
     padding: 0;
     display: flex;
     justify-content: center;
+    flex: 1;
+  }
+  
+  .theme-toggle-nav {
+    display: flex;
+    align-items: center;
   }
   
   .nav-menu li {
@@ -50,14 +69,15 @@
   }
   
   .nav-menu a {
-    color: white;
+    color: var(--text-color);
     text-decoration: none;
     font-weight: bold;
     font-size: 14px;
+    transition: color 0.3s ease;
   }
   
   .nav-menu a:hover {
-    color: #ddd;
+    color: var(--primary-color);
     text-decoration: underline;
   }
 

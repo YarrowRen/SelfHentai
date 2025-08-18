@@ -45,6 +45,10 @@ LOGIN_LOCK = threading.Lock()
 
 def backup_json_file(target_file, backup_dir, keep_count=5, prefix="backup"):
     """将目标文件备份到指定目录，并保留最近 keep_count 个备份"""
+    if backup_dir is None:
+        logger.warning(f"备份目录未设置，跳过备份操作")
+        return
+    
     os.makedirs(backup_dir, exist_ok=True)
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     backup_file = os.path.join(backup_dir, f"{prefix}_{timestamp}.json")

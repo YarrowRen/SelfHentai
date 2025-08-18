@@ -10,8 +10,8 @@ load_dotenv()  # 加载 .env 文件
 class Settings:
     GALLERY_DATA_PATH = os.getenv("GALLERY_DATA_PATH", "data/exhentai_favs_metadata.json")
     TAG_TRANSLATE_PATH = os.getenv("TAG_TRANSLATE_PATH", "data/db.text.json")
-    EX_BACKUP_PATH = os.getenv("EX_BACKUP_PATH")
-    JM_BACKUP_PATH = os.getenv("JM_BACKUP_PATH")
+    EX_BACKUP_PATH = os.getenv("EX_BACKUP_PATH", "data/backup_favs")
+    JM_BACKUP_PATH = os.getenv("JM_BACKUP_PATH", "data/jm_backup_favs")
     EXHENTAI_BASE_URL = os.getenv("EXHENTAI_BASE_URL")
     EXHENTAI_COOKIE_MEMBER_ID = os.getenv("EXHENTAI_COOKIE_MEMBER_ID")
     EXHENTAI_COOKIE_PASS_HASH = os.getenv("EXHENTAI_COOKIE_PASS_HASH")
@@ -32,7 +32,7 @@ class Settings:
     LOG_DIR = os.getenv("LOG_DIR", "logs")
     LOG_FILE = os.getenv("LOG_FILE", "app.log")
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-    BACKUP_HISTORY_COUNT = int(os.getenv("BACKUP_HISTORY_COUNT"))
+    BACKUP_HISTORY_COUNT = int(os.getenv("BACKUP_HISTORY_COUNT", "5"))
     PORT = int(os.getenv("PORT", 5001))
 
 

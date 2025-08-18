@@ -1,20 +1,6 @@
 <template>
   <div class="container">
     <div class="control-panel">
-      <!-- 数据源切换 -->
-      <div class="provider-switch">
-        <Button
-          label="EX"
-          :class="['btn', 'provider-btn', { active: provider === 'ex' }]"
-          @click="switchProvider('ex')"
-        />
-        <Button
-          label="JM"
-          :class="['btn', 'provider-btn', { active: provider === 'jm' }]"
-          @click="switchProvider('jm')"
-        />
-      </div>
-
       <!-- 类型筛选 -->
       <div class="button-group">
         <Button
@@ -49,6 +35,14 @@
           @click="clearSearch"
           severity="secondary"
           :disabled="loading && !searchQuery && !activeType"
+        />
+        <!-- 数据源切换 -->
+        <Button
+          :label="provider.toUpperCase()"
+          class="btn provider-toggle-btn"
+          @click="toggleProvider"
+          severity="secondary"
+          v-tooltip="`当前数据源: ${provider.toUpperCase()}, 点击切换`"
         />
       </div>
     </div>
@@ -406,6 +400,11 @@ function switchProvider (newProvider) {
   activeType.value = null // 重置类型筛选
   searchQuery.value = '' // 重置搜索
   fetchData(1)
+}
+
+function toggleProvider () {
+  const newProvider = provider.value === 'ex' ? 'jm' : 'ex'
+  switchProvider(newProvider)
 }
 
 function navigateToGallery (id, gid) {

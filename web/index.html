@@ -6,8 +6,34 @@
     <link rel="icon" type="image/png" href="/public/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ExHentai DB</title>
+    <script>
+      // 防止主题切换闪烁 - 在页面加载前立即应用主题
+      (function() {
+        const savedTheme = localStorage.getItem('theme') || 'dark'
+        const html = document.documentElement
+        const body = document.body
+        
+        if (savedTheme === 'dark') {
+          html.classList.add('my-app-dark')
+          html.classList.remove('my-app-light')
+          // 立即设置 body 背景色
+          if (body) {
+            body.style.backgroundColor = '#0f172a'
+            body.style.color = '#f1f5f9'
+          }
+        } else {
+          html.classList.add('my-app-light')
+          html.classList.remove('my-app-dark')
+          // 立即设置 body 背景色
+          if (body) {
+            body.style.backgroundColor = '#faf8f5'
+            body.style.color = '#2d3748'
+          }
+        }
+      })()
+    </script>
   </head>
-  <body>
+  <body style="background-color: #0f172a; color: #f1f5f9; margin: 0; transition: background-color 0.3s ease, color 0.3s ease;">
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

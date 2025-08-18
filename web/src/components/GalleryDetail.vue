@@ -100,7 +100,7 @@
           <th style="width: 15%;">Size</th>
           <th style="width: 15%;">Torrent Size</th>
           <th style="width: 15%;">Added</th>
-          <th style="width: 15%;">Magnet Link</th>
+          <th style="width: 15%;">Torrent Download</th>
         </tr>
       </thead>
       <tbody>
@@ -110,7 +110,7 @@
           <td>{{ formatFileSize(Number(torrent.tsize)) }}</td>
           <td>{{ formatDate(Number(torrent.added)) }}</td>
           <td>
-            <a :href="`magnet:?xt=urn:btih:${torrent.hash}`" target="_blank">Magnet</a>
+            <a :href="`https://exhentai.org/torrent/${itemId}/${torrent.hash}.torrent`" target="_blank">Torrent</a>
           </td>
         </tr>
       </tbody>

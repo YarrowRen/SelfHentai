@@ -2,161 +2,153 @@
     <div class="container">
 
         <!-- 顶部行：Statistics (左) 和 Categories (右) -->
-        <div style="display:flex; border:1px solid #444; border-radius:8px; overflow:hidden; margin-bottom:1rem;">
-            <div style="width:60%; background:#222; padding:1rem; box-sizing:border-box;">
-                <h1 style="font-size:1.25rem; font-weight:bold; margin:0 0 10px;">Gallery Statistics</h1>
-                <p style="margin:0;">Total Galleries: {{ stats.total_count }}</p>
-                <div class="line-chart-container" style="margin-top:1rem; height:300px;">
+        <div class="stats-row">
+            <div class="stats-left">
+                <h1 class="section-title-large">Gallery Statistics</h1>
+                <p class="stats-text">Total Galleries: {{ stats.total_count }}</p>
+                <div class="line-chart-container">
                     <Chart type="line" :data="quarterlyLineData" :options="quarterlyLineOptions"
-                        style="width:100%; height:100%;" />
+                        class="chart-full" />
                 </div>
             </div>
-            <div style="width:40%; background:#222; padding:1rem; box-sizing:border-box; border-left:1px solid #444;">
-                <h2 style="font-size:1.125rem; font-weight:bold; margin:0 0 10px;">Categories</h2>
-                <div style="max-width:100%; overflow:auto;">
-                    <Chart type="pie" :data="chartData" :options="chartOptions" style="max-width:100%;" />
+            <div class="stats-right">
+                <h2 class="section-title">Categories</h2>
+                <div class="chart-container">
+                    <Chart type="pie" :data="chartData" :options="chartOptions" class="chart-responsive" />
                 </div>
             </div>
         </div>
 
         <!-- 中间行：Female Tags (左) 和 Male Tags (右) -->
-        <div style="display:flex; border:1px solid #444; border-radius:8px; overflow:hidden; margin-bottom:1rem;">
-            <div style="width:50%; background:#222; padding:1rem; box-sizing:border-box;">
-                <h2 style="font-size:1.125rem; font-weight:bold; margin:0 0 10px;">Female Tags</h2>
-                <div style="max-width:100%; overflow:auto;">
-                    <Chart type="bar" :data="femaleChartData" :options="barChartOptions" style="max-width:100%;" />
+        <div class="tags-row">
+            <div class="tags-section-half">
+                <h2 class="section-title">Female Tags</h2>
+                <div class="chart-container">
+                    <Chart type="bar" :data="femaleChartData" :options="barChartOptions" class="chart-responsive" />
                 </div>
             </div>
-            <div style="width:50%; background:#222; padding:1rem; box-sizing:border-box; border-left:1px solid #444;">
-                <h2 style="font-size:1.125rem; font-weight:bold; margin:0 0 10px;">Male Tags</h2>
-                <div style="max-width:100%; overflow:auto;">
-                    <Chart type="bar" :data="maleChartData" :options="barChartOptions" style="max-width:100%;" />
+            <div class="tags-section-half">
+                <h2 class="section-title">Male Tags</h2>
+                <div class="chart-container">
+                    <Chart type="bar" :data="maleChartData" :options="barChartOptions" class="chart-responsive" />
                 </div>
             </div>
         </div>
 
         <!-- 底部行 -->
-        <div style="display:flex; border:1px solid #444; border-radius:8px; overflow:hidden;">
-            <div style="width:25%; background:#222; padding:1rem; box-sizing:border-box;">
-                <h2 style="font-size:1.125rem; font-weight:bold; margin:0 0 10px;">Other</h2>
-                <table
-                    style="width:100%; border-collapse:collapse; color:#eee; white-space:normal; word-break:break-all; table-layout:fixed;">
+        <div class="bottom-row">
+            <div class="bottom-section">
+                <h2 class="section-title">Other</h2>
+                <table class="data-table">
                     <colgroup>
-                        <col style="width:70%;">
-                        <col style="width:30%;">
+                        <col class="tag-col">
+                        <col class="count-col">
                     </colgroup>
                     <thead>
                         <tr>
-                            <th style="border-bottom:1px solid #444; padding:8px; text-align:left;">Tag</th>
-                            <th style="border-bottom:1px solid #444; padding:8px; text-align:right;">Count</th>
+                            <th class="left-align">Tag</th>
+                            <th class="right-align">Count</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="tag in tags.other" :key="tag.tag" v-tooltip.bottom="[
                             `${tag.tag}`,
                             `翻译: ${tag.tag_cn || 'N/A'}`,
-                            tag.intro ? `介绍: ${tag.intro.length > 100 ? tag.intro.slice(0, 100) + '...' : tag.intro}` : null // 限制 intro 长度
+                            tag.intro ? `介绍: ${tag.intro.length > 100 ? tag.intro.slice(0, 100) + '...' : tag.intro}` : null
                         ].filter(Boolean).join('\n')">
-                            <td style="border-bottom:1px solid #444; padding:8px; text-align:left;">
+                            <td class="left-align">
                                 {{ tag.tag_cn || tag.tag.replace(/^language:/, '') }}
                             </td>
-                            <td style="border-bottom:1px solid #444; padding:8px; text-align:right;">
+                            <td class="right-align">
                                 {{ tag.count }}
                             </td>
                         </tr>
                     </tbody>
                 </table>
-
             </div>
-            <div style="width:25%; background:#222; padding:1rem; box-sizing:border-box; border-left:1px solid #444;">
-                <h2 style="font-size:1.125rem; font-weight:bold; margin:0 0 10px;">Artist</h2>
-                <table
-                    style="width:100%; border-collapse:collapse; color:#eee; white-space:normal; word-break:break-all; table-layout:fixed;">
+            
+            <div class="bottom-section">
+                <h2 class="section-title">Artist</h2>
+                <table class="data-table">
                     <colgroup>
-                        <col style="width:70%;">
-                        <col style="width:30%;">
+                        <col class="tag-col">
+                        <col class="count-col">
                     </colgroup>
                     <thead>
                         <tr>
-                            <th style="border-bottom:1px solid #444; padding:8px; text-align:left;">Tag</th>
-                            <th style="border-bottom:1px solid #444; padding:8px; text-align:right;">Count</th>
+                            <th class="left-align">Tag</th>
+                            <th class="right-align">Count</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="tag in tags.artist" :key="tag.tag" v-tooltip.bottom="[
                             `${tag.tag}`,
                             `翻译: ${tag.tag_cn || 'N/A'}`,
-                            tag.intro ? `介绍: ${tag.intro.length > 100 ? tag.intro.slice(0, 100) + '...' : tag.intro}` : null // 限制 intro 长度
+                            tag.intro ? `介绍: ${tag.intro.length > 100 ? tag.intro.slice(0, 100) + '...' : tag.intro}` : null
                         ].filter(Boolean).join('\n')">
-                            <td style="border-bottom:1px solid #444; padding:8px; text-align:left;">
+                            <td class="left-align">
                                 {{ tag.tag_cn || tag.tag.replace(/^artist:/, '') }}
                             </td>
-                            <td style="border-bottom:1px solid #444; padding:8px; text-align:right;">{{ tag.count }}
-                            </td>
+                            <td class="right-align">{{ tag.count }}</td>
                         </tr>
                     </tbody>
                 </table>
-
             </div>
-            <div style="width:25%; background:#222; padding:1rem; box-sizing:border-box; border-left:1px solid #444;">
-                <h2 style="font-size:1.125rem; font-weight:bold; margin:0 0 10px;">Parody</h2>
-                <table
-                    style="width:100%; border-collapse:collapse; color:#eee; white-space:normal; word-break:break-all; table-layout:fixed;">
+            
+            <div class="bottom-section">
+                <h2 class="section-title">Parody</h2>
+                <table class="data-table">
                     <colgroup>
-                        <col style="width:70%;">
-                        <col style="width:30%;">
+                        <col class="tag-col">
+                        <col class="count-col">
                     </colgroup>
                     <thead>
                         <tr>
-                            <th style="border-bottom:1px solid #444; padding:8px; text-align:left;">Tag</th>
-                            <th style="border-bottom:1px solid #444; padding:8px; text-align:right;">Count</th>
+                            <th class="left-align">Tag</th>
+                            <th class="right-align">Count</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="tag in tags.parody" :key="tag.tag" v-tooltip.bottom="[
                             `${tag.tag}`,
                             `翻译: ${tag.tag_cn || 'N/A'}`,
-                            tag.intro ? `介绍: ${tag.intro.length > 100 ? tag.intro.slice(0, 100) + '...' : tag.intro}` : null // 限制 intro 长度
+                            tag.intro ? `介绍: ${tag.intro.length > 100 ? tag.intro.slice(0, 100) + '...' : tag.intro}` : null
                         ].filter(Boolean).join('\n')">
-                            <td style="border-bottom:1px solid #444; padding:8px; text-align:left;">
+                            <td class="left-align">
                                 {{ tag.tag_cn || tag.tag.replace(/^parody:/, '') }}
                             </td>
-                            <td style="border-bottom:1px solid #444; padding:8px; text-align:right;">{{ tag.count }}
-                            </td>
+                            <td class="right-align">{{ tag.count }}</td>
                         </tr>
                     </tbody>
                 </table>
-
             </div>
-            <div style="width:25%; background:#222; padding:1rem; box-sizing:border-box; border-left:1px solid #444;">
-                <h2 style="font-size:1.125rem; font-weight:bold; margin:0 0 10px;">Character</h2>
-                <table
-                    style="width:100%; border-collapse:collapse; color:#eee; white-space:normal; word-break:break-all; table-layout:fixed;">
+            
+            <div class="bottom-section">
+                <h2 class="section-title">Character</h2>
+                <table class="data-table">
                     <colgroup>
-                        <col style="width:70%;">
-                        <col style="width:30%;">
+                        <col class="tag-col">
+                        <col class="count-col">
                     </colgroup>
                     <thead>
                         <tr>
-                            <th style="border-bottom:1px solid #444; padding:8px; text-align:left;">Tag</th>
-                            <th style="border-bottom:1px solid #444; padding:8px; text-align:right;">Count</th>
+                            <th class="left-align">Tag</th>
+                            <th class="right-align">Count</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="tag in tags.character" :key="tag.tag" v-tooltip.bottom="[
                             `${tag.tag}`,
                             `翻译: ${tag.tag_cn || 'N/A'}`,
-                            tag.intro ? `介绍: ${tag.intro.length > 100 ? tag.intro.slice(0, 100) + '...' : tag.intro}` : null // 限制 intro 长度
+                            tag.intro ? `介绍: ${tag.intro.length > 100 ? tag.intro.slice(0, 100) + '...' : tag.intro}` : null
                         ].filter(Boolean).join('\n')">
-                            <td style="border-bottom:1px solid #444; padding:8px; text-align:left;">
-
-                                {{ tag.tag_cn || tag.tag.replace(/^character:/, '') }}</td>
-                            <td style="border-bottom:1px solid #444; padding:8px; text-align:right;">{{ tag.count }}
+                            <td class="left-align">
+                                {{ tag.tag_cn || tag.tag.replace(/^character:/, '') }}
                             </td>
+                            <td class="right-align">{{ tag.count }}</td>
                         </tr>
                     </tbody>
                 </table>
-
             </div>
         </div>
 
@@ -164,13 +156,19 @@
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import Chart from "primevue/chart";
 import axios from "axios";
+import { useTheme } from '@/composables/useTheme';
+import '@/assets/DataAnalys.css';
 
 const API = import.meta.env.VITE_API_BASE;
 export default {
     components: { Chart },
+    setup() {
+        const { isDark } = useTheme()
+        return { isDark }
+    },
     data() {
         return {
             stats: {
@@ -212,6 +210,26 @@ export default {
         this.fetchStats();
         this.fetchTags();
         this.fetchQuarterlyStats();
+    },
+    watch: {
+        isDark: {
+            handler() {
+                // 主题切换时重新生成图表配置
+                this.updateChart();
+                this.updateBarCharts();
+                if (this.quarterlyLineData && this.quarterlyLineData.labels && this.quarterlyLineData.labels.length > 0) {
+                    // 重新创建季度图表
+                    const quarters = this.quarterlyLineData.labels;
+                    const counts = this.quarterlyLineData.datasets[0].data;
+                    const quarterlyData = quarters.map((quarter, index) => ({
+                        quarter,
+                        count: counts[index]
+                    }));
+                    this.initQuarterlyLineChart(quarterlyData);
+                }
+            },
+            immediate: false
+        }
     },
     methods: {
         async fetchStats() {
@@ -297,10 +315,12 @@ export default {
             const quarters = quarterlyData.map(item => item.quarter);
             const counts = quarterlyData.map(item => item.count);
 
-            const documentStyle = getComputedStyle(document.documentElement);
-            const textColor = documentStyle.getPropertyValue('--p-text-color') || '#eee';
-            const textColorSecondary = documentStyle.getPropertyValue('--p-text-muted-color') || '#bbb';
-            const surfaceBorder = documentStyle.getPropertyValue('--p-content-border-color') || '#444';
+            // 动态主题颜色
+            const textColor = this.isDark ? '#f1f5f9' : '#2d3748';
+            const textColorSecondary = this.isDark ? '#cbd5e1' : '#64748b';
+            const gridColor = this.isDark ? '#475569' : '#d6d3d1';
+            const borderColor = this.isDark ? '#00bcd4' : '#0891b2';
+            const bgColor = this.isDark ? 'rgba(107, 114, 128, 0.2)' : 'rgba(8, 145, 178, 0.1)';
 
             this.quarterlyLineData = {
                 labels: quarters,
@@ -309,9 +329,9 @@ export default {
                         label: 'Quarterly Counts',
                         data: counts,
                         fill: true,
-                        borderColor: documentStyle.getPropertyValue('--p-cyan-500') || '#00bcd4',
+                        borderColor: borderColor,
                         tension: 0.4,
-                        backgroundColor: 'rgba(107, 114, 128, 0.2)'
+                        backgroundColor: bgColor
                     }
                 ]
             };
@@ -332,7 +352,7 @@ export default {
                             color: textColorSecondary
                         },
                         grid: {
-                            color: surfaceBorder
+                            color: gridColor
                         }
                     },
                     y: {
@@ -340,15 +360,17 @@ export default {
                             color: textColorSecondary
                         },
                         grid: {
-                            color: surfaceBorder
+                            color: gridColor
                         }
                     }
                 }
             };
         },
         getChartOptions() {
-            // 自定义Chart样式
-            const textColor = '#eee';
+            // 动态主题颜色
+            const textColor = this.isDark ? '#f1f5f9' : '#2d3748';
+            const gridColor = this.isDark ? '#475569' : '#d6d3d1';
+            
             return {
                 plugins: {
                     legend: {
@@ -363,18 +385,27 @@ export default {
                         ticks: {
                             color: textColor,
                         },
+                        grid: {
+                            color: gridColor,
+                        },
                     },
                     y: {
                         ticks: {
                             color: textColor,
                             beginAtZero: true,
                         },
+                        grid: {
+                            color: gridColor,
+                        },
                     },
                 },
             };
         },
         getBarChartOptions() {
-            const textColor = '#eee';
+            // 动态主题颜色
+            const textColor = this.isDark ? '#f1f5f9' : '#2d3748';
+            const gridColor = this.isDark ? '#475569' : '#d6d3d1';
+            
             return {
                 plugins: {
                     legend: {
@@ -391,6 +422,9 @@ export default {
                                 size: 12,
                             },
                         },
+                        grid: {
+                            color: gridColor,
+                        },
                     },
                     y: {
                         ticks: {
@@ -400,6 +434,9 @@ export default {
                             },
                             beginAtZero: true,
                         },
+                        grid: {
+                            color: gridColor,
+                        },
                     },
                 },
             };
@@ -407,47 +444,3 @@ export default {
     },
 };
 </script>
-
-
-<style scoped>
-* {
-    box-sizing: border-box;
-}
-
-body {
-    background-color: #34353a;
-    /* 设置为深灰色背景 */
-    margin: 0;
-    /* 移除默认外边距 */
-    padding: 0;
-    /* 移除默认内边距 */
-}
-
-#app {
-    position: relative;
-    /* 保持流式布局 */
-    margin: auto;
-    margin-top: 0px;
-    width: 100%;
-    max-width: 1500px;
-    /* 设置最大宽度 */
-    padding: 5px;
-    /* 将 padding 设置为 20px，可以根据需要调整 */
-
-}
-
-.container {
-    width: 100%;
-    max-width: 1300px;
-    /* 限制最大宽度 */
-    background-color: #50535a;
-    padding: 20px;
-    margin: 0 auto;
-    /* 水平居中 */
-    border-radius: 8px;
-    color: white;
-    font-family: Arial, sans-serif;
-    box-sizing: border-box;
-    /* 确保 padding 不影响宽高 */
-}
-</style>

@@ -3,14 +3,39 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* 主题变量 - 默认为深色模式 */
+  --primary-color: #646cff;
+  --primary-color-hover: #535bf2;
+  --text-color: #f1f5f9;
+  --bg-color: #0f172a;
+  --surface-color: #1e293b;
+  --border-color: #334155;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+/* 浅色主题 - 护眼暖米色调 */
+.my-app-light {
+  color-scheme: light;
+  --text-color: #2d3748;
+  --bg-color: #faf8f5;
+  --surface-color: #f1ede7;
+  --border-color: #d6d3d1;
+  --shadow-color: rgba(0, 0, 0, 0.06);
+}
+
+/* 深色主题 */
+.my-app-dark {
+  color-scheme: dark;
+  --text-color: rgba(255, 255, 255, 0.87);
+  --bg-color: #242424;
+  --surface-color: #1a1a1a;
+  --border-color: #374151;
+  --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
 a {
@@ -28,6 +53,9 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1 {
@@ -37,17 +65,20 @@ h1 {
 
 button {
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1px solid var(--border-color);
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--surface-color);
+  color: var(--text-color);
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: all 0.3s ease;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+  color: white;
 }
 button:focus,
 button:focus-visible {
