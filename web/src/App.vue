@@ -41,10 +41,7 @@ const { isDark } = useTheme()
 
   /* Navigation Bar Styles */
   .navigation-bar {
-    background-color: var(--surface-color);
     padding: 10px 20px;
-    border-bottom: 1px solid var(--border-color);
-    transition: background-color 0.3s ease, border-color 0.3s ease;
     display: flex;
     justify-content: space-between;
     align-items: center;

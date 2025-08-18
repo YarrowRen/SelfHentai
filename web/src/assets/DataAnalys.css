@@ -14,9 +14,9 @@
 }
 
 .my-app-light {
-  --data-bg-color: #faf8f5;
+  --data-bg-color: #ffffff;
   --data-text-color: #1a202c;
-  --data-section-bg: #ffffff;
+  --data-section-bg: #f7f5f3;
   --data-border-color: #d6d3d1;
 }
 

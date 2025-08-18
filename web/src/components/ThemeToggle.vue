@@ -34,6 +34,11 @@ const { isDark, toggleTheme, getThemeIcon, getThemeLabel } = useTheme()
   font-size: 14px;
   transition: all 0.3s ease;
   min-width: 120px;
+  /* 主题切换按钮专用背景色 */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  color: white !important;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.25);
 }
 
 .theme-icon {
@@ -46,7 +51,45 @@ const { isDark, toggleTheme, getThemeIcon, getThemeLabel } = useTheme()
 
 .theme-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.theme-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+}
+
+/* 深色模式时的特殊样式 */
+.theme-btn.dark {
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+  box-shadow: 0 2px 6px rgba(74, 85, 104, 0.25);
+}
+
+.theme-btn.dark:hover {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%) !important;
+  box-shadow: 0 4px 12px rgba(74, 85, 104, 0.4);
+}
+
+/* 添加脉动动画效果 */
+.theme-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s;
+}
+
+.theme-btn:hover::before {
+  left: 100%;
 }
 
 /* 响应式设计 - 小屏幕只显示图标 */
