@@ -8,14 +8,18 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   
-  /* 主题变量 - 默认为深色模式 */
+  /* 共用变量 */
   --primary-color: #646cff;
   --primary-color-hover: #535bf2;
-  --text-color: #f1f5f9;
-  --bg-color: #0f172a;
-  --surface-color: #1e293b;
-  --border-color: #334155;
-  --shadow-color: rgba(0, 0, 0, 0.3);
+  
+  /* 主题变量将由类设置，不在root设置默认值以避免闪烁 */
+}
+
+/* HTML 根元素也需要设置背景色和过渡效果 */
+html {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* 浅色主题 - 护眼暖米色调 */
@@ -31,10 +35,10 @@
 /* 深色主题 */
 .my-app-dark {
   color-scheme: dark;
-  --text-color: rgba(255, 255, 255, 0.87);
-  --bg-color: #242424;
-  --surface-color: #1a1a1a;
-  --border-color: #374151;
+  --text-color: #f1f5f9;
+  --bg-color: #0f172a;
+  --surface-color: #1e293b;
+  --border-color: #334155;
   --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
@@ -49,13 +53,13 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  padding: 0;
   min-width: 320px;
   min-height: 100vh;
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
+  /* 移除 flex 布局，让内容正常流动 */
 }
 
 h1 {
@@ -90,10 +94,11 @@ button:focus-visible {
 }
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 @media (prefers-color-scheme: light) {

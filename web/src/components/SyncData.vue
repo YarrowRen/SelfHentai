@@ -4,11 +4,11 @@
       <div class="provider-selection">
         <label>
           <input type="radio" v-model="selectedProvider" value="ex" />
-          EX 数据同步
+          <span>EX 数据同步</span>
         </label>
         <label>
           <input type="radio" v-model="selectedProvider" value="jm" />
-          JM 数据同步
+          <span>JM 数据同步</span>
         </label>
       </div>
       <button @click="startSync" :disabled="syncing">
@@ -114,6 +114,9 @@ onBeforeUnmount(() => {
 <style scoped>
 .container {
   padding: 1rem;
+  background: var(--bg-color);
+  color: var(--text-color);
+  transition: all 0.3s ease;
 }
 
 .sync-controls {
@@ -121,6 +124,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .provider-selection {
@@ -133,50 +137,121 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #555;
-  border-radius: 4px;
-  background: #333;
-  color: #fff;
-  transition: background-color 0.2s;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--surface-color);
+  color: var(--text-color);
+  transition: all 0.3s ease;
+  font-weight: 500;
 }
 
 .provider-selection label:hover {
-  background: #444;
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.provider-selection input[type="radio"]:checked + span {
+  color: var(--primary-color);
+  font-weight: 600;
 }
 
 .provider-selection input[type="radio"] {
   margin: 0;
+  accent-color: var(--primary-color);
 }
 
 button {
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.5rem;
   font-size: 16px;
-  background: #007bff;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-hover) 100%);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(100, 108, 255, 0.25);
 }
 
 button:hover:not(:disabled) {
-  background: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.4);
+  background: linear-gradient(135deg, var(--primary-color-hover) 0%, var(--primary-color) 100%);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(100, 108, 255, 0.3);
 }
 
 button:disabled {
-  background: #ccc;
+  background: var(--border-color);
+  color: var(--text-color);
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .terminal {
-  background: #111;
-  color: #0f0;
-  padding: 1rem;
+  background: var(--surface-color);
+  color: var(--text-color);
+  padding: 1.5rem;
   height: 650px;
   overflow-y: auto;
-  font-family: monospace;
-  border-radius: 8px;
-  border: 1px solid #333;
+  font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+  box-shadow: 0 4px 12px var(--shadow-color);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.terminal::before {
+  content: '● ● ●';
+  position: absolute;
+  top: 10px;
+  left: 15px;
+  color: var(--text-color);
+  opacity: 0.5;
+  font-size: 12px;
+}
+
+.terminal pre {
+  margin-top: 25px;
+  line-height: 1.4;
+  font-size: 14px;
+}
+
+/* 浅色模式下的终端特殊样式 */
+:global(.my-app-light) .terminal {
+  background: #2d3748;
+  color: #e2e8f0;
+  border-color: #4a5568;
+}
+
+/* 深色模式下保持绿色终端文字 */
+:global(.my-app-dark) .terminal {
+  color: #00ff00;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .sync-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .provider-selection {
+    justify-content: center;
+  }
+  
+  .terminal {
+    height: 500px;
+    padding: 1rem;
+  }
 }
 </style>

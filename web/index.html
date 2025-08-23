@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="my-app-dark">
   <head>
     <meta charset="UTF-8" />
     <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
@@ -11,29 +11,46 @@
       (function() {
         const savedTheme = localStorage.getItem('theme') || 'dark'
         const html = document.documentElement
-        const body = document.body
         
+        // 立即应用正确的类
         if (savedTheme === 'dark') {
-          html.classList.add('my-app-dark')
-          html.classList.remove('my-app-light')
-          // 立即设置 body 背景色
-          if (body) {
-            body.style.backgroundColor = '#0f172a'
-            body.style.color = '#f1f5f9'
-          }
+          html.className = 'my-app-dark'
         } else {
-          html.classList.add('my-app-light')
-          html.classList.remove('my-app-dark')
-          // 立即设置 body 背景色
-          if (body) {
-            body.style.backgroundColor = '#faf8f5'
-            body.style.color = '#2d3748'
-          }
+          html.className = 'my-app-light'
         }
       })()
     </script>
+    <style>
+      /* 紧急CSS - 确保在main.css加载前有基本样式 */
+      html {
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      .my-app-dark {
+        --text-color: #f1f5f9;
+        --bg-color: #0f172a;
+        background-color: #0f172a;
+        color: #f1f5f9;
+      }
+      .my-app-light {
+        --text-color: #2d3748;
+        --bg-color: #faf8f5;
+        background-color: #faf8f5;
+        color: #2d3748;
+      }
+      body {
+        margin: 0;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      #app {
+        min-height: 100vh;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+      }
+    </style>
   </head>
-  <body style="background-color: #0f172a; color: #f1f5f9; margin: 0; transition: background-color 0.3s ease, color 0.3s ease;">
+  <body>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

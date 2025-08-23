@@ -1,5 +1,6 @@
 <template>
-  <div v-if="galleryData" class="gallery-detail-container">
+  <div class="gallery-detail-wrapper">
+    <div v-if="galleryData" class="gallery-detail-container">
     <!-- 数据源指示器 -->
     <div :class="['data-source-indicator', provider]">
       {{ provider.toUpperCase() }}
@@ -88,9 +89,9 @@
         </div>
       </div>
     </div>
-  </div>
+    </div>
 
-  <!-- EX Torrents Section -->
+    <!-- EX Torrents Section -->
   <section v-if="provider === 'ex' && galleryData.torrents?.length" class="torrents">
     <h4>Torrent Downloads</h4>
     <table class="torrent-table">
@@ -143,8 +144,9 @@
       </div>
     </div>
   </section>
-  <div v-else-if="loading" class="loading">Loading...</div>
-  <div v-else-if="error" class="error">{{ error }}</div>
+    <div v-else-if="loading" class="loading">Loading...</div>
+    <div v-else-if="error" class="error">{{ error }}</div>
+  </div>
 </template>
 
 <script>

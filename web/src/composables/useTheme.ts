@@ -14,7 +14,9 @@ const applyThemeImmediate = (themeValue: Theme) => {
   if (isDarkMode) {
     html.classList.add('my-app-dark')
     html.classList.remove('my-app-light')
-    // 同步更新 body 背景色
+    // 同步更新 HTML 和 body 背景色
+    html.style.backgroundColor = '#0f172a'
+    html.style.color = '#f1f5f9'
     if (body) {
       body.style.backgroundColor = '#0f172a'
       body.style.color = '#f1f5f9'
@@ -22,7 +24,9 @@ const applyThemeImmediate = (themeValue: Theme) => {
   } else {
     html.classList.add('my-app-light')
     html.classList.remove('my-app-dark')
-    // 同步更新 body 背景色
+    // 同步更新 HTML 和 body 背景色
+    html.style.backgroundColor = '#faf8f5'
+    html.style.color = '#2d3748'
     if (body) {
       body.style.backgroundColor = '#faf8f5'
       body.style.color = '#2d3748'
