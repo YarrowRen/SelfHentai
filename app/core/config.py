@@ -10,7 +10,7 @@ load_dotenv()  # 加载 .env 文件
 class Settings:
     GALLERY_DATA_PATH = os.getenv("GALLERY_DATA_PATH", "data/exhentai_favs_metadata.json")
     TAG_TRANSLATE_PATH = os.getenv("TAG_TRANSLATE_PATH", "data/db.text.json")
-    EX_BACKUP_PATH = os.getenv("EX_BACKUP_PATH", "data/backup_favs")
+    EX_BACKUP_PATH = os.getenv("EX_BACKUP_PATH", "data/ex_backup_favs")
     JM_BACKUP_PATH = os.getenv("JM_BACKUP_PATH", "data/jm_backup_favs")
     EXHENTAI_BASE_URL = os.getenv("EXHENTAI_BASE_URL")
     EXHENTAI_COOKIE_MEMBER_ID = os.getenv("EXHENTAI_COOKIE_MEMBER_ID")
