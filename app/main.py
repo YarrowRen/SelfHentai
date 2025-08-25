@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 main_event_loop = asyncio.get_event_loop()
 
 from api import websocket  # 导入 websocket 路由
-from api import gallery, root
+from api import gallery, root, settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -39,4 +39,5 @@ app.add_middleware(
 # 挂载路由
 app.include_router(root.router)
 app.include_router(gallery.router, prefix="/api/gallery", tags=["Gallery"])
+app.include_router(settings.router, prefix="/api/settings", tags=["Settings"])
 app.include_router(websocket.router)

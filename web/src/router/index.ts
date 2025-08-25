@@ -2,7 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Home from '@/components/Home.vue';
 import SyncData from '@/components/SyncData.vue'
 import DataAnalys from '@/components/DataAnalys.vue';
-import GalleryDetail from '@/components/GalleryDetail.vue'; 
+import GalleryDetail from '@/components/GalleryDetail.vue';
+import Settings from '@/components/Settings.vue'; 
 
 const routes = [
   {
@@ -19,6 +20,11 @@ const routes = [
     path: '/sync',
     name: 'SyncData',
     component: SyncData,
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: Settings,
   },
   {
     path: '/gallery/:gid',  // EX 动态路由
