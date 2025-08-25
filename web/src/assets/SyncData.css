@@ -1,0 +1,144 @@
+/* ============ SyncData Styles ============ */
+
+.container {
+  padding: 1rem;
+  background: var(--bg-color);
+  color: var(--text-color);
+  transition: all 0.3s ease;
+}
+
+.sync-controls {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.provider-selection {
+  display: flex;
+  gap: 1rem;
+}
+
+.provider-selection label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--surface-color);
+  color: var(--text-color);
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.provider-selection label:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.provider-selection input[type="radio"]:checked + span {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.provider-selection input[type="radio"] {
+  margin: 0;
+  accent-color: var(--primary-color);
+}
+
+button {
+  padding: 0.75rem 1.5rem;
+  font-size: 16px;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-hover) 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(100, 108, 255, 0.25);
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.4);
+  background: linear-gradient(135deg, var(--primary-color-hover) 0%, var(--primary-color) 100%);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(100, 108, 255, 0.3);
+}
+
+button:disabled {
+  background: var(--border-color);
+  color: var(--text-color);
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.terminal {
+  background: var(--surface-color);
+  color: var(--text-color);
+  padding: 1.5rem;
+  height: 500px;
+  overflow-y: auto;
+  font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+  box-shadow: 0 4px 12px var(--shadow-color);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.terminal::before {
+  content: '● ● ●';
+  position: absolute;
+  top: 10px;
+  left: 15px;
+  color: var(--text-color);
+  opacity: 0.5;
+  font-size: 12px;
+}
+
+.terminal pre {
+  margin-top: 25px;
+  line-height: 1.4;
+  font-size: 14px;
+}
+
+/* 浅色模式下的终端特殊样式 */
+:global(.my-app-light) .terminal {
+  background: #2d3748;
+  color: #e2e8f0;
+  border-color: #4a5568;
+}
+
+/* 深色模式下保持绿色终端文字 */
+:global(.my-app-dark) .terminal {
+  color: #00ff00;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .sync-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .provider-selection {
+    justify-content: center;
+  }
+  
+  .terminal {
+    height: 400px;
+    padding: 1rem;
+  }
+}
