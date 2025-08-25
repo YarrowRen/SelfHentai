@@ -17,18 +17,21 @@ class Settings:
     EXHENTAI_COOKIE_PASS_HASH = os.getenv("EXHENTAI_COOKIE_PASS_HASH")
     EXHENTAI_COOKIE_IGNEOUS = os.getenv("EXHENTAI_COOKIE_IGNEOUS")
     TRANSLATE_LATEST_URL = os.getenv("TRANSLATE_LATEST_URL")
-    JM_GALLERY_DATA_PATH = os.getenv("JM_GALLERY_DATA_PATH", "data/jm_favs_metadata_enriched.json")
+    JM_GALLERY_DATA_PATH = os.getenv("JM_GALLERY_DATA_PATH", "data/jm_favs_metadata.json")
     JM_COVER_URL_TEMPLATE = os.getenv("JM_COVER_URL_TEMPLATE", "https://cdn-msp.18comic.vip/media/albums/{id}_3x4.jpg")
-    
+
     # JM 同步配置
     JM_USERNAME = os.getenv("JM_USERNAME")
     JM_PASSWORD = os.getenv("JM_PASSWORD")
     JM_APP_VERSION = os.getenv("JM_APP_VERSION", "1.8.0")
-    JM_API_BASES = os.getenv("JM_API_BASES", "https://www.cdnmhwscc.vip,https://www.cdnplaystation6.club,https://www.cdnplaystation6.org,https://www.cdnuc.vip,https://www.cdn-mspjmapiproxy.xyz")
+    JM_API_BASES = os.getenv(
+        "JM_API_BASES",
+        "https://www.cdnmhwscc.vip,https://www.cdnplaystation6.club,https://www.cdnplaystation6.org,https://www.cdnuc.vip,https://www.cdn-mspjmapiproxy.xyz",
+    )
     JM_MAX_WORKERS = int(os.getenv("JM_MAX_WORKERS", "16"))
     JM_SYNC_RETRIES = int(os.getenv("JM_SYNC_RETRIES", "3"))
     JM_SAVE_EVERY = int(os.getenv("JM_SAVE_EVERY", "50"))
-    
+
     LOG_DIR = os.getenv("LOG_DIR", "logs")
     LOG_FILE = os.getenv("LOG_FILE", "app.log")
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
