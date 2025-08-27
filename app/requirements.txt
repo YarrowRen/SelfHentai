@@ -1,0 +1,32 @@
+# =============================================================================
+# SelfHentai Backend Dependencies
+# =============================================================================
+
+# FastAPI Framework and Dependencies
+fastapi==0.104.1
+uvicorn==0.24.0
+starlette==0.27.0
+
+# Pydantic for data validation
+pydantic==2.5.0
+
+# HTTP Requests and Web Scraping
+requests==2.31.0
+aiohttp==3.9.1
+beautifulsoup4==4.12.2
+
+# Async File Operations
+aiofiles==23.2.0
+
+# Configuration Management
+python-dotenv==1.0.0
+
+# Cryptography (for JM sync encryption)
+pycryptodome==3.19.0
+
+# Additional Standard Library Extensions
+python-multipart==0.0.6
+
+# Development and Testing (Optional)
+# pytest==7.4.3
+# pytest-asyncio==0.21.1
