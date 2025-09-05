@@ -1,9 +1,17 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useTheme } from '@/composables/useTheme'
+import { useMomMode } from '@/composables/useMomMode'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import MomModeToggle from '@/components/MomModeToggle.vue'
 
-// 初始化主题
+// 初始化主题和妈妈模式
 const { isDark } = useTheme()
+const { initMomMode } = useMomMode()
+
+onMounted(() => {
+  initMomMode()
+})
 </script>
 
 <template>
@@ -18,6 +26,7 @@ const { isDark } = useTheme()
       <li><a href="https://exhentai.org/">ExHentai</a></li>
     </ul>
     <div class="theme-toggle-nav">
+      <MomModeToggle />
       <ThemeToggle />
     </div>
   </div>
@@ -59,6 +68,7 @@ const { isDark } = useTheme()
   .theme-toggle-nav {
     display: flex;
     align-items: center;
+    gap: 10px;
   }
   
   .nav-menu li {

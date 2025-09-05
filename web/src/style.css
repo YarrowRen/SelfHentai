@@ -42,6 +42,76 @@ html {
   --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
+/* 妈妈模式 - 图片毛玻璃特效（排除缩略图相关元素，避免与遮罩层冲突） */
+.mom-mode img:not(.thumbnail-image),
+.mom-mode .cover img,
+.mom-mode .image-popover img,
+.mom-mode .popover img {
+  filter: blur(20px) !important;
+  transition: filter 0.3s ease;
+}
+
+/* 鼠标悬停时暂时清除模糊效果 */
+.mom-mode img:not(.thumbnail-image):hover,
+.mom-mode .cover img:hover,
+.mom-mode .image-popover img:hover,
+.mom-mode .popover img:hover {
+  filter: blur(0px) !important;
+}
+
+/* 特殊处理：对于使用背景图片的缩略图，添加一个遮罩层 */
+.mom-mode .thumbnail-item,
+.mom-mode .thumbnail-gallery .thumbnail-item {
+  position: relative;
+}
+
+.mom-mode .thumbnail-item::before,
+.mom-mode .thumbnail-gallery .thumbnail-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 2px;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mom-mode .thumbnail-item:hover::before,
+.mom-mode .thumbnail-gallery .thumbnail-item:hover::before {
+  opacity: 0;
+}
+
+/* 深色主题下的妈妈模式遮罩 */
+.my-app-dark.mom-mode .thumbnail-item::before,
+.my-app-dark.mom-mode .thumbnail-gallery .thumbnail-item::before {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* 为所有可能包含敏感图片的元素添加模糊效果（排除缩略图，避免重复） */
+.mom-mode .gallery-item img,
+.mom-mode .gallery-preview img,
+.mom-mode .image-container,
+.mom-mode .poster,
+.mom-mode .album-cover,
+.mom-mode .gallery-detail-container .cover img {
+  filter: blur(20px) !important;
+  transition: filter 0.3s ease;
+}
+
+.mom-mode .gallery-item img:hover,
+.mom-mode .gallery-preview img:hover,
+.mom-mode .image-container:hover,
+.mom-mode .poster:hover,
+.mom-mode .album-cover:hover,
+.mom-mode .gallery-detail-container .cover img:hover {
+  filter: blur(0px) !important;
+}
+
 a {
   font-weight: 500;
   color: #646cff;

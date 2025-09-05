@@ -134,3 +134,127 @@ class ExHentaiUtils:
             self.logger.info(f"已保存至 {os.path.abspath(output_path)}")
         except Exception:
             self.logger.exception("保存失败")
+
+    def fetch_gallery_thumbnails(self, gid: str, token: str, page: int = 0):
+        """
+        获取画廊的缩略图数据
+        
+        参数:
+            gid: Gallery ID
+            token: Gallery token  
+            page: 页码，从0开始
+            
+        返回:
+            dict: 包含缩略图数据、分页信息等
+        """
+        url = f"https://exhentai.org/g/{gid}/{token}/"
+        if page > 0:
+            url += f"?p={page}"
+            
+        try:
+            response = self.session.get(url)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, "html.parser")
+            
+            # 提取分页信息
+            pagination_info = {}
+            gpc_elem = soup.select_one(".gpc")
+            if gpc_elem:
+                # 例如: "Showing 1 - 20 of 258 images"
+                match = re.search(r"Showing (\d+) - (\d+) of (\d+) images", gpc_elem.text)
+                if match:
+                    pagination_info = {
+                        "start": int(match.group(1)),
+                        "end": int(match.group(2)), 
+                        "total": int(match.group(3))
+                    }
+            
+            # 提取分页导航
+            page_links = []
+            ptt_elem = soup.select_one(".ptt")
+            if ptt_elem:
+                for link in ptt_elem.select("td a"):
+                    href = link.get("href", "")
+                    text = link.text.strip()
+                    if href and text.isdigit():
+                        # 提取页码参数
+                        page_match = re.search(r"p=(\d+)", href)
+                        page_num = int(page_match.group(1)) if page_match else 0
+                        page_links.append({
+                            "page": page_num,
+                            "display": text,
+                            "url": href
+                        })
+                        
+            # 当前页码
+            current_page = page
+            total_pages = 0
+            if page_links:
+                total_pages = max(link["page"] for link in page_links) + 1
+            
+            # 提取缩略图数据
+            thumbnails = []
+            gdt_elem = soup.select_one("#gdt")
+            if gdt_elem:
+                for link in gdt_elem.select("a"):
+                    href = link.get("href", "")
+                    div = link.select_one("div")
+                    if div and href:
+                        title = div.get("title", "")
+                        style = div.get("style", "")
+                        
+                        # 解析背景图片URL和位置
+                        bg_match = re.search(r"url\(([^)]+)\)", style)
+                        pos_match = re.search(r"(-?\d+)px\s+(\d+)\s+no-repeat", style)
+                        size_match = re.search(r"width:(\d+)px;height:(\d+)px", style)
+                        
+                        thumbnail_data = {
+                            "page_url": href,
+                            "title": title,
+                        }
+                        
+                        if bg_match:
+                            thumbnail_data["background_url"] = bg_match.group(1)
+                            
+                        if pos_match:
+                            thumbnail_data["bg_position"] = {
+                                "x": int(pos_match.group(1)),
+                                "y": int(pos_match.group(2))
+                            }
+                            
+                        if size_match:
+                            thumbnail_data["size"] = {
+                                "width": int(size_match.group(1)),
+                                "height": int(size_match.group(2))
+                            }
+                            
+                        # 提取页码信息
+                        page_match = re.search(r"/s/[^/]+/\d+-(\d+)", href)
+                        if page_match:
+                            thumbnail_data["page_number"] = int(page_match.group(1))
+                            
+                        thumbnails.append(thumbnail_data)
+            
+            return {
+                "thumbnails": thumbnails,
+                "pagination": {
+                    "current_page": current_page,
+                    "total_pages": total_pages,
+                    "page_info": pagination_info,
+                    "page_links": page_links
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"获取缩略图失败: {e}")
+            return {
+                "thumbnails": [],
+                "pagination": {
+                    "current_page": 0,
+                    "total_pages": 0,
+                    "page_info": {},
+                    "page_links": []
+                },
+                "error": str(e)
+            }

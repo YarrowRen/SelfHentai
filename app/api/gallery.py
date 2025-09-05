@@ -197,3 +197,50 @@ def reload_jm_data():
 
     load_jm_gallery_data(force_reload=True)
     return {"message": "JM数据已重新加载"}
+
+
+@router.get("/ex/thumbnails/{gid}/{token}")
+def get_ex_gallery_thumbnails(
+    gid: str, 
+    token: str, 
+    page: int = Query(0, ge=0, description="页码，从0开始")
+):
+    """
+    EX：获取画廊缩略图数据
+    
+    参数:
+        gid: Gallery ID
+        token: Gallery token
+        page: 页码，从0开始
+    """
+    from core.config import settings
+    from utils.exhentai_utils import ExHentaiUtils
+    
+    # 检查必要的配置
+    if not all([
+        getattr(settings, 'EXHENTAI_COOKIE_MEMBER_ID', None),
+        getattr(settings, 'EXHENTAI_COOKIE_PASS_HASH', None),
+        getattr(settings, 'EXHENTAI_COOKIE_IGNEOUS', None)
+    ]):
+        raise HTTPException(
+            status_code=503, 
+            detail="ExHentai 认证信息未配置，请在设置页面配置 ExHentai cookies"
+        )
+    
+    cookies = {
+        "ipb_member_id": settings.EXHENTAI_COOKIE_MEMBER_ID,
+        "ipb_pass_hash": settings.EXHENTAI_COOKIE_PASS_HASH,
+        "igneous": settings.EXHENTAI_COOKIE_IGNEOUS,
+    }
+    
+    try:
+        utils = ExHentaiUtils("https://exhentai.org/favorites.php", cookies)
+        result = utils.fetch_gallery_thumbnails(gid, token, page)
+        
+        if "error" in result:
+            raise HTTPException(status_code=500, detail=result["error"])
+            
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取缩略图失败: {str(e)}")

@@ -144,6 +144,105 @@
       </div>
     </div>
   </section>
+
+  <!-- EX Thumbnail Gallery Section -->
+  <section v-if="provider === 'ex'" class="thumbnail-gallery">
+    <div class="thumbnail-header">
+      <h4>Gallery Preview</h4>
+      <div v-if="thumbnailData.pagination.page_info" class="thumbnail-info">
+        Showing {{ thumbnailData.pagination.page_info.start }} - {{ thumbnailData.pagination.page_info.end }} 
+        of {{ thumbnailData.pagination.page_info.total }} images
+      </div>
+    </div>
+
+    <!-- Thumbnail Grid -->
+    <div v-if="thumbnailData.thumbnails?.length" class="thumbnail-grid">
+      <div 
+        v-for="(thumb, index) in thumbnailData.thumbnails" 
+        :key="index" 
+        class="thumbnail-item"
+        @click="openImagePreview(thumb)"
+      >
+        <div 
+          class="thumbnail-image"
+          :style="{
+            width: thumb.size?.width + 'px',
+            height: thumb.size?.height + 'px',
+            backgroundImage: `url(${thumb.background_url})`,
+            backgroundPosition: `${thumb.bg_position?.x || 0}px ${thumb.bg_position?.y || 0}px`,
+            backgroundRepeat: 'no-repeat'
+          }"
+          :title="thumb.title"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div v-if="thumbnailData.pagination.page_links?.length" class="thumbnail-pagination">
+      <button 
+        class="page-btn"
+        :disabled="thumbnailCurrentPage === 0"
+        @click="loadThumbnails(thumbnailCurrentPage - 1)"
+      >
+        &lt;
+      </button>
+      
+      <button
+        v-for="link in visiblePageLinks"
+        :key="link.page"
+        class="page-btn"
+        :class="{ active: link.page === thumbnailCurrentPage }"
+        @click="loadThumbnails(link.page)"
+      >
+        {{ link.display }}
+      </button>
+
+      <button 
+        v-if="hasMorePages"
+        class="page-btn ellipsis"
+        @click="showPageJump = true"
+      >
+        ...
+      </button>
+
+      <button 
+        class="page-btn"
+        :disabled="thumbnailCurrentPage >= thumbnailData.pagination.total_pages - 1"
+        @click="loadThumbnails(thumbnailCurrentPage + 1)"
+      >
+        &gt;
+      </button>
+    </div>
+
+    <!-- Page Jump Dialog -->
+    <div v-if="showPageJump" class="page-jump-overlay" @click="showPageJump = false">
+      <div class="page-jump-dialog" @click.stop>
+        <p>Jump to page: (1-{{ thumbnailData.pagination.total_pages }})</p>
+        <input 
+          ref="pageJumpInput"
+          type="number" 
+          v-model="jumpToPage" 
+          :min="1" 
+          :max="thumbnailData.pagination.total_pages"
+          @keyup.enter="handlePageJump"
+        />
+        <div class="page-jump-buttons">
+          <button @click="handlePageJump">Go</button>
+          <button @click="showPageJump = false">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="thumbnailLoading" class="thumbnail-loading">
+      Loading thumbnails...
+    </div>
+
+    <!-- Error State -->
+    <div v-if="thumbnailError" class="thumbnail-error">
+      {{ thumbnailError }}
+    </div>
+  </section>
     <div v-else-if="loading" class="loading">Loading...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
   </div>
@@ -169,16 +268,35 @@ export default {
       isChinese: true,
       loading: true,
       error: null,
+      // Thumbnail related data
+      thumbnailData: {
+        thumbnails: [],
+        pagination: {
+          current_page: 0,
+          total_pages: 0,
+          page_info: {},
+          page_links: []
+        }
+      },
+      thumbnailCurrentPage: 0,
+      thumbnailLoading: false,
+      thumbnailError: null,
+      showPageJump: false,
+      jumpToPage: 1,
     };
   },
   created() {
     this.initializeFromRoute();
-    if (this.itemId) this.fetchGalleryData();
+    if (this.itemId) {
+      this.fetchGalleryData();
+    }
   },
   watch: {
     '$route'() {
       this.initializeFromRoute();
-      if (this.itemId) this.fetchGalleryData();
+      if (this.itemId) {
+        this.fetchGalleryData();
+      }
     }
   },
   methods: {
@@ -214,6 +332,11 @@ export default {
 
         const { data } = await axios.get(url);
         this.galleryData = data;
+        
+        // 如果是EX画廊，加载缩略图
+        if (this.provider === 'ex' && this.galleryData) {
+          this.loadThumbnails(0);
+        }
       } catch (error) {
         console.error("Error fetching gallery data:", error);
         this.error = `Failed to load ${this.provider.toUpperCase()} data: ${error.message}`;
@@ -266,6 +389,53 @@ export default {
       if (!num) return '0';
       return parseInt(num).toLocaleString();
     },
+
+    async loadThumbnails(page) {
+      console.log('loadThumbnails called:', { provider: this.provider, galleryData: !!this.galleryData, itemId: this.itemId });
+      
+      if (this.provider !== 'ex' || !this.galleryData) {
+        console.log('Early return from loadThumbnails:', { provider: this.provider, hasGalleryData: !!this.galleryData });
+        return;
+      }
+      
+      this.thumbnailLoading = true;
+      this.thumbnailError = null;
+      
+      try {
+        const url = `${API}/api/gallery/ex/thumbnails/${this.itemId}/${this.galleryData.token}?page=${page}`;
+        console.log('Fetching thumbnails from:', url);
+        
+        const { data } = await axios.get(url);
+        console.log('Thumbnail data received:', data);
+        
+        this.thumbnailData = data;
+        this.thumbnailCurrentPage = page;
+        
+      } catch (error) {
+        console.error("Error loading thumbnails:", error);
+        this.thumbnailError = `Failed to load thumbnails: ${error.message}`;
+      } finally {
+        this.thumbnailLoading = false;
+      }
+    },
+
+    openImagePreview(thumb) {
+      // 可以实现图片预览功能，这里暂时只是打开原页面链接
+      if (thumb.page_url) {
+        window.open(thumb.page_url, '_blank');
+      }
+    },
+
+    handlePageJump() {
+      const page = Math.min(
+        Math.max(1, parseInt(this.jumpToPage) || 1), 
+        this.thumbnailData.pagination.total_pages
+      ) - 1; // 转换为0开始的页码
+      
+      this.loadThumbnails(page);
+      this.showPageJump = false;
+      this.jumpToPage = page + 1;
+    },
   },
   computed: {
     groupedTags() {
@@ -293,6 +463,23 @@ export default {
       });
       
       return Object.fromEntries(Object.entries(groups).filter(([, v]) => v.length > 0));
+    },
+
+    visiblePageLinks() {
+      const links = this.thumbnailData.pagination.page_links || [];
+      const current = this.thumbnailCurrentPage;
+      
+      // 显示当前页面周围的页码
+      return links.filter(link => {
+        const page = link.page;
+        return page <= 6 || Math.abs(page - current) <= 2 || page >= links.length - 3;
+      });
+    },
+
+    hasMorePages() {
+      const links = this.thumbnailData.pagination.page_links || [];
+      const visible = this.visiblePageLinks;
+      return visible.length < links.length;
     },
   },
 };
