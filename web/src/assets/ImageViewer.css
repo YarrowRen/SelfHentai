@@ -528,6 +528,7 @@
   right: -2px;
   bottom: -2px;
   border: 2px dashed rgba(100, 108, 255, 0.8);
+  pointer-events: none;
   animation: dash-animation 1s linear infinite;
 }
 
@@ -559,6 +560,7 @@
   flex-direction: column;
   gap: 8px;
   z-index: 12;
+  pointer-events: auto;
 }
 
 .confirm-btn,
@@ -600,7 +602,7 @@
 
 /* 妈妈模式兼容 - 大图查看器专用毛玻璃效果 */
 .mom-mode .full-image {
-  filter: blur(20px) !important;
+  filter: blur(var(--mom-mode-blur)) !important;
   transition: filter 0.3s ease;
 }
 
@@ -610,7 +612,7 @@
 
 /* 妈妈模式支持截图预览 */
 .mom-mode .screenshot-image {
-  filter: blur(10px) !important;
+  filter: blur(var(--mom-mode-blur)) !important;
   transition: filter 0.3s ease;
 }
 

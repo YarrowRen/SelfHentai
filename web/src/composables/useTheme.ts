@@ -11,6 +11,10 @@ const applyThemeImmediate = (themeValue: Theme) => {
   const body = document.body
   const isDarkMode = themeValue === 'dark'
   
+  // 设置妈妈模式的模糊度 CSS 变量
+  const blurValue = import.meta.env.VITE_MOM_MODE_BLUR || '20px'
+  html.style.setProperty('--mom-mode-blur', blurValue)
+  
   if (isDarkMode) {
     html.classList.add('my-app-dark')
     html.classList.remove('my-app-light')

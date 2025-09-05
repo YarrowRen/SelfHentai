@@ -47,7 +47,7 @@ html {
 .mom-mode .cover img,
 .mom-mode .image-popover img,
 .mom-mode .popover img {
-  filter: blur(20px) !important;
+  filter: blur(var(--mom-mode-blur)) !important;
   transition: filter 0.3s ease;
 }
 
@@ -73,8 +73,8 @@ html {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
+  /* background: rgba(255, 255, 255, 0.8); */
+  backdrop-filter: blur(var(--mom-mode-blur));
   border-radius: 2px;
   transition: opacity 0.3s ease;
   pointer-events: none;
@@ -89,7 +89,7 @@ html {
 /* 深色主题下的妈妈模式遮罩 */
 .my-app-dark.mom-mode .thumbnail-item::before,
 .my-app-dark.mom-mode .thumbnail-gallery .thumbnail-item::before {
-  background: rgba(0, 0, 0, 0.8);
+  /* background: rgba(0, 0, 0, 0.8); */
 }
 
 /* 为所有可能包含敏感图片的元素添加模糊效果（排除缩略图和大图查看器，避免重复） */
@@ -98,7 +98,7 @@ html {
 .mom-mode .poster,
 .mom-mode .album-cover,
 .mom-mode .gallery-detail-container .cover img {
-  filter: blur(20px) !important;
+  filter: blur(var(--mom-mode-blur)) !important;
   transition: filter 0.3s ease;
 }
 

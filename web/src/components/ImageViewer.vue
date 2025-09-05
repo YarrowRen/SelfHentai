@@ -29,39 +29,41 @@
           <div 
             v-if="isScreenshotMode"
             class="screenshot-overlay-container"
-            @mousedown="startSelection"
-            @mousemove="updateSelection"
-            @mouseup="endSelection"
+            @mousedown.prevent.stop="startSelection"
+            @mousemove.prevent="updateSelection"
+            @mouseup.prevent.stop="endSelection"
             @mouseleave="cancelSelection"
+            @contextmenu.prevent
           >
             <!-- 选择框 -->
             <div 
-              v-if="selectionBox.visible"
+              v-if="screenshotState.selection.visible"
               class="selection-box"
               :style="{
-                left: selectionBox.x + 'px',
-                top: selectionBox.y + 'px',
-                width: selectionBox.width + 'px',
-                height: selectionBox.height + 'px'
+                left: screenshotState.selection.x + 'px',
+                top: screenshotState.selection.y + 'px',
+                width: screenshotState.selection.width + 'px',
+                height: screenshotState.selection.height + 'px'
               }"
             >
               <div class="selection-border"></div>
               <div class="selection-info">
-                {{ Math.round(selectionBox.width) }} × {{ Math.round(selectionBox.height) }}
+                {{ Math.round(screenshotState.selection.width) }} × {{ Math.round(screenshotState.selection.height) }}
               </div>
             </div>
             
             <!-- 确认按钮 -->
             <div 
-              v-if="selectionBox.visible && selectionBox.width > 10 && selectionBox.height > 10"
+              v-if="screenshotState.selection.visible && screenshotState.selection.width > 5 && screenshotState.selection.height > 5"
               class="screenshot-actions"
               :style="{
-                left: (selectionBox.x + selectionBox.width + 10) + 'px',
-                top: selectionBox.y + 'px'
+                left: (screenshotState.selection.x + screenshotState.selection.width + 10) + 'px',
+                top: screenshotState.selection.y + 'px'
               }"
             >
               <Button 
-                @click="confirmScreenshot"
+                @mousedown.prevent.stop
+                @click.prevent.stop="confirmScreenshot"
                 size="small"
                 severity="success"
                 class="confirm-btn"
@@ -69,7 +71,8 @@
                 ✓ Capture
               </Button>
               <Button 
-                @click="cancelScreenshot"
+                @mousedown.prevent.stop
+                @click.prevent.stop="cancelScreenshot"
                 size="small"
                 severity="secondary"
                 class="cancel-btn"
@@ -95,14 +98,16 @@
             <!-- 截图按钮 -->
             <div class="screenshot-controls">
               <Button 
-                @click="startScreenshot"
+                @click="toggleScreenshotMode"
                 :disabled="screenshotLoading"
                 :loading="screenshotLoading"
                 class="screenshot-btn"
-                severity="success"
+                :severity="isScreenshotMode ? 'danger' : 'success'"
               >
-                <span class="btn-icon">✂️</span>
-                <span class="btn-text">{{ screenshotLoading ? 'Processing...' : 'Take Screenshot' }}</span>
+                <span class="btn-icon">{{ isScreenshotMode ? '✕' : '✂️' }}</span>
+                <span class="btn-text">
+                  {{ screenshotLoading ? 'Processing...' : (isScreenshotMode ? 'Cancel Screenshot' : 'Take Screenshot') }}
+                </span>
               </Button>
               
               <Button 
@@ -186,22 +191,13 @@
                 severity="warning"
               >
                 <span class="btn-icon">⚡</span>
-                <span class="btn-text">{{ translationLoading ? 'Translating...' : 'Translate' }}</span>
+                <span class="btn-text">{{ translationLoading ? 'Translating...' : 'Translate to Chinese' }}</span>
               </Button>
-              
-              <Dropdown 
-                v-model="targetLanguage" 
-                :options="languageOptions" 
-                optionLabel="label" 
-                optionValue="value"
-                placeholder="Target Language"
-                class="language-dropdown"
-              />
             </div>
 
             <!-- AI翻译结果框（只读） -->
             <div class="text-result">
-              <label class="result-label">{{ targetLanguageLabel }} Translation:</label>
+              <label class="result-label">Chinese Translation:</label>
               <Textarea 
                 v-model="translationResult" 
                 placeholder="Translation result will appear here..."
@@ -303,7 +299,6 @@ import axios from 'axios'
 import Button from 'primevue/button'
 import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
-import Dropdown from 'primevue/dropdown'
 import Divider from 'primevue/divider'
 
 const route = useRoute()
@@ -334,17 +329,22 @@ const screenshotWidth = ref(0)
 const screenshotHeight = ref(0)
 const screenshotLoading = ref(false)
 
-// 截图选择相关
+// 截图功能状态管理
 const isScreenshotMode = ref(false)
-const isSelecting = ref(false)
-const selectionBox = ref({
-  visible: false,
-  x: 0,
-  y: 0,
-  width: 0,
-  height: 0,
-  startX: 0,
-  startY: 0
+const screenshotState = ref({
+  isSelecting: false,
+  isDragging: false,
+  selection: {
+    visible: false,
+    startX: 0,
+    startY: 0,
+    currentX: 0,
+    currentY: 0,
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0
+  }
 })
 
 const ocrResult = ref('')
@@ -352,24 +352,14 @@ const ocrLoading = ref(false)
 
 const translationResult = ref('')
 const translationLoading = ref(false)
-const targetLanguage = ref('en')
-
-// 语言选项
-const languageOptions = ref([
-  { label: 'English', value: 'en' },
-  { label: '中文', value: 'zh' },
-  { label: '한국어', value: 'ko' },
-  { label: 'Français', value: 'fr' },
-  { label: 'Deutsch', value: 'de' },
-  { label: 'Español', value: 'es' },
-  { label: 'Русский', value: 'ru' }
-])
+const targetLanguage = ref('zh')
 
 // 初始化
 onMounted(() => {
   currentPage.value = pageNumber.value
   loadFullImage()
   checkOCRStatus()
+  checkTranslationStatus()
 })
 
 // 监听路由变化
@@ -425,7 +415,13 @@ function getImageSize(url) {
 
 // 图片加载事件
 function handleImageLoad() {
-  console.log('Image loaded successfully')
+  console.log('图片加载完成')
+  
+  // 如果正在截图模式，重置状态
+  if (isScreenshotMode.value) {
+    console.log('图片重新加载，重置截图状态')
+    resetScreenshotState()
+  }
 }
 
 function handleImageError() {
@@ -501,26 +497,48 @@ const visiblePages = computed(() => {
   return pages
 })
 
-// 计算目标语言标签
-const targetLanguageLabel = computed(() => {
-  const option = languageOptions.value.find(opt => opt.value === targetLanguage.value)
-  return option ? option.label : 'Translation'
-})
 
-// 翻译功能方法
-function startScreenshot() {
-  if (!fullImageRef.value) return
+// 截图功能主要方法
+function toggleScreenshotMode() {
+  if (!fullImageRef.value?.complete) {
+    alert('图片未加载完成，请稍后再试')
+    return
+  }
   
+  if (isScreenshotMode.value) {
+    exitScreenshotMode()
+  } else {
+    enterScreenshotMode()
+  }
+}
+
+function enterScreenshotMode() {
+  console.log('进入截图模式')
   isScreenshotMode.value = true
-  // 重置选择框
-  selectionBox.value = {
-    visible: false,
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-    startX: 0,
-    startY: 0
+  resetScreenshotState()
+}
+
+function exitScreenshotMode() {
+  console.log('退出截图模式')
+  isScreenshotMode.value = false
+  resetScreenshotState()
+}
+
+function resetScreenshotState() {
+  screenshotState.value = {
+    isSelecting: false,
+    isDragging: false,
+    selection: {
+      visible: false,
+      startX: 0,
+      startY: 0,
+      currentX: 0,
+      currentY: 0,
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
+    }
   }
 }
 
@@ -530,21 +548,38 @@ function clearScreenshot() {
   screenshotHeight.value = 0
   ocrResult.value = ''
   translationResult.value = ''
-  isScreenshotMode.value = false
-  selectionBox.value.visible = false
+  exitScreenshotMode()
 }
 
 // 获取图片在容器中的实际位置和尺寸
 function getImageBounds() {
-  if (!fullImageRef.value) return null
+  if (!fullImageRef.value) {
+    console.error('getImageBounds: fullImageRef 不存在')
+    return null
+  }
   
   const img = fullImageRef.value
+  
+  if (!img.complete) {
+    console.error('getImageBounds: 图片尚未加载完成')
+    return null
+  }
+  
+  if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+    console.error('getImageBounds: 图片自然尺寸为0')
+    return null
+  }
+  
   const container = img.parentElement
+  if (!container) {
+    console.error('getImageBounds: 找不到图片容器')
+    return null
+  }
   
   const imgRect = img.getBoundingClientRect()
   const containerRect = container.getBoundingClientRect()
   
-  return {
+  const bounds = {
     left: imgRect.left - containerRect.left,
     top: imgRect.top - containerRect.top,
     width: imgRect.width,
@@ -552,10 +587,30 @@ function getImageBounds() {
     naturalWidth: img.naturalWidth,
     naturalHeight: img.naturalHeight
   }
+  
+  // 只在首次调用或调试模式下输出详细信息
+  // console.log('getImageBounds 返回:', bounds)
+  return bounds
 }
 
-// 开始选择
+// 选择开始
 function startSelection(event) {
+  console.log('开始选择')
+  
+  if (!isScreenshotMode.value) return
+  
+  // 如果正在加载截图，忽略新的选择
+  if (screenshotLoading.value) {
+    console.log('截图正在处理中，忽略新选择')
+    return
+  }
+  
+  // 检查事件来源，避免按钮点击触发选择
+  if (event.target.closest('.screenshot-actions')) {
+    console.log('来自按钮区域的事件，忽略')
+    return
+  }
+  
   const imageBounds = getImageBounds()
   if (!imageBounds) return
   
@@ -564,26 +619,33 @@ function startSelection(event) {
   const y = event.clientY - rect.top
   
   // 检查是否在图片范围内
-  if (x < imageBounds.left || x > imageBounds.left + imageBounds.width ||
-      y < imageBounds.top || y > imageBounds.top + imageBounds.height) {
+  if (!isPointInImageBounds(x, y, imageBounds)) {
     return
   }
   
-  isSelecting.value = true
-  selectionBox.value.startX = x
-  selectionBox.value.startY = y
-  selectionBox.value.x = x
-  selectionBox.value.y = y
-  selectionBox.value.width = 0
-  selectionBox.value.height = 0
-  selectionBox.value.visible = true
+  // 设置选择状态
+  screenshotState.value.isSelecting = true
+  screenshotState.value.isDragging = false
+  screenshotState.value.selection = {
+    visible: true,
+    startX: x,
+    startY: y,
+    currentX: x,
+    currentY: y,
+    x: x,
+    y: y,
+    width: 0,
+    height: 0
+  }
   
   event.preventDefault()
 }
 
-// 更新选择
+// 选择更新
 function updateSelection(event) {
-  if (!isSelecting.value) return
+  if (!isScreenshotMode.value || !screenshotState.value.isSelecting) {
+    return
+  }
   
   const imageBounds = getImageBounds()
   if (!imageBounds) return
@@ -592,76 +654,126 @@ function updateSelection(event) {
   const currentX = event.clientX - rect.left
   const currentY = event.clientY - rect.top
   
-  // 限制在图片范围内
-  const constrainedX = Math.max(imageBounds.left, Math.min(currentX, imageBounds.left + imageBounds.width))
-  const constrainedY = Math.max(imageBounds.top, Math.min(currentY, imageBounds.top + imageBounds.height))
+  screenshotState.value.isDragging = true
+  screenshotState.value.selection.currentX = currentX
+  screenshotState.value.selection.currentY = currentY
   
-  const startX = Math.max(imageBounds.left, Math.min(selectionBox.value.startX, imageBounds.left + imageBounds.width))
-  const startY = Math.max(imageBounds.top, Math.min(selectionBox.value.startY, imageBounds.top + imageBounds.height))
-  
-  selectionBox.value.x = Math.min(startX, constrainedX)
-  selectionBox.value.y = Math.min(startY, constrainedY)
-  selectionBox.value.width = Math.abs(constrainedX - startX)
-  selectionBox.value.height = Math.abs(constrainedY - startY)
+  // 计算选择框位置和大小
+  updateSelectionBounds(imageBounds)
 }
 
-// 结束选择
-function endSelection() {
-  isSelecting.value = false
+// 选择结束
+function endSelection(event) {
+  if (!screenshotState.value.isSelecting) return
+  
+  screenshotState.value.isSelecting = false
+  
+  const selection = screenshotState.value.selection
+  
+  // 检查选择框是否有效
+  if (selection.width < 5 || selection.height < 5) {
+    console.log('选择区域太小，重置状态')
+    resetScreenshotState()
+  } else {
+    console.log(`选择完成: ${Math.round(selection.width)} × ${Math.round(selection.height)}`)
+  }
+  
+  if (event) {
+    event.stopPropagation()
+  }
 }
 
 // 取消选择
 function cancelSelection() {
-  if (isSelecting.value) {
-    isSelecting.value = false
-    selectionBox.value.visible = false
+  if (screenshotState.value.isSelecting && !screenshotState.value.isDragging) {
+    resetScreenshotState()
   }
+}
+
+// 辅助函数：检查点是否在图片范围内
+function isPointInImageBounds(x, y, imageBounds) {
+  return x >= imageBounds.left && x <= imageBounds.left + imageBounds.width &&
+         y >= imageBounds.top && y <= imageBounds.top + imageBounds.height
+}
+
+// 辅助函数：更新选择框边界
+function updateSelectionBounds(imageBounds) {
+  const selection = screenshotState.value.selection
+  
+  // 限制坐标在图片范围内
+  const constrainedStartX = Math.max(imageBounds.left, Math.min(selection.startX, imageBounds.left + imageBounds.width))
+  const constrainedStartY = Math.max(imageBounds.top, Math.min(selection.startY, imageBounds.top + imageBounds.height))
+  const constrainedCurrentX = Math.max(imageBounds.left, Math.min(selection.currentX, imageBounds.left + imageBounds.width))
+  const constrainedCurrentY = Math.max(imageBounds.top, Math.min(selection.currentY, imageBounds.top + imageBounds.height))
+  
+  // 计算选择框的最终位置和大小
+  selection.x = Math.min(constrainedStartX, constrainedCurrentX)
+  selection.y = Math.min(constrainedStartY, constrainedCurrentY)
+  selection.width = Math.abs(constrainedCurrentX - constrainedStartX)
+  selection.height = Math.abs(constrainedCurrentY - constrainedStartY)
 }
 
 // 确认截图
 function confirmScreenshot() {
+  // 立即停止任何正在进行的选择操作
+  screenshotState.value.isSelecting = false
+  
   const imageBounds = getImageBounds()
-  if (!imageBounds || !selectionBox.value.visible) return
+  const selection = screenshotState.value.selection
+  
+  if (!imageBounds || !fullImageRef.value?.complete) {
+    alert('截图失败：图片未准备好')
+    return
+  }
+  
+  if (!selection.visible || selection.width < 5 || selection.height < 5) {
+    alert('截图失败：请选择一个有效的区域')
+    return
+  }
   
   screenshotLoading.value = true
   
   try {
-    // 创建canvas进行截图
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
     
-    // 计算选择区域在原始图片上的位置
+    // 计算缩放比例
     const scaleX = imageBounds.naturalWidth / imageBounds.width
     const scaleY = imageBounds.naturalHeight / imageBounds.height
     
-    const sourceX = (selectionBox.value.x - imageBounds.left) * scaleX
-    const sourceY = (selectionBox.value.y - imageBounds.top) * scaleY
-    const sourceWidth = selectionBox.value.width * scaleX
-    const sourceHeight = selectionBox.value.height * scaleY
+    // 计算在原始图片上的坐标
+    const sourceX = Math.max(0, (selection.x - imageBounds.left) * scaleX)
+    const sourceY = Math.max(0, (selection.y - imageBounds.top) * scaleY)
+    const sourceWidth = Math.min(imageBounds.naturalWidth - sourceX, selection.width * scaleX)
+    const sourceHeight = Math.min(imageBounds.naturalHeight - sourceY, selection.height * scaleY)
+    
+    console.log('截图参数:', { sourceX, sourceY, sourceWidth, sourceHeight })
     
     canvas.width = sourceWidth
     canvas.height = sourceHeight
     
-    // 绘制裁剪后的图片
+    // 绘制截图
     ctx.drawImage(
       fullImageRef.value,
       sourceX, sourceY, sourceWidth, sourceHeight,
       0, 0, sourceWidth, sourceHeight
     )
     
-    // 转换为数据URL
     const dataUrl = canvas.toDataURL('image/png')
     
-    screenshotData.value = dataUrl
-    screenshotWidth.value = sourceWidth
-    screenshotHeight.value = sourceHeight
-    
-    // 退出截图模式
-    isScreenshotMode.value = false
-    selectionBox.value.visible = false
+    if (dataUrl && dataUrl !== 'data:,') {
+      screenshotData.value = dataUrl
+      screenshotWidth.value = Math.round(sourceWidth)
+      screenshotHeight.value = Math.round(sourceHeight)
+      console.log('截图成功')
+      exitScreenshotMode()
+    } else {
+      throw new Error('无法生成截图数据')
+    }
     
   } catch (error) {
     console.error('Screenshot failed:', error)
+    alert(`截图失败: ${error.message}`)
   } finally {
     screenshotLoading.value = false
   }
@@ -669,8 +781,7 @@ function confirmScreenshot() {
 
 // 取消截图
 function cancelScreenshot() {
-  isScreenshotMode.value = false
-  selectionBox.value.visible = false
+  exitScreenshotMode()
 }
 
 // 检查OCR服务状态
@@ -687,6 +798,25 @@ async function checkOCRStatus() {
     
   } catch (error) {
     console.error('检查OCR状态失败:', error)
+  }
+}
+
+// 检查翻译服务状态
+async function checkTranslationStatus() {
+  try {
+    const url = `${API}/api/gallery/translate/status`
+    const { data } = await axios.get(url)
+    
+    if (!data.is_initialized) {
+      console.warn('翻译服务未初始化:', data.error || '服务未启动')
+    } else if (!data.api_key_available) {
+      console.warn('翻译服务 API Key 未配置')
+    } else {
+      console.log('翻译服务正常，模型:', data.model_name)
+    }
+    
+  } catch (error) {
+    console.error('检查翻译状态失败:', error)
   }
 }
 
@@ -724,17 +854,40 @@ async function performOCR() {
   }
 }
 
-function performTranslation() {
+async function performTranslation() {
   if (!ocrResult.value.trim()) return
   
   translationLoading.value = true
-  // TODO: 实现AI翻译功能
-  setTimeout(() => {
+  
+  try {
+    const url = `${API}/api/gallery/translate`
+    const { data } = await axios.post(url, {
+      text: ocrResult.value,
+      target_language: targetLanguage.value
+    })
+    
+    if (data.success) {
+      translationResult.value = data.translation || ''
+      console.log('翻译完成，目标语言:', data.target_language)
+      console.log('翻译结果:', data.translation)
+    } else {
+      console.error('翻译失败:', data.error)
+      translationResult.value = ''
+    }
+    
+  } catch (error) {
+    console.error('翻译请求失败:', error)
+    translationResult.value = ''
+    
+    // 显示错误信息给用户
+    if (error.response?.data?.detail) {
+      alert(`翻译失败: ${error.response.data.detail}`)
+    } else {
+      alert('翻译失败，请检查网络连接和后端服务')
+    }
+  } finally {
     translationLoading.value = false
-    // 模拟翻译结果
-    translationResult.value = 'This is a test translation result'
-    console.log('Translation functionality will be implemented')
-  }, 1500)
+  }
 }
 
 function copyTranslation() {
