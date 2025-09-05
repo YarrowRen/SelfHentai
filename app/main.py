@@ -20,6 +20,16 @@ async def lifespan(app: FastAPI):
             os.makedirs(folder)
         else:
             continue
+    
+    # 初始化 OCR 服务
+    try:
+        from services.ocr_service import ocr_service
+        print("正在加载 manga-ocr 模型，这可能需要一些时间...")
+        ocr_service.load_model()
+        print("manga-ocr 模型加载完成！")
+    except Exception as e:
+        print(f"OCR 模型加载失败: {str(e)}")
+        print("OCR 功能将不可用，但应用会继续运行")
 
     yield  # 继续运行应用
 

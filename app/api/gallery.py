@@ -295,3 +295,134 @@ def get_ex_full_image(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取大图失败: {str(e)}")
+
+
+@router.get("/ex/proxy-image")
+def proxy_ex_image(url: str):
+    """
+    EX：代理图片请求，解决CORS问题
+    """
+    import requests
+    from fastapi.responses import StreamingResponse
+    from core.config import settings
+    
+    # 检查必要的配置
+    if not all([
+        getattr(settings, 'EXHENTAI_COOKIE_MEMBER_ID', None),
+        getattr(settings, 'EXHENTAI_COOKIE_PASS_HASH', None),
+        getattr(settings, 'EXHENTAI_COOKIE_IGNEOUS', None)
+    ]):
+        raise HTTPException(
+            status_code=503, 
+            detail="ExHentai 认证信息未配置"
+        )
+    
+    cookies = {
+        "ipb_member_id": settings.EXHENTAI_COOKIE_MEMBER_ID,
+        "ipb_pass_hash": settings.EXHENTAI_COOKIE_PASS_HASH,
+        "igneous": settings.EXHENTAI_COOKIE_IGNEOUS,
+    }
+    
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Referer': 'https://exhentai.org/'
+    }
+    
+    try:
+        response = requests.get(url, cookies=cookies, headers=headers, stream=True, timeout=30)
+        response.raise_for_status()
+        
+        # 获取内容类型
+        content_type = response.headers.get('content-type', 'image/jpeg')
+        
+        def generate():
+            for chunk in response.iter_content(chunk_size=8192):
+                yield chunk
+        
+        return StreamingResponse(
+            generate(),
+            media_type=content_type,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET",
+                "Access-Control-Allow-Headers": "*",
+                "Cache-Control": "public, max-age=3600"
+            }
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"代理图片请求失败: {str(e)}")
+
+
+@router.post("/ocr")
+def perform_ocr_recognition(image_data: dict):
+    """
+    OCR文本识别接口
+    
+    参数:
+        image_data: {"image": "data:image/png;base64,..."} 包含base64编码图片数据的字典
+    
+    返回:
+        {"text": "识别出的文本", "success": true/false, "error": "错误信息"}
+    """
+    try:
+        from services.ocr_service import ocr_service
+        
+        # 检查OCR服务状态
+        if not ocr_service.is_loaded:
+            raise HTTPException(
+                status_code=503, 
+                detail="OCR服务未启动，请检查 manga-ocr 是否正确安装"
+            )
+        
+        # 验证请求数据
+        if "image" not in image_data:
+            raise HTTPException(
+                status_code=400, 
+                detail="请求缺少 'image' 字段"
+            )
+        
+        base64_image = image_data["image"]
+        if not base64_image:
+            raise HTTPException(
+                status_code=400, 
+                detail="图片数据不能为空"
+            )
+        
+        # 进行OCR识别
+        recognized_text = ocr_service.recognize_text(base64_image)
+        
+        return {
+            "success": True,
+            "text": recognized_text,
+            "length": len(recognized_text) if recognized_text else 0
+        }
+        
+    except HTTPException:
+        # 重新抛出 HTTP 异常
+        raise
+    except Exception as e:
+        # 捕获其他异常并返回 500 错误
+        import traceback
+        error_msg = f"OCR识别失败: {str(e)}"
+        print(f"OCR错误详情: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=error_msg)
+
+
+@router.get("/ocr/status")
+def get_ocr_status():
+    """
+    获取OCR服务状态
+    
+    返回:
+        {"is_loaded": true/false, "model_available": true/false}
+    """
+    try:
+        from services.ocr_service import ocr_service
+        return ocr_service.get_status()
+    except Exception as e:
+        return {
+            "is_loaded": False,
+            "model_available": False,
+            "error": str(e)
+        }

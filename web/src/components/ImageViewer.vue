@@ -16,64 +16,223 @@
         
         <div v-else-if="fullImageUrl" class="image-container">
           <img 
+            ref="fullImageRef"
             :src="fullImageUrl" 
             :alt="`Page ${currentPage}`"
             class="full-image"
+            crossorigin="anonymous"
             @error="handleImageError"
             @load="handleImageLoad"
           />
+          
+          <!-- 截图选择覆盖层 -->
+          <div 
+            v-if="isScreenshotMode"
+            class="screenshot-overlay-container"
+            @mousedown="startSelection"
+            @mousemove="updateSelection"
+            @mouseup="endSelection"
+            @mouseleave="cancelSelection"
+          >
+            <!-- 选择框 -->
+            <div 
+              v-if="selectionBox.visible"
+              class="selection-box"
+              :style="{
+                left: selectionBox.x + 'px',
+                top: selectionBox.y + 'px',
+                width: selectionBox.width + 'px',
+                height: selectionBox.height + 'px'
+              }"
+            >
+              <div class="selection-border"></div>
+              <div class="selection-info">
+                {{ Math.round(selectionBox.width) }} × {{ Math.round(selectionBox.height) }}
+              </div>
+            </div>
+            
+            <!-- 确认按钮 -->
+            <div 
+              v-if="selectionBox.visible && selectionBox.width > 10 && selectionBox.height > 10"
+              class="screenshot-actions"
+              :style="{
+                left: (selectionBox.x + selectionBox.width + 10) + 'px',
+                top: selectionBox.y + 'px'
+              }"
+            >
+              <Button 
+                @click="confirmScreenshot"
+                size="small"
+                severity="success"
+                class="confirm-btn"
+              >
+                ✓ Capture
+              </Button>
+              <Button 
+                @click="cancelScreenshot"
+                size="small"
+                severity="secondary"
+                class="cancel-btn"
+              >
+                ✕ Cancel
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- 右侧表单区域 50% -->
+      <!-- 右侧翻译功能区域 50% -->
       <div class="form-section">
-        <div class="form-container">
-          <h3>Image Details</h3>
-          
-          <div class="form-group">
-            <label>Gallery:</label>
-            <span>{{ galleryTitle || 'Unknown Gallery' }}</span>
-          </div>
-          
-          <div class="form-group">
-            <label>Page:</label>
-            <span>{{ currentPage }} / {{ totalPages }}</span>
-          </div>
-          
-          <div class="form-group">
-            <label>Image Name:</label>
-            <span>{{ imageName || 'Unknown' }}</span>
-          </div>
-          
-          <div class="form-group">
-            <label>Size:</label>
-            <span v-if="imageSize">{{ imageSize.width }} x {{ imageSize.height }}</span>
-            <span v-else>Loading...</span>
+        <div class="translation-container">
+
+          <!-- 截图功能区 -->
+          <div class="screenshot-section">
+            <h4>
+              <span class="section-icon">📷</span>
+              Screenshot & OCR
+            </h4>
+            
+            <!-- 截图按钮 -->
+            <div class="screenshot-controls">
+              <Button 
+                @click="startScreenshot"
+                :disabled="screenshotLoading"
+                :loading="screenshotLoading"
+                class="screenshot-btn"
+                severity="success"
+              >
+                <span class="btn-icon">✂️</span>
+                <span class="btn-text">{{ screenshotLoading ? 'Processing...' : 'Take Screenshot' }}</span>
+              </Button>
+              
+              <Button 
+                @click="clearScreenshot"
+                :disabled="!screenshotData"
+                class="clear-btn"
+                severity="secondary"
+                outlined
+              >
+                <span class="btn-icon">🗑️</span>
+                <span class="btn-text">Clear</span>
+              </Button>
+            </div>
+
+            <!-- 截图预览框 -->
+            <div class="screenshot-preview">
+              <div v-if="screenshotData" class="screenshot-image-container">
+                <img :src="screenshotData" alt="Screenshot" class="screenshot-image" />
+                <div class="screenshot-overlay">
+                  <span class="screenshot-info">{{ screenshotWidth }}x{{ screenshotHeight }}</span>
+                </div>
+              </div>
+              <div v-else class="screenshot-placeholder">
+                <div class="placeholder-content">
+                  <span class="placeholder-icon">🖼️</span>
+                  <span class="placeholder-text">No screenshot taken</span>
+                  <span class="placeholder-hint">Click "Take Screenshot" to capture image area</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Demo表单 -->
-          <Divider />
-          <h4>Actions (Demo)</h4>
-          
-          <div class="form-group">
-            <label for="rating">Rating:</label>
-            <Rating v-model="demoRating" id="rating" />
+
+          <!-- OCR结果区 -->
+          <div class="ocr-section">
+            <h4>
+              <span class="section-icon">👁️</span>
+              OCR Recognition
+            </h4>
+            
+            <div class="ocr-controls">
+              <Button 
+                @click="performOCR"
+                :disabled="!screenshotData || ocrLoading"
+                :loading="ocrLoading"
+                class="ocr-btn"
+                severity="info"
+              >
+                <span class="btn-icon">🔍</span>
+                <span class="btn-text">{{ ocrLoading ? 'Recognizing...' : 'Run OCR' }}</span>
+              </Button>
+            </div>
+
+            <!-- OCR结果文本框（可编辑） -->
+            <div class="text-result">
+              <label class="result-label">Japanese Text:</label>
+              <Textarea 
+                v-model="ocrResult" 
+                placeholder="OCR result will appear here..."
+                rows="4"
+                class="ocr-textarea"
+                :disabled="ocrLoading"
+              />
+            </div>
           </div>
-          
-          <div class="form-group">
-            <label for="tags">Tags:</label>
-            <InputText v-model="demoTags" id="tags" placeholder="Add tags..." />
+
+
+          <!-- AI翻译结果区 -->
+          <div class="translation-section">
+            <h4>
+              <span class="section-icon">🌐</span>
+              AI Translation
+            </h4>
+            
+            <div class="translation-controls">
+              <Button 
+                @click="performTranslation"
+                :disabled="!ocrResult.trim() || translationLoading"
+                :loading="translationLoading"
+                class="translate-btn"
+                severity="warning"
+              >
+                <span class="btn-icon">⚡</span>
+                <span class="btn-text">{{ translationLoading ? 'Translating...' : 'Translate' }}</span>
+              </Button>
+              
+              <Dropdown 
+                v-model="targetLanguage" 
+                :options="languageOptions" 
+                optionLabel="label" 
+                optionValue="value"
+                placeholder="Target Language"
+                class="language-dropdown"
+              />
+            </div>
+
+            <!-- AI翻译结果框（只读） -->
+            <div class="text-result">
+              <label class="result-label">{{ targetLanguageLabel }} Translation:</label>
+              <Textarea 
+                v-model="translationResult" 
+                placeholder="Translation result will appear here..."
+                rows="4"
+                class="translation-textarea"
+                readonly
+              />
+            </div>
           </div>
-          
-          <div class="form-group">
-            <label for="notes">Notes:</label>
-            <Textarea v-model="demoNotes" id="notes" rows="4" placeholder="Add notes..." />
-          </div>
-          
-          <div class="form-actions">
-            <Button label="Save" icon="pi pi-save" />
-            <Button label="Download" icon="pi pi-download" severity="secondary" />
-            <Button label="Share" icon="pi pi-share-alt" severity="info" />
+
+          <!-- 操作按钮 -->
+          <div class="action-section">
+            <Button 
+              @click="copyTranslation"
+              :disabled="!translationResult.trim()"
+              class="copy-btn"
+              severity="success"
+              outlined
+            >
+              <span class="btn-icon">📋</span>
+              <span class="btn-text">Copy Translation</span>
+            </Button>
+            
+            <Button 
+              @click="saveTranslation"
+              :disabled="!translationResult.trim()"
+              class="save-btn"
+            >
+              <span class="btn-icon">💾</span>
+              <span class="btn-text">Save</span>
+            </Button>
           </div>
         </div>
       </div>
@@ -142,10 +301,9 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
-import Rating from 'primevue/rating'
+import Dropdown from 'primevue/dropdown'
 import Divider from 'primevue/divider'
 
 const route = useRoute()
@@ -167,15 +325,51 @@ const galleryTitle = ref('')
 const imageName = ref('')
 const imageSize = ref(null)
 
-// Demo表单数据
-const demoRating = ref(0)
-const demoTags = ref('')
-const demoNotes = ref('')
+// 图片引用
+const fullImageRef = ref(null)
+
+// 翻译功能数据
+const screenshotData = ref(null)
+const screenshotWidth = ref(0)
+const screenshotHeight = ref(0)
+const screenshotLoading = ref(false)
+
+// 截图选择相关
+const isScreenshotMode = ref(false)
+const isSelecting = ref(false)
+const selectionBox = ref({
+  visible: false,
+  x: 0,
+  y: 0,
+  width: 0,
+  height: 0,
+  startX: 0,
+  startY: 0
+})
+
+const ocrResult = ref('')
+const ocrLoading = ref(false)
+
+const translationResult = ref('')
+const translationLoading = ref(false)
+const targetLanguage = ref('en')
+
+// 语言选项
+const languageOptions = ref([
+  { label: 'English', value: 'en' },
+  { label: '中文', value: 'zh' },
+  { label: '한국어', value: 'ko' },
+  { label: 'Français', value: 'fr' },
+  { label: 'Deutsch', value: 'de' },
+  { label: 'Español', value: 'es' },
+  { label: 'Русский', value: 'ru' }
+])
 
 // 初始化
 onMounted(() => {
   currentPage.value = pageNumber.value
   loadFullImage()
+  checkOCRStatus()
 })
 
 // 监听路由变化
@@ -195,14 +389,18 @@ async function loadFullImage() {
     const url = `${API}/api/gallery/ex/full-image/${gid.value}/${token.value}/${currentPage.value}`
     const { data } = await axios.get(url)
     
-    fullImageUrl.value = data.imageUrl
+    // 使用代理URL来解决CORS问题
+    const originalImageUrl = data.imageUrl
+    const proxyImageUrl = `${API}/api/gallery/ex/proxy-image?url=${encodeURIComponent(originalImageUrl)}`
+    
+    fullImageUrl.value = proxyImageUrl
     imageName.value = data.imageName
     galleryTitle.value = data.galleryTitle
     totalPages.value = data.totalPages || 1
     
-    // 获取图片尺寸
-    if (fullImageUrl.value) {
-      getImageSize(fullImageUrl.value)
+    // 获取图片尺寸 (使用原始URL以避免重复请求)
+    if (originalImageUrl) {
+      getImageSize(proxyImageUrl)
     }
     
   } catch (err) {
@@ -302,6 +500,262 @@ const visiblePages = computed(() => {
   
   return pages
 })
+
+// 计算目标语言标签
+const targetLanguageLabel = computed(() => {
+  const option = languageOptions.value.find(opt => opt.value === targetLanguage.value)
+  return option ? option.label : 'Translation'
+})
+
+// 翻译功能方法
+function startScreenshot() {
+  if (!fullImageRef.value) return
+  
+  isScreenshotMode.value = true
+  // 重置选择框
+  selectionBox.value = {
+    visible: false,
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    startX: 0,
+    startY: 0
+  }
+}
+
+function clearScreenshot() {
+  screenshotData.value = null
+  screenshotWidth.value = 0
+  screenshotHeight.value = 0
+  ocrResult.value = ''
+  translationResult.value = ''
+  isScreenshotMode.value = false
+  selectionBox.value.visible = false
+}
+
+// 获取图片在容器中的实际位置和尺寸
+function getImageBounds() {
+  if (!fullImageRef.value) return null
+  
+  const img = fullImageRef.value
+  const container = img.parentElement
+  
+  const imgRect = img.getBoundingClientRect()
+  const containerRect = container.getBoundingClientRect()
+  
+  return {
+    left: imgRect.left - containerRect.left,
+    top: imgRect.top - containerRect.top,
+    width: imgRect.width,
+    height: imgRect.height,
+    naturalWidth: img.naturalWidth,
+    naturalHeight: img.naturalHeight
+  }
+}
+
+// 开始选择
+function startSelection(event) {
+  const imageBounds = getImageBounds()
+  if (!imageBounds) return
+  
+  const rect = event.currentTarget.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+  
+  // 检查是否在图片范围内
+  if (x < imageBounds.left || x > imageBounds.left + imageBounds.width ||
+      y < imageBounds.top || y > imageBounds.top + imageBounds.height) {
+    return
+  }
+  
+  isSelecting.value = true
+  selectionBox.value.startX = x
+  selectionBox.value.startY = y
+  selectionBox.value.x = x
+  selectionBox.value.y = y
+  selectionBox.value.width = 0
+  selectionBox.value.height = 0
+  selectionBox.value.visible = true
+  
+  event.preventDefault()
+}
+
+// 更新选择
+function updateSelection(event) {
+  if (!isSelecting.value) return
+  
+  const imageBounds = getImageBounds()
+  if (!imageBounds) return
+  
+  const rect = event.currentTarget.getBoundingClientRect()
+  const currentX = event.clientX - rect.left
+  const currentY = event.clientY - rect.top
+  
+  // 限制在图片范围内
+  const constrainedX = Math.max(imageBounds.left, Math.min(currentX, imageBounds.left + imageBounds.width))
+  const constrainedY = Math.max(imageBounds.top, Math.min(currentY, imageBounds.top + imageBounds.height))
+  
+  const startX = Math.max(imageBounds.left, Math.min(selectionBox.value.startX, imageBounds.left + imageBounds.width))
+  const startY = Math.max(imageBounds.top, Math.min(selectionBox.value.startY, imageBounds.top + imageBounds.height))
+  
+  selectionBox.value.x = Math.min(startX, constrainedX)
+  selectionBox.value.y = Math.min(startY, constrainedY)
+  selectionBox.value.width = Math.abs(constrainedX - startX)
+  selectionBox.value.height = Math.abs(constrainedY - startY)
+}
+
+// 结束选择
+function endSelection() {
+  isSelecting.value = false
+}
+
+// 取消选择
+function cancelSelection() {
+  if (isSelecting.value) {
+    isSelecting.value = false
+    selectionBox.value.visible = false
+  }
+}
+
+// 确认截图
+function confirmScreenshot() {
+  const imageBounds = getImageBounds()
+  if (!imageBounds || !selectionBox.value.visible) return
+  
+  screenshotLoading.value = true
+  
+  try {
+    // 创建canvas进行截图
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    
+    // 计算选择区域在原始图片上的位置
+    const scaleX = imageBounds.naturalWidth / imageBounds.width
+    const scaleY = imageBounds.naturalHeight / imageBounds.height
+    
+    const sourceX = (selectionBox.value.x - imageBounds.left) * scaleX
+    const sourceY = (selectionBox.value.y - imageBounds.top) * scaleY
+    const sourceWidth = selectionBox.value.width * scaleX
+    const sourceHeight = selectionBox.value.height * scaleY
+    
+    canvas.width = sourceWidth
+    canvas.height = sourceHeight
+    
+    // 绘制裁剪后的图片
+    ctx.drawImage(
+      fullImageRef.value,
+      sourceX, sourceY, sourceWidth, sourceHeight,
+      0, 0, sourceWidth, sourceHeight
+    )
+    
+    // 转换为数据URL
+    const dataUrl = canvas.toDataURL('image/png')
+    
+    screenshotData.value = dataUrl
+    screenshotWidth.value = sourceWidth
+    screenshotHeight.value = sourceHeight
+    
+    // 退出截图模式
+    isScreenshotMode.value = false
+    selectionBox.value.visible = false
+    
+  } catch (error) {
+    console.error('Screenshot failed:', error)
+  } finally {
+    screenshotLoading.value = false
+  }
+}
+
+// 取消截图
+function cancelScreenshot() {
+  isScreenshotMode.value = false
+  selectionBox.value.visible = false
+}
+
+// 检查OCR服务状态
+async function checkOCRStatus() {
+  try {
+    const url = `${API}/api/gallery/ocr/status`
+    const { data } = await axios.get(url)
+    
+    if (!data.is_loaded) {
+      console.warn('OCR服务未加载:', data.error || '模型未启动')
+    } else {
+      console.log('OCR服务正常')
+    }
+    
+  } catch (error) {
+    console.error('检查OCR状态失败:', error)
+  }
+}
+
+async function performOCR() {
+  if (!screenshotData.value) return
+  
+  ocrLoading.value = true
+  
+  try {
+    const url = `${API}/api/gallery/ocr`
+    const { data } = await axios.post(url, {
+      image: screenshotData.value
+    })
+    
+    if (data.success) {
+      ocrResult.value = data.text || ''
+      console.log('OCR识别完成，文本长度:', data.length || 0)
+    } else {
+      console.error('OCR识别失败:', data.error)
+      ocrResult.value = ''
+    }
+    
+  } catch (error) {
+    console.error('OCR请求失败:', error)
+    ocrResult.value = ''
+    
+    // 显示错误信息给用户
+    if (error.response?.data?.detail) {
+      alert(`OCR失败: ${error.response.data.detail}`)
+    } else {
+      alert('OCR识别失败，请检查网络连接和后端服务')
+    }
+  } finally {
+    ocrLoading.value = false
+  }
+}
+
+function performTranslation() {
+  if (!ocrResult.value.trim()) return
+  
+  translationLoading.value = true
+  // TODO: 实现AI翻译功能
+  setTimeout(() => {
+    translationLoading.value = false
+    // 模拟翻译结果
+    translationResult.value = 'This is a test translation result'
+    console.log('Translation functionality will be implemented')
+  }, 1500)
+}
+
+function copyTranslation() {
+  if (translationResult.value.trim()) {
+    navigator.clipboard.writeText(translationResult.value)
+    console.log('Translation copied to clipboard')
+  }
+}
+
+function saveTranslation() {
+  // TODO: 实现保存翻译功能
+  console.log('Save translation functionality will be implemented')
+  const data = {
+    page: currentPage.value,
+    screenshot: screenshotData.value,
+    ocrResult: ocrResult.value,
+    translation: translationResult.value,
+    targetLanguage: targetLanguage.value
+  }
+  console.log('Translation data:', data)
+}
 </script>
 
 <style src="../assets/ImageViewer.css"></style>

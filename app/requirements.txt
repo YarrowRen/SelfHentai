@@ -27,6 +27,21 @@ pycryptodome==3.19.0
 # Additional Standard Library Extensions
 python-multipart==0.0.6
 
+# OCR Dependencies
+manga-ocr==0.1.11
+pillow==10.1.0
+
+# TensorFlow Dependencies (compatible versions for manga-ocr)
+tensorflow==2.13.1
+# Alternative for Apple Silicon Macs:
+# tensorflow-macos==2.13.1
+# tensorflow-metal==1.1.0
+
+# Additional ML Dependencies
+transformers==4.21.3
+torch==2.0.1
+torchvision==0.15.2
+
 # Development and Testing (Optional)
 # pytest==7.4.3
 # pytest-asyncio==0.21.1

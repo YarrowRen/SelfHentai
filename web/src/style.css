@@ -42,8 +42,8 @@ html {
   --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
-/* 妈妈模式 - 图片毛玻璃特效（排除缩略图相关元素，避免与遮罩层冲突） */
-.mom-mode img:not(.thumbnail-image),
+/* 妈妈模式 - 图片毛玻璃特效（排除缩略图和大图查看器元素，避免与遮罩层冲突） */
+.mom-mode img:not(.thumbnail-image):not(.full-image),
 .mom-mode .cover img,
 .mom-mode .image-popover img,
 .mom-mode .popover img {
@@ -52,7 +52,7 @@ html {
 }
 
 /* 鼠标悬停时暂时清除模糊效果 */
-.mom-mode img:not(.thumbnail-image):hover,
+.mom-mode img:not(.thumbnail-image):not(.full-image):hover,
 .mom-mode .cover img:hover,
 .mom-mode .image-popover img:hover,
 .mom-mode .popover img:hover {
@@ -92,10 +92,9 @@ html {
   background: rgba(0, 0, 0, 0.8);
 }
 
-/* 为所有可能包含敏感图片的元素添加模糊效果（排除缩略图，避免重复） */
+/* 为所有可能包含敏感图片的元素添加模糊效果（排除缩略图和大图查看器，避免重复） */
 .mom-mode .gallery-item img,
 .mom-mode .gallery-preview img,
-.mom-mode .image-container,
 .mom-mode .poster,
 .mom-mode .album-cover,
 .mom-mode .gallery-detail-container .cover img {
@@ -105,7 +104,6 @@ html {
 
 .mom-mode .gallery-item img:hover,
 .mom-mode .gallery-preview img:hover,
-.mom-mode .image-container:hover,
 .mom-mode .poster:hover,
 .mom-mode .album-cover:hover,
 .mom-mode .gallery-detail-container .cover img:hover {

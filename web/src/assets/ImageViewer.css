@@ -90,7 +90,7 @@
   text-align: center;
 }
 
-/* 右侧表单区域 50% */
+/* 右侧翻译功能区域 50% */
 .form-section {
   flex: 1;
   background: var(--surface-color);
@@ -99,76 +99,247 @@
   overflow: hidden;
 }
 
-.form-container {
-  padding: 30px;
+.translation-container {
+  padding: 25px;
   height: 100%;
   overflow-y: auto;
 }
 
-.form-container h3 {
+.translation-container h3 {
   margin-top: 0;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
   color: var(--primary-color);
-  font-size: 1.5em;
+  font-size: 1.4em;
   font-weight: 600;
-}
-
-.form-container h4 {
-  margin-bottom: 20px;
-  color: var(--text-color);
-  font-size: 1.2em;
-  font-weight: 500;
-}
-
-.form-group {
-  margin-bottom: 20px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.translation-icon {
+  font-size: 1.2em;
+}
+
+.translation-container h4 {
+  margin-bottom: 15px;
+  color: var(--text-color);
+  font-size: 1.1em;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-.form-group label {
+.section-icon {
+  font-size: 1em;
+}
+
+/* 基本信息区域 */
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-label {
+  font-weight: 500;
+  color: var(--text-color);
+  opacity: 0.8;
+  font-size: 13px;
+}
+
+.info-value {
+  color: var(--text-color);
+  background: var(--bg-color);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+/* 截图功能区域 */
+.screenshot-section {
+  margin-bottom: 20px;
+}
+
+.screenshot-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.screenshot-btn,
+.clear-btn,
+.ocr-btn,
+.translate-btn,
+.copy-btn,
+.save-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-icon {
+  font-size: 16px;
+}
+
+.btn-text {
+  font-size: 14px;
+}
+
+/* 截图预览框 */
+.screenshot-preview {
+  width: 100%;
+  height: 200px;
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-color);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.screenshot-image-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.screenshot-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.screenshot-overlay {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.screenshot-placeholder {
+  text-align: center;
+  color: var(--text-color);
+  opacity: 0.6;
+}
+
+.placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.placeholder-icon {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.placeholder-text {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.placeholder-hint {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* OCR和翻译区域 */
+.ocr-section,
+.translation-section {
+  margin-bottom: 20px;
+}
+
+.ocr-controls,
+.translation-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.language-dropdown {
+  min-width: 140px;
+}
+
+/* 文本结果区域 */
+.text-result {
+  margin-bottom: 15px;
+}
+
+.result-label {
+  display: block;
   font-weight: 500;
   color: var(--text-color);
   opacity: 0.9;
   font-size: 14px;
+  margin-bottom: 8px;
 }
 
-.form-group span {
-  color: var(--text-color);
-  background: var(--bg-color);
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  font-family: monospace;
-}
-
-.form-group input,
-.form-group textarea {
-  padding: 10px 12px;
-  border-radius: 6px;
+.ocr-textarea,
+.translation-textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
   border: 1px solid var(--border-color);
   background: var(--bg-color);
   color: var(--text-color);
   font-size: 14px;
+  line-height: 1.4;
+  resize: vertical;
   transition: border-color 0.3s ease;
+  font-family: inherit;
 }
 
-.form-group input:focus,
-.form-group textarea:focus {
+.ocr-textarea:focus,
+.translation-textarea:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.1);
 }
 
-.form-actions {
+.translation-textarea {
+  background: var(--surface-color);
+  cursor: default;
+}
+
+/* 操作按钮区域 */
+.action-section {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 30px;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
 }
 
-.form-actions button {
+.action-section button {
   flex: 1;
   min-width: 120px;
 }
@@ -331,12 +502,118 @@
   }
 }
 
-/* 妈妈模式兼容 */
+/* 截图选择覆盖层 */
+.screenshot-overlay-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  cursor: crosshair;
+  z-index: 10;
+}
+
+.selection-box {
+  position: absolute;
+  border: 2px solid var(--primary-color);
+  background: rgba(100, 108, 255, 0.1);
+  pointer-events: none;
+  z-index: 11;
+}
+
+.selection-border {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px dashed rgba(100, 108, 255, 0.8);
+  animation: dash-animation 1s linear infinite;
+}
+
+@keyframes dash-animation {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 20px;
+  }
+}
+
+.selection-info {
+  position: absolute;
+  bottom: -25px;
+  right: 0;
+  background: var(--primary-color);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.screenshot-actions {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 12;
+}
+
+.confirm-btn,
+.cancel-btn {
+  min-width: 80px;
+  height: 32px;
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-btn {
+  background: #22c55e;
+  color: white;
+}
+
+.confirm-btn:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+}
+
+.cancel-btn {
+  background: var(--surface-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.cancel-btn:hover {
+  background: var(--bg-color);
+  border-color: var(--primary-color);
+}
+
+/* 妈妈模式兼容 - 大图查看器专用毛玻璃效果 */
 .mom-mode .full-image {
-  filter: blur(20px);
+  filter: blur(20px) !important;
   transition: filter 0.3s ease;
 }
 
 .mom-mode .full-image:hover {
-  filter: blur(0px);
+  filter: blur(0px) !important;
+}
+
+/* 妈妈模式支持截图预览 */
+.mom-mode .screenshot-image {
+  filter: blur(10px) !important;
+  transition: filter 0.3s ease;
+}
+
+.mom-mode .screenshot-image:hover {
+  filter: blur(0px) !important;
 }
