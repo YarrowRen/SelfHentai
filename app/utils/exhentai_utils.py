@@ -258,3 +258,106 @@ class ExHentaiUtils:
                 },
                 "error": str(e)
             }
+
+    def fetch_full_image(self, gid: str, token: str, page: int):
+        """
+        获取画廊的完整大图信息
+        
+        参数:
+            gid: Gallery ID
+            token: Gallery token
+            page: 页码，从1开始（用户界面显示）
+            
+        返回:
+            dict: 包含大图URL、图片名称、画廊标题等信息
+        """
+        # 首先获取缩略图页面的跳转链接
+        thumb_page = max(0, (page - 1) // 20)  # 缩略图页面从0开始
+        thumb_index = (page - 1) % 20  # 该页面中第几个缩略图
+        
+        try:
+            # 获取缩略图页面
+            thumb_url = f"https://exhentai.org/g/{gid}/{token}/"
+            if thumb_page > 0:
+                thumb_url += f"?p={thumb_page}"
+                
+            response = self.session.get(thumb_url)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, "html.parser")
+            
+            # 获取画廊标题
+            title_elem = soup.select_one("#gn")
+            gallery_title = title_elem.text.strip() if title_elem else "Unknown Gallery"
+            
+            # 获取总页数信息
+            gpc_elem = soup.select_one(".gpc")
+            total_images = 0
+            if gpc_elem:
+                match = re.search(r"Showing \d+ - \d+ of (\d+) images", gpc_elem.text)
+                if match:
+                    total_images = int(match.group(1))
+            
+            # 获取缩略图链接
+            gdt_elem = soup.select_one("#gdt")
+            if not gdt_elem:
+                raise Exception("无法找到缩略图容器")
+                
+            thumb_links = gdt_elem.select("a")
+            if thumb_index >= len(thumb_links):
+                raise Exception(f"缩略图索引超出范围: {thumb_index} >= {len(thumb_links)}")
+            
+            # 获取指定缩略图的跳转链接
+            target_link = thumb_links[thumb_index]
+            image_page_url = target_link.get("href")
+            if not image_page_url:
+                raise Exception("无法获取图片页面链接")
+            
+            # 访问图片页面获取大图信息
+            image_response = self.session.get(image_page_url)
+            image_response.raise_for_status()
+            
+            image_soup = BeautifulSoup(image_response.content, "html.parser")
+            
+            # 查找大图元素 (#i3 > a > img)
+            img_elem = image_soup.select_one("#i3 img")
+            if not img_elem:
+                raise Exception("无法找到大图元素")
+            
+            image_url = img_elem.get("src")
+            image_name = img_elem.get("alt", "")
+            
+            # 从图片URL中提取文件名（如果alt为空）
+            if not image_name and image_url:
+                # 从URL路径中提取文件名
+                url_parts = image_url.split("/")
+                if len(url_parts) > 1:
+                    # 获取最后部分并解码
+                    last_part = url_parts[-1]
+                    # 移除可能的查询参数
+                    if "?" in last_part:
+                        last_part = last_part.split("?")[0]
+                    image_name = last_part
+            
+            if not image_url:
+                raise Exception("无法获取大图URL")
+            
+            return {
+                "imageUrl": image_url,
+                "imageName": image_name,
+                "galleryTitle": gallery_title,
+                "currentPage": page,
+                "totalPages": total_images,
+                "imagePageUrl": image_page_url
+            }
+            
+        except Exception as e:
+            self.logger.error(f"获取大图失败: {e}")
+            return {
+                "error": str(e),
+                "imageUrl": "",
+                "imageName": "",
+                "galleryTitle": "",
+                "currentPage": page,
+                "totalPages": 0
+            }

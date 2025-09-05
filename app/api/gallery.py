@@ -244,3 +244,54 @@ def get_ex_gallery_thumbnails(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取缩略图失败: {str(e)}")
+
+
+@router.get("/ex/full-image/{gid}/{token}/{page}")
+def get_ex_full_image(
+    gid: str, 
+    token: str, 
+    page: int
+):
+    """
+    EX：获取画廊大图信息
+    
+    参数:
+        gid: Gallery ID
+        token: Gallery token
+        page: 页码，从1开始
+    """
+    from core.config import settings
+    from utils.exhentai_utils import ExHentaiUtils
+    
+    # 检查必要的配置
+    if not all([
+        getattr(settings, 'EXHENTAI_COOKIE_MEMBER_ID', None),
+        getattr(settings, 'EXHENTAI_COOKIE_PASS_HASH', None),
+        getattr(settings, 'EXHENTAI_COOKIE_IGNEOUS', None)
+    ]):
+        raise HTTPException(
+            status_code=503, 
+            detail="ExHentai 认证信息未配置，请在设置页面配置 ExHentai cookies"
+        )
+    
+    cookies = {
+        "ipb_member_id": settings.EXHENTAI_COOKIE_MEMBER_ID,
+        "ipb_pass_hash": settings.EXHENTAI_COOKIE_PASS_HASH,
+        "igneous": settings.EXHENTAI_COOKIE_IGNEOUS,
+    }
+    
+    # 验证页码参数
+    if page < 1:
+        raise HTTPException(status_code=400, detail="页码必须大于等于1")
+    
+    try:
+        utils = ExHentaiUtils("https://exhentai.org/favorites.php", cookies)
+        result = utils.fetch_full_image(gid, token, page)
+        
+        if "error" in result and result["error"]:
+            raise HTTPException(status_code=500, detail=result["error"])
+            
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取大图失败: {str(e)}")

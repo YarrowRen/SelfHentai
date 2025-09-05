@@ -420,9 +420,10 @@ export default {
     },
 
     openImagePreview(thumb) {
-      // 可以实现图片预览功能，这里暂时只是打开原页面链接
-      if (thumb.page_url) {
-        window.open(thumb.page_url, '_blank');
+      // 跳转到图片查看器页面
+      if (thumb.page_number && this.galleryData) {
+        const route = `/gallery/${this.itemId}/${this.galleryData.token}/page/${thumb.page_number}`;
+        this.$router.push(route);
       }
     },
 
