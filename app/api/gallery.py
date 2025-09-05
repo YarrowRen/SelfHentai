@@ -426,3 +426,109 @@ def get_ocr_status():
             "model_available": False,
             "error": str(e)
         }
+
+
+@router.post("/translate")
+def perform_translation(request_data: dict):
+    """
+    AI翻译接口
+    
+    参数:
+        request_data: {
+            "text": "日文原文",
+            "target_language": "zh" (目标语言，默认中文)
+        }
+    
+    返回:
+        {
+            "success": true/false,
+            "translation": "翻译结果",
+            "error": "错误信息",
+            "original_text": "原文",
+            "target_language": "目标语言"
+        }
+    """
+    try:
+        from services.translation_service import translation_service
+        
+        # 检查翻译服务状态
+        status = translation_service.get_status()
+        if not status["is_initialized"]:
+            raise HTTPException(
+                status_code=503, 
+                detail="翻译服务未初始化，请检查 ARK_API_KEY 环境变量"
+            )
+        
+        if not status["api_key_available"]:
+            raise HTTPException(
+                status_code=503,
+                detail="ARK_API_KEY 环境变量未设置"
+            )
+        
+        # 验证请求数据
+        if "text" not in request_data:
+            raise HTTPException(
+                status_code=400, 
+                detail="请求缺少 'text' 字段"
+            )
+        
+        original_text = request_data["text"]
+        target_language = request_data.get("target_language", "zh")
+        
+        if not original_text or not original_text.strip():
+            raise HTTPException(
+                status_code=400, 
+                detail="待翻译文本不能为空"
+            )
+        
+        # 进行翻译
+        result = translation_service.translate_text(original_text, target_language)
+        
+        # 构建响应
+        response = {
+            "success": result["success"],
+            "translation": result["translation"],
+            "error": result["error"],
+            "original_text": original_text,
+            "target_language": target_language
+        }
+        
+        if not result["success"]:
+            # 翻译失败时返回 400 错误
+            raise HTTPException(status_code=400, detail=result["error"])
+        
+        return response
+        
+    except HTTPException:
+        # 重新抛出 HTTP 异常
+        raise
+    except Exception as e:
+        # 捕获其他异常并返回 500 错误
+        import traceback
+        error_msg = f"翻译服务异常: {str(e)}"
+        print(f"翻译错误详情: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=error_msg)
+
+
+@router.get("/translate/status")
+def get_translation_status():
+    """
+    获取翻译服务状态
+    
+    返回:
+        {
+            "is_initialized": true/false,
+            "api_key_available": true/false,
+            "model_name": "模型名称"
+        }
+    """
+    try:
+        from services.translation_service import translation_service
+        return translation_service.get_status()
+    except Exception as e:
+        return {
+            "is_initialized": False,
+            "api_key_available": False,
+            "model_name": "",
+            "error": str(e)
+        }

@@ -30,6 +30,19 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"OCR 模型加载失败: {str(e)}")
         print("OCR 功能将不可用，但应用会继续运行")
+    
+    # 初始化翻译服务
+    try:
+        from services.translation_service import translation_service
+        print("正在初始化 AI 翻译服务...")
+        success = translation_service.initialize()
+        if success:
+            print("AI 翻译服务初始化完成！")
+        else:
+            print("AI 翻译服务初始化失败，请检查 ARK_API_KEY 环境变量")
+    except Exception as e:
+        print(f"翻译服务初始化失败: {str(e)}")
+        print("翻译功能将不可用，但应用会继续运行")
 
     yield  # 继续运行应用
 
