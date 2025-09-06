@@ -19,6 +19,16 @@ class ConfigModel(BaseModel):
     JM_PASSWORD: str = ""
     JM_APP_VERSION: str = "1.8.0"
     JM_API_BASES: List[str] = []
+    # AI翻译配置
+    TRANSLATION_PROVIDER: str = "volcano"
+    TRANSLATION_BASE_URL: str = "https://ark.cn-beijing.volces.com/api/v3"
+    TRANSLATION_MODEL: str = "doubao-1-5-lite-32k-250115"
+    TRANSLATION_API_KEY_ENV: str = "ARK_API_KEY"
+    ARK_API_KEY: str = ""
+    OPENAI_API_KEY: str = ""
+    ANTHROPIC_API_KEY: str = ""
+    DASHSCOPE_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""
 
 class TestConnectionResponse(BaseModel):
     success: bool
@@ -68,6 +78,25 @@ async def read_env_config() -> ConfigModel:
                 elif key == 'JM_API_BASES':
                     # 分割逗号分隔的API地址
                     config.JM_API_BASES = [url.strip() for url in value.split(',') if url.strip()]
+                # AI翻译配置
+                elif key == 'TRANSLATION_PROVIDER':
+                    config.TRANSLATION_PROVIDER = value
+                elif key == 'TRANSLATION_BASE_URL':
+                    config.TRANSLATION_BASE_URL = value
+                elif key == 'TRANSLATION_MODEL':
+                    config.TRANSLATION_MODEL = value
+                elif key == 'TRANSLATION_API_KEY_ENV':
+                    config.TRANSLATION_API_KEY_ENV = value
+                elif key == 'ARK_API_KEY':
+                    config.ARK_API_KEY = value
+                elif key == 'OPENAI_API_KEY':
+                    config.OPENAI_API_KEY = value
+                elif key == 'ANTHROPIC_API_KEY':
+                    config.ANTHROPIC_API_KEY = value
+                elif key == 'DASHSCOPE_API_KEY':
+                    config.DASHSCOPE_API_KEY = value
+                elif key == 'GEMINI_API_KEY':
+                    config.GEMINI_API_KEY = value
                     
     except Exception as e:
         logger.error(f"Error reading .env file: {e}")
@@ -96,7 +125,17 @@ async def write_env_config(config: ConfigModel) -> bool:
             'JM_USERNAME': config.JM_USERNAME,
             'JM_PASSWORD': config.JM_PASSWORD,
             'JM_APP_VERSION': config.JM_APP_VERSION,
-            'JM_API_BASES': ','.join(config.JM_API_BASES)
+            'JM_API_BASES': ','.join(config.JM_API_BASES),
+            # AI翻译配置
+            'TRANSLATION_PROVIDER': config.TRANSLATION_PROVIDER,
+            'TRANSLATION_BASE_URL': config.TRANSLATION_BASE_URL,
+            'TRANSLATION_MODEL': config.TRANSLATION_MODEL,
+            'TRANSLATION_API_KEY_ENV': config.TRANSLATION_API_KEY_ENV,
+            'ARK_API_KEY': config.ARK_API_KEY,
+            'OPENAI_API_KEY': config.OPENAI_API_KEY,
+            'ANTHROPIC_API_KEY': config.ANTHROPIC_API_KEY,
+            'DASHSCOPE_API_KEY': config.DASHSCOPE_API_KEY,
+            'GEMINI_API_KEY': config.GEMINI_API_KEY
         }
         
         lines = existing_content.split('\n') if existing_content else []
@@ -259,6 +298,59 @@ async def test_connection(config: ConfigModel):
                     all_success = False
             else:
                 results['jm'] = {'success': False, 'message': 'JM API地址未配置'}
+                all_success = False
+            
+            # 测试AI翻译服务连接
+            translation_api_key = getattr(config, config.TRANSLATION_API_KEY_ENV, "")
+            if config.TRANSLATION_BASE_URL and translation_api_key:
+                try:
+                    # 简单测试API端点是否可达
+                    timeout = aiohttp.ClientTimeout(total=10)
+                    headers = {}
+                    
+                    # 根据不同的服务商设置请求头
+                    if 'openai' in config.TRANSLATION_BASE_URL.lower() or 'api.openai.com' in config.TRANSLATION_BASE_URL:
+                        headers['Authorization'] = f'Bearer {translation_api_key}'
+                    elif 'anthropic' in config.TRANSLATION_BASE_URL.lower():
+                        headers['x-api-key'] = translation_api_key
+                        headers['anthropic-version'] = '2023-06-01'
+                    elif 'dashscope' in config.TRANSLATION_BASE_URL.lower():
+                        headers['Authorization'] = f'Bearer {translation_api_key}'
+                    elif 'googleapis.com' in config.TRANSLATION_BASE_URL.lower():
+                        headers['x-goog-api-key'] = translation_api_key
+                    elif 'volces.com' in config.TRANSLATION_BASE_URL.lower():
+                        headers['Authorization'] = f'Bearer {translation_api_key}'
+                    
+                    # 测试模型列表端点
+                    models_url = f"{config.TRANSLATION_BASE_URL.rstrip('/')}/models"
+                    async with session.get(models_url, headers=headers, timeout=timeout) as response:
+                        if response.status in [200, 401, 403]:  # 200成功，401/403表示服务响应但认证问题
+                            if response.status == 200:
+                                results['translation'] = {
+                                    'success': True, 
+                                    'message': f'翻译服务连接成功 (模型: {config.TRANSLATION_MODEL})'
+                                }
+                            else:
+                                results['translation'] = {
+                                    'success': False, 
+                                    'message': f'翻译服务连接成功但认证失败 (HTTP {response.status})'
+                                }
+                                all_success = False
+                        else:
+                            results['translation'] = {
+                                'success': False, 
+                                'message': f'翻译服务连接失败: HTTP {response.status}'
+                            }
+                            all_success = False
+                            
+                except asyncio.TimeoutError:
+                    results['translation'] = {'success': False, 'message': '翻译服务连接超时'}
+                    all_success = False
+                except Exception as e:
+                    results['translation'] = {'success': False, 'message': f'翻译服务连接错误: {str(e)}'}
+                    all_success = False
+            else:
+                results['translation'] = {'success': False, 'message': '翻译服务配置信息不完整'}
                 all_success = False
         
         overall_message = "所有连接测试成功" if all_success else "部分连接测试失败"

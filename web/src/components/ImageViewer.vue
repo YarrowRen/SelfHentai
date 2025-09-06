@@ -170,6 +170,7 @@
                 rows="4"
                 class="ocr-textarea"
                 :disabled="ocrLoading"
+                @input="onOcrTextChange"
               />
             </div>
           </div>
@@ -182,17 +183,9 @@
               AI Translation
             </h4>
             
-            <div class="translation-controls">
-              <Button 
-                @click="performTranslation"
-                :disabled="!ocrResult.trim() || translationLoading"
-                :loading="translationLoading"
-                class="translate-btn"
-                severity="warning"
-              >
-                <span class="btn-icon">⚡</span>
-                <span class="btn-text">{{ translationLoading ? 'Translating...' : 'Translate to Chinese' }}</span>
-              </Button>
+            <div v-if="translationLoading" class="translation-status">
+              <span class="status-icon">⚡</span>
+              <span class="status-text">Translating...</span>
             </div>
 
             <!-- AI翻译结果框（只读） -->
@@ -208,28 +201,6 @@
             </div>
           </div>
 
-          <!-- 操作按钮 -->
-          <div class="action-section">
-            <Button 
-              @click="copyTranslation"
-              :disabled="!translationResult.trim()"
-              class="copy-btn"
-              severity="success"
-              outlined
-            >
-              <span class="btn-icon">📋</span>
-              <span class="btn-text">Copy Translation</span>
-            </Button>
-            
-            <Button 
-              @click="saveTranslation"
-              :disabled="!translationResult.trim()"
-              class="save-btn"
-            >
-              <span class="btn-icon">💾</span>
-              <span class="btn-text">Save</span>
-            </Button>
-          </div>
         </div>
       </div>
     </div>
@@ -293,7 +264,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import Button from 'primevue/button'
@@ -354,12 +325,41 @@ const translationResult = ref('')
 const translationLoading = ref(false)
 const targetLanguage = ref('zh')
 
+// 防抖定时器
+let translationTimer = null
+
+// OCR文本变化处理（自动翻译）
+function onOcrTextChange() {
+  // 清除之前的定时器
+  if (translationTimer) {
+    clearTimeout(translationTimer)
+  }
+  
+  // 如果文本为空，清空翻译结果
+  if (!ocrResult.value.trim()) {
+    translationResult.value = ''
+    return
+  }
+  
+  // 设置防抖延迟（800ms后执行翻译）
+  translationTimer = setTimeout(() => {
+    performTranslation()
+  }, 800)
+}
+
 // 初始化
 onMounted(() => {
   currentPage.value = pageNumber.value
   loadFullImage()
   checkOCRStatus()
   checkTranslationStatus()
+})
+
+// 清理定时器
+onUnmounted(() => {
+  if (translationTimer) {
+    clearTimeout(translationTimer)
+  }
 })
 
 // 监听路由变化
@@ -834,14 +834,20 @@ async function performOCR() {
     if (data.success) {
       ocrResult.value = data.text || ''
       console.log('OCR识别完成，文本长度:', data.length || 0)
+      // OCR识别完成后触发自动翻译
+      onOcrTextChange()
     } else {
       console.error('OCR识别失败:', data.error)
       ocrResult.value = ''
+      // OCR失败也需要清空翻译结果
+      onOcrTextChange()
     }
     
   } catch (error) {
     console.error('OCR请求失败:', error)
     ocrResult.value = ''
+    // OCR异常也需要清空翻译结果
+    onOcrTextChange()
     
     // 显示错误信息给用户
     if (error.response?.data?.detail) {

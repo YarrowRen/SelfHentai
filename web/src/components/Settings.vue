@@ -107,6 +107,77 @@
         </div>
       </div>
 
+      <!-- AI翻译配置区域 -->
+      <div class="config-section">
+        <h2 class="section-title">
+          AI Translation Configuration
+        </h2>
+        
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="translationProvider">LLM Provider</label>
+            <select v-model="config.TRANSLATION_PROVIDER" id="translationProvider" class="form-select" @change="onProviderChange">
+              <option value="volcano">火山引擎 (豆包)</option>
+              <option value="openai">OpenAI (GPT)</option>
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="qwen">阿里千问 (Qwen)</option>
+              <option value="gemini">Google Gemini</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="translationBaseUrl">API Base URL</label>
+            <input 
+              v-model="config.TRANSLATION_BASE_URL"
+              id="translationBaseUrl"
+              type="text"
+              class="form-input"
+              placeholder="API 基础地址"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="translationModel">Model Name</label>
+            <input 
+              v-model="config.TRANSLATION_MODEL"
+              id="translationModel"
+              type="text"
+              class="form-input"
+              placeholder="模型名称"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="translationApiKeyEnv">API Key Variable</label>
+            <input 
+              v-model="config.TRANSLATION_API_KEY_ENV"
+              id="translationApiKeyEnv"
+              type="text"
+              class="form-input"
+              placeholder="环境变量名"
+              readonly
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label :for="`apiKey-${config.TRANSLATION_PROVIDER}`">{{ getApiKeyLabel() }}</label>
+            <input 
+              :value="getApiKeyValue()"
+              @input="setApiKeyValue($event.target.value)"
+              :id="`apiKey-${config.TRANSLATION_PROVIDER}`"
+              type="password"
+              class="form-input"
+              :placeholder="`输入你的 ${getProviderName()} API Key`"
+            />
+          </div>
+        </div>
+
+        <div class="provider-info">
+          <h4>{{ getProviderName() }} 配置说明</h4>
+          <div v-html="getProviderDescription()"></div>
+        </div>
+      </div>
+
       <!-- 操作按钮 -->
       <div class="actions">
         <button 
@@ -159,7 +230,17 @@ const config = ref({
   JM_USERNAME: '',
   JM_PASSWORD: '',
   JM_APP_VERSION: '1.8.0',
-  JM_API_BASES: []
+  JM_API_BASES: [],
+  // AI翻译配置
+  TRANSLATION_PROVIDER: 'volcano',
+  TRANSLATION_BASE_URL: 'https://ark.cn-beijing.volces.com/api/v3',
+  TRANSLATION_MODEL: 'doubao-1-5-lite-32k-250115',
+  TRANSLATION_API_KEY_ENV: 'ARK_API_KEY',
+  ARK_API_KEY: '',
+  OPENAI_API_KEY: '',
+  ANTHROPIC_API_KEY: '',
+  DASHSCOPE_API_KEY: '',
+  GEMINI_API_KEY: ''
 })
 
 const originalConfig = ref({})
@@ -255,6 +336,103 @@ const testConnection = async () => {
     showMessage('测试连接失败: ' + error.message, 'error')
   } finally {
     loading.value = false
+  }
+}
+
+// 翻译服务商配置映射
+const providerConfigs = {
+  volcano: {
+    name: '火山引擎 (豆包)',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    model: 'doubao-1-5-lite-32k-250115',
+    apiKeyEnv: 'ARK_API_KEY',
+    description: `
+      <p><strong>火山引擎豆包模型</strong>：字节跳动出品的大语言模型</p>
+      <ul>
+        <li>获取API Key：<a href="https://console.volcengine.com/ark" target="_blank">火山引擎控制台</a></li>
+      </ul>
+    `
+  },
+  openai: {
+    name: 'OpenAI (GPT)',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-4o-mini',
+    apiKeyEnv: 'OPENAI_API_KEY',
+    description: `
+      <p><strong>OpenAI GPT模型</strong>：业界领先的大语言模型，翻译质量极高</p>
+      <ul>
+        <li>获取API Key：<a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></li>
+      </ul>
+    `
+  },
+  anthropic: {
+    name: 'Anthropic (Claude)',
+    baseUrl: 'https://api.anthropic.com/v1',
+    model: 'claude-3-5-haiku-20241022',
+    apiKeyEnv: 'ANTHROPIC_API_KEY',
+    description: `
+      <p><strong>Anthropic Claude模型</strong>：注重安全性和可靠性的大语言模型</p>
+      <ul>
+        <li>获取API Key：<a href="https://console.anthropic.com/" target="_blank">Anthropic Console</a></li>
+      </ul>
+    `
+  },
+  qwen: {
+    name: '阿里千问 (Qwen)',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    model: 'qwen-plus',
+    apiKeyEnv: 'DASHSCOPE_API_KEY',
+    description: `
+      <p><strong>阿里千问模型</strong>：阿里巴巴出品的中文优化大语言模型</p>
+      <ul>
+        <li>获取API Key：<a href="https://dashscope.console.aliyun.com/apiKey" target="_blank">DashScope控制台</a></li>
+      </ul>
+    `
+  },
+  gemini: {
+    name: 'Google Gemini',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+    model: 'gemini-1.5-flash',
+    apiKeyEnv: 'GEMINI_API_KEY',
+    description: `
+      <p><strong>Google Gemini模型</strong>：Google出品的多模态大语言模型</p>
+      <ul>
+        <li>获取API Key：<a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></li>
+      </ul>
+    `
+  }
+}
+
+// 翻译配置相关方法
+const getProviderName = () => {
+  return providerConfigs[config.value.TRANSLATION_PROVIDER]?.name || '未知服务商'
+}
+
+const getProviderDescription = () => {
+  return providerConfigs[config.value.TRANSLATION_PROVIDER]?.description || ''
+}
+
+const getApiKeyLabel = () => {
+  return `${getProviderName()} API Key`
+}
+
+const getApiKeyValue = () => {
+  const keyEnv = config.value.TRANSLATION_API_KEY_ENV
+  return config.value[keyEnv] || ''
+}
+
+const setApiKeyValue = (value) => {
+  const keyEnv = config.value.TRANSLATION_API_KEY_ENV
+  config.value[keyEnv] = value
+}
+
+// 切换服务商时更新配置
+const onProviderChange = () => {
+  const providerConfig = providerConfigs[config.value.TRANSLATION_PROVIDER]
+  if (providerConfig) {
+    config.value.TRANSLATION_BASE_URL = providerConfig.baseUrl
+    config.value.TRANSLATION_MODEL = providerConfig.model
+    config.value.TRANSLATION_API_KEY_ENV = providerConfig.apiKeyEnv
   }
 }
 

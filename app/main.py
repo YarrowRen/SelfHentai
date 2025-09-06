@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
         if success:
             print("AI 翻译服务初始化完成！")
         else:
-            print("AI 翻译服务初始化失败，请检查 ARK_API_KEY 环境变量")
+            print("AI 翻译服务初始化失败，请检查翻译服务配置")
     except Exception as e:
         print(f"翻译服务初始化失败: {str(e)}")
         print("翻译功能将不可用，但应用会继续运行")

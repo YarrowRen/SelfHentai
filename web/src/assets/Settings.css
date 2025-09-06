@@ -1,5 +1,46 @@
 /* ============ Settings Styles ============ */
 
+/* 翻译服务商信息 */
+.provider-info {
+  background: var(--surface-color);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+  border: 1px solid var(--border-color);
+}
+
+.provider-info h4 {
+  margin: 0 0 15px 0;
+  color: var(--primary-color);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.provider-info p {
+  margin: 0 0 10px 0;
+  line-height: 1.6;
+}
+
+.provider-info ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.provider-info li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.provider-info a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.provider-info a:hover {
+  text-decoration: underline;
+}
+
 .settings-wrapper {
   padding: 20px;
   background: var(--bg-color);

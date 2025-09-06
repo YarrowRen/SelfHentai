@@ -50,10 +50,14 @@ onMounted(() => {
 
   /* Navigation Bar Styles */
   .navigation-bar {
+    max-width: 1300px;
+    margin: 0 auto;
     padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .nav-menu {

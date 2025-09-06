@@ -38,5 +38,18 @@ class Settings:
     BACKUP_HISTORY_COUNT = int(os.getenv("BACKUP_HISTORY_COUNT", "5"))
     PORT = int(os.getenv("PORT", 5001))
 
+    # AI翻译配置
+    TRANSLATION_PROVIDER = os.getenv("TRANSLATION_PROVIDER", "volcano")
+    TRANSLATION_BASE_URL = os.getenv("TRANSLATION_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3")
+    TRANSLATION_MODEL = os.getenv("TRANSLATION_MODEL", "doubao-1-5-lite-32k-250115")
+    TRANSLATION_API_KEY_ENV = os.getenv("TRANSLATION_API_KEY_ENV", "ARK_API_KEY")
+    
+    # 各种LLM服务商的API Key
+    ARK_API_KEY = os.getenv("ARK_API_KEY")
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") 
+    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+    DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY")
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
 
 settings = Settings()

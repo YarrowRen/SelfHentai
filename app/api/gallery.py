@@ -456,13 +456,13 @@ def perform_translation(request_data: dict):
         if not status["is_initialized"]:
             raise HTTPException(
                 status_code=503, 
-                detail="翻译服务未初始化，请检查 ARK_API_KEY 环境变量"
+                detail="翻译服务未初始化，请检查翻译服务配置"
             )
         
         if not status["api_key_available"]:
             raise HTTPException(
                 status_code=503,
-                detail="ARK_API_KEY 环境变量未设置"
+                detail="翻译服务 API Key 未设置，请在设置页面配置"
             )
         
         # 验证请求数据
