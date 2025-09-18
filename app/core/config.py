@@ -50,6 +50,9 @@ class Settings:
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
     DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    
+    # OCR服务配置
+    OCR_ENABLED = os.getenv("OCR_ENABLED", "false").lower() in ("true", "1", "yes", "on")
 
 
 settings = Settings()

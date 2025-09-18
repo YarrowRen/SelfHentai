@@ -21,12 +21,16 @@ async def lifespan(app: FastAPI):
         else:
             continue
     
-    # 初始化 OCR 服务
+    # 初始化 OCR 服务（基于配置决定是否启用）
     try:
-        from services.ocr_service import ocr_service
-        print("正在加载 manga-ocr 模型，这可能需要一些时间...")
-        ocr_service.load_model()
-        print("manga-ocr 模型加载完成！")
+        from core.config import settings
+        if settings.OCR_ENABLED:
+            from services.ocr_service import ocr_service
+            print("正在加载 manga-ocr 模型，这可能需要一些时间...")
+            ocr_service.load_model()
+            print("manga-ocr 模型加载完成！")
+        else:
+            print("OCR 服务已禁用（OCR_ENABLED=false），跳过模型加载")
     except Exception as e:
         print(f"OCR 模型加载失败: {str(e)}")
         print("OCR 功能将不可用，但应用会继续运行")

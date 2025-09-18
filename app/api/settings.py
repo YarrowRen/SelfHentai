@@ -29,6 +29,8 @@ class ConfigModel(BaseModel):
     ANTHROPIC_API_KEY: str = ""
     DASHSCOPE_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
+    # OCR服务配置
+    OCR_ENABLED: bool = False
 
 class TestConnectionResponse(BaseModel):
     success: bool
@@ -97,6 +99,8 @@ async def read_env_config() -> ConfigModel:
                     config.DASHSCOPE_API_KEY = value
                 elif key == 'GEMINI_API_KEY':
                     config.GEMINI_API_KEY = value
+                elif key == 'OCR_ENABLED':
+                    config.OCR_ENABLED = value.lower() in ("true", "1", "yes", "on")
                     
     except Exception as e:
         logger.error(f"Error reading .env file: {e}")
@@ -135,7 +139,8 @@ async def write_env_config(config: ConfigModel) -> bool:
             'OPENAI_API_KEY': config.OPENAI_API_KEY,
             'ANTHROPIC_API_KEY': config.ANTHROPIC_API_KEY,
             'DASHSCOPE_API_KEY': config.DASHSCOPE_API_KEY,
-            'GEMINI_API_KEY': config.GEMINI_API_KEY
+            'GEMINI_API_KEY': config.GEMINI_API_KEY,
+            'OCR_ENABLED': str(config.OCR_ENABLED).lower()
         }
         
         lines = existing_content.split('\n') if existing_content else []

@@ -366,6 +366,15 @@ def perform_ocr_recognition(image_data: dict):
         {"text": "识别出的文本", "success": true/false, "error": "错误信息"}
     """
     try:
+        from core.config import settings
+        
+        # 检查OCR服务是否启用
+        if not settings.OCR_ENABLED:
+            raise HTTPException(
+                status_code=503, 
+                detail="OCR服务已禁用，请在设置中启用 OCR_ENABLED 选项"
+            )
+        
         from services.ocr_service import ocr_service
         
         # 检查OCR服务状态
@@ -418,12 +427,31 @@ def get_ocr_status():
         {"is_loaded": true/false, "model_available": true/false}
     """
     try:
+        from core.config import settings
+        
+        # 检查OCR服务是否启用
+        if not settings.OCR_ENABLED:
+            return {
+                "is_loaded": False,
+                "model_available": False,
+                "enabled": False,
+                "message": "OCR服务已禁用"
+            }
+        
         from services.ocr_service import ocr_service
-        return ocr_service.get_status()
+        status = ocr_service.get_status()
+        status["enabled"] = True
+        return status
     except Exception as e:
+        try:
+            from core.config import settings
+            enabled = settings.OCR_ENABLED
+        except:
+            enabled = False
         return {
             "is_loaded": False,
             "model_available": False,
+            "enabled": enabled,
             "error": str(e)
         }
 

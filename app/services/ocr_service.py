@@ -128,9 +128,11 @@ class OCRService:
     
     def get_status(self) -> dict:
         """获取OCR服务状态"""
+        from core.config import settings
         return {
             "is_loaded": self.is_loaded,
-            "model_available": self.model is not None
+            "model_available": self.model is not None,
+            "enabled": settings.OCR_ENABLED
         }
 
 
