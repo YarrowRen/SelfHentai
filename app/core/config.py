@@ -31,6 +31,10 @@ class Settings:
     JM_MAX_WORKERS = int(os.getenv("JM_MAX_WORKERS", "16"))
     JM_SYNC_RETRIES = int(os.getenv("JM_SYNC_RETRIES", "3"))
     JM_SAVE_EVERY = int(os.getenv("JM_SAVE_EVERY", "50"))
+    
+    # ExHentai 同步配置
+    EX_SYNC_RETRIES = int(os.getenv("EX_SYNC_RETRIES", "5"))
+    EX_RETRY_DELAY = float(os.getenv("EX_RETRY_DELAY", "2.0"))
 
     LOG_DIR = os.getenv("LOG_DIR", "logs")
     LOG_FILE = os.getenv("LOG_FILE", "app.log")

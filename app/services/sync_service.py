@@ -24,6 +24,15 @@ from utils.websocket_logger import WebSocketLogHandler
 
 logger = get_logger(__name__)
 
+
+def create_websocket_formatter():
+    """创建用于WebSocket的无颜色日志格式器"""
+    import logging
+    return logging.Formatter(
+        "%(levelname)s:    [%(asctime)s] [%(name)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
 # JM API 常量
 APP_TOKEN_SECRET = "18comicAPP"
 APP_DATA_SECRET = "185Hcomic3PAPP7R"
@@ -72,9 +81,9 @@ def sync_ex_favorites():
     """执行收藏夹数据同步流程，并通过 WebSocket 实时发送日志"""
     logger = get_logger("sync_metadata")
 
-    # 添加 WebSocket 日志 handler
+    # 添加 WebSocket 日志 handler（使用无颜色的格式）
     ws_handler = WebSocketLogHandler(loop=main_event_loop)
-    ws_handler.setFormatter(logger.handlers[0].formatter)
+    ws_handler.setFormatter(create_websocket_formatter())
     logger.addHandler(ws_handler)
 
     try:
@@ -89,7 +98,15 @@ def sync_ex_favorites():
 
         # 初始化工具类并抓取元数据
         client = ExHentaiUtils(settings.EXHENTAI_BASE_URL, cookies, logger=logger)
-        data = client.get_favorites_metadata()
+        try:
+            data = client.get_favorites_metadata(
+                max_retries=settings.EX_SYNC_RETRIES,
+                retry_delay=settings.EX_RETRY_DELAY
+            )
+        except RuntimeError as e:
+            # 处理数据获取失败（重试后仍失败）
+            logger.error(f"数据获取失败，同步终止: {str(e)}")
+            return {"status": "error", "message": str(e), "count": 0}
 
         # 备份旧文件
         backup_json_file(
@@ -108,6 +125,10 @@ def sync_ex_favorites():
 
         logger.info(f"同步完成，共 {len(data)} 项")
         return {"status": "success", "count": len(data)}
+    
+    except Exception as e:
+        logger.error(f"同步过程中发生未预期错误: {str(e)}")
+        return {"status": "error", "message": f"同步过程中发生错误: {str(e)}", "count": 0}
 
     finally:
         # 清理 WebSocket handler，防止重复添加
@@ -327,9 +348,9 @@ def sync_jm_favorites():
     """执行 JM 收藏夹数据同步流程，并通过 WebSocket 实时发送日志"""
     logger = get_logger("sync_jm_metadata")
 
-    # 添加 WebSocket 日志 handler
+    # 添加 WebSocket 日志 handler（使用无颜色的格式）
     ws_handler = WebSocketLogHandler(loop=main_event_loop)
-    ws_handler.setFormatter(logger.handlers[0].formatter)
+    ws_handler.setFormatter(create_websocket_formatter())
     logger.addHandler(ws_handler)
 
     try:
@@ -365,6 +386,10 @@ def sync_jm_favorites():
 
         logger.info(f"JM 同步完成，共 {len(enriched)} 项")
         return {"status": "success", "count": len(enriched)}
+        
+    except Exception as e:
+        logger.error(f"JM 同步过程中发生错误: {str(e)}")
+        return {"status": "error", "message": f"JM 同步失败: {str(e)}", "count": 0}
 
     finally:
         # 清理 WebSocket handler，防止重复添加

@@ -77,41 +77,136 @@ class ExHentaiUtils:
 
         return result
 
-    def fetch_gallery_metadatas(self, favorites: list):
+    def fetch_gallery_metadatas(self, favorites: list, max_retries: int = 5, retry_delay: float = 2.0):
         """
-        批量请求收藏本子的元数据（每批最多 25 条）
+        批量获取画廊元数据，带重试机制确保数据完整性和顺序一致性
 
         参数:
             favorites: List[dict]，包含 'gid' 和 'token'
+            max_retries: 最大重试次数（默认5次）
+            retry_delay: 重试延迟秒数（默认2秒）
 
         返回:
-            List[dict]，每个本子的元数据
+            List[dict]，每个本子的元数据（保持原始顺序）
+            
+        异常:
+            如果有批次在重试后仍然失败，抛出异常
         """
+        import time
+        
         url = "https://api.e-hentai.org/api.php"
-        all_metadata = []
+        # 使用字典存储批次数据，key为批次开始索引，确保顺序
+        batch_results = {}
+        failed_batches = []
+        total_batches = (len(favorites) + 24) // 25
+        
+        self.logger.info(f"开始获取元数据，共 {total_batches} 批，每批最多25条")
 
+        # 第一轮：处理所有批次
         for i in range(0, len(favorites), 25):
             batch = favorites[i : i + 25]
-            gidlist = [[int(f["gid"]), f["token"]] for f in batch]
-
-            payload = {"method": "gdata", "gidlist": gidlist, "namespace": 1}
-            self.logger.info(f"正在请求第 {i // 25 + 1} 批，共 {len(batch)} 条数据...")
-            try:
-                res = requests.post(url, json=payload)
-                res.raise_for_status()
-                data = res.json().get("gmetadata", [])
-                all_metadata.extend(data)
-            except Exception:
-                self.logger.exception("请求失败")
-
+            batch_num = i // 25 + 1
+            
+            success, batch_data = self._fetch_single_batch_with_result(url, batch, batch_num)
+            if success:
+                batch_results[i] = batch_data
+            else:
+                failed_batches.append((i, batch, batch_num))
+        
+        # 重试失败的批次
+        if failed_batches:
+            self.logger.warning(f"第一轮完成，有 {len(failed_batches)} 个批次失败，开始重试...")
+            
+            for retry_round in range(1, max_retries + 1):
+                if not failed_batches:
+                    break
+                    
+                self.logger.info(f"第 {retry_round} 轮重试，处理 {len(failed_batches)} 个失败批次...")
+                remaining_failed = []
+                
+                for i, batch, batch_num in failed_batches:
+                    self.logger.info(f"重试第 {batch_num} 批（第{retry_round}次重试）...")
+                    time.sleep(retry_delay)  # 延迟重试
+                    
+                    success, batch_data = self._fetch_single_batch_with_result(url, batch, batch_num)
+                    if success:
+                        batch_results[i] = batch_data
+                    else:
+                        remaining_failed.append((i, batch, batch_num))
+                
+                failed_batches = remaining_failed
+                
+                if failed_batches:
+                    self.logger.warning(f"第 {retry_round} 轮重试完成，还有 {len(failed_batches)} 个批次失败")
+                else:
+                    self.logger.info(f"第 {retry_round} 轮重试完成，所有批次成功！")
+                    break
+        
+        # 检查是否还有失败的批次
+        if failed_batches:
+            failed_batch_nums = [str(batch_num) for _, _, batch_num in failed_batches]
+            error_msg = f"经过 {max_retries} 次重试后，仍有 {len(failed_batches)} 个批次失败（批次: {', '.join(failed_batch_nums)}），为保证数据完整性，同步已终止"
+            self.logger.error(error_msg)
+            raise RuntimeError(error_msg)
+        
+        # 按原始顺序组装最终结果
+        all_metadata = []
+        for i in range(0, len(favorites), 25):
+            if i in batch_results:
+                all_metadata.extend(batch_results[i])
+        
+        self.logger.info(f"所有批次处理完成，成功获取 {len(all_metadata)} 条元数据（顺序已保持）")
         return all_metadata
+    
+    def _fetch_single_batch_with_result(self, url: str, batch: list, batch_num: int) -> tuple:
+        """
+        获取单个批次的数据，返回数据和成功状态
+        
+        返回:
+            tuple: (是否成功, 数据列表)
+        """
+        gidlist = [[int(f["gid"]), f["token"]] for f in batch]
+        payload = {"method": "gdata", "gidlist": gidlist, "namespace": 1}
+        
+        self.logger.info(f"正在请求第 {batch_num} 批，共 {len(batch)} 条数据...")
+        
+        try:
+            res = requests.post(url, json=payload, timeout=30)
+            res.raise_for_status()
+            data = res.json().get("gmetadata", [])
+            
+            if len(data) != len(batch):
+                self.logger.warning(f"第 {batch_num} 批返回数据不完整：期望 {len(batch)} 条，实际 {len(data)} 条")
+            
+            self.logger.info(f"第 {batch_num} 批成功，获取 {len(data)} 条数据")
+            return True, data
+            
+        except Exception as e:
+            self.logger.error(f"第 {batch_num} 批请求失败: {str(e)}")
+            return False, []
 
-    def get_favorites_metadata(self):
+    def _fetch_single_batch(self, url: str, batch: list, batch_num: int, all_metadata: list) -> bool:
+        """
+        获取单个批次的数据（兼容性方法）
+        
+        返回:
+            bool: 是否成功
+        """
+        success, data = self._fetch_single_batch_with_result(url, batch, batch_num)
+        if success:
+            all_metadata.extend(data)
+        return success
+
+    def get_favorites_metadata(self, max_retries: int = 5, retry_delay: float = 2.0):
         """
         高层封装：从收藏夹获取所有本子元数据。
+        
+        参数:
+            max_retries: 最大重试次数
+            retry_delay: 重试延迟秒数
         """
         favorites = self.extract_favorites()
-        return self.fetch_gallery_metadatas(favorites)
+        return self.fetch_gallery_metadatas(favorites, max_retries=max_retries, retry_delay=retry_delay)
 
     def export_favorites_metadata(self, output_path="favorites_metadata.json"):
         """
