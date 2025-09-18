@@ -16,7 +16,9 @@ os.environ['PYTORCH_MPS_HIGH_WATERMARK_RATIO'] = '0.0'
 os.environ['CUDA_VISIBLE_DEVICES'] = ''
 os.environ['MPS_VISIBLE_DEVICES'] = ''
 
-logger = logging.getLogger(__name__)
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class OCRService:

@@ -7,8 +7,9 @@ from typing import Optional
 
 from openai import OpenAI
 from core.config import settings
+from core.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class TranslationService:

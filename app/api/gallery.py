@@ -3,6 +3,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
+from core.logger import get_logger
 from services.ex_gallery_service import (
     get_ex_gallery_data,
     get_ex_gallery_data_by_gid,
@@ -22,6 +23,7 @@ from starlette.concurrency import run_in_threadpool
 from utils.sync_lock import sync_lock
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 
 @router.get("/", response_model=dict)
@@ -200,14 +202,10 @@ def reload_jm_data():
 
 
 @router.get("/ex/thumbnails/{gid}/{token}")
-def get_ex_gallery_thumbnails(
-    gid: str, 
-    token: str, 
-    page: int = Query(0, ge=0, description="页码，从0开始")
-):
+def get_ex_gallery_thumbnails(gid: str, token: str, page: int = Query(0, ge=0, description="页码，从0开始")):
     """
     EX：获取画廊缩略图数据
-    
+
     参数:
         gid: Gallery ID
         token: Gallery token
@@ -215,46 +213,41 @@ def get_ex_gallery_thumbnails(
     """
     from core.config import settings
     from utils.exhentai_utils import ExHentaiUtils
-    
+
     # 检查必要的配置
-    if not all([
-        getattr(settings, 'EXHENTAI_COOKIE_MEMBER_ID', None),
-        getattr(settings, 'EXHENTAI_COOKIE_PASS_HASH', None),
-        getattr(settings, 'EXHENTAI_COOKIE_IGNEOUS', None)
-    ]):
-        raise HTTPException(
-            status_code=503, 
-            detail="ExHentai 认证信息未配置，请在设置页面配置 ExHentai cookies"
-        )
-    
+    if not all(
+        [
+            getattr(settings, "EXHENTAI_COOKIE_MEMBER_ID", None),
+            getattr(settings, "EXHENTAI_COOKIE_PASS_HASH", None),
+            getattr(settings, "EXHENTAI_COOKIE_IGNEOUS", None),
+        ]
+    ):
+        raise HTTPException(status_code=503, detail="ExHentai 认证信息未配置，请在设置页面配置 ExHentai cookies")
+
     cookies = {
         "ipb_member_id": settings.EXHENTAI_COOKIE_MEMBER_ID,
         "ipb_pass_hash": settings.EXHENTAI_COOKIE_PASS_HASH,
         "igneous": settings.EXHENTAI_COOKIE_IGNEOUS,
     }
-    
+
     try:
         utils = ExHentaiUtils("https://exhentai.org/favorites.php", cookies)
         result = utils.fetch_gallery_thumbnails(gid, token, page)
-        
+
         if "error" in result:
             raise HTTPException(status_code=500, detail=result["error"])
-            
+
         return result
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取缩略图失败: {str(e)}")
 
 
 @router.get("/ex/full-image/{gid}/{token}/{page}")
-def get_ex_full_image(
-    gid: str, 
-    token: str, 
-    page: int
-):
+def get_ex_full_image(gid: str, token: str, page: int):
     """
     EX：获取画廊大图信息
-    
+
     参数:
         gid: Gallery ID
         token: Gallery token
@@ -262,37 +255,36 @@ def get_ex_full_image(
     """
     from core.config import settings
     from utils.exhentai_utils import ExHentaiUtils
-    
+
     # 检查必要的配置
-    if not all([
-        getattr(settings, 'EXHENTAI_COOKIE_MEMBER_ID', None),
-        getattr(settings, 'EXHENTAI_COOKIE_PASS_HASH', None),
-        getattr(settings, 'EXHENTAI_COOKIE_IGNEOUS', None)
-    ]):
-        raise HTTPException(
-            status_code=503, 
-            detail="ExHentai 认证信息未配置，请在设置页面配置 ExHentai cookies"
-        )
-    
+    if not all(
+        [
+            getattr(settings, "EXHENTAI_COOKIE_MEMBER_ID", None),
+            getattr(settings, "EXHENTAI_COOKIE_PASS_HASH", None),
+            getattr(settings, "EXHENTAI_COOKIE_IGNEOUS", None),
+        ]
+    ):
+        raise HTTPException(status_code=503, detail="ExHentai 认证信息未配置，请在设置页面配置 ExHentai cookies")
+
     cookies = {
         "ipb_member_id": settings.EXHENTAI_COOKIE_MEMBER_ID,
         "ipb_pass_hash": settings.EXHENTAI_COOKIE_PASS_HASH,
         "igneous": settings.EXHENTAI_COOKIE_IGNEOUS,
     }
-    
+
     # 验证页码参数
     if page < 1:
         raise HTTPException(status_code=400, detail="页码必须大于等于1")
-    
+
     try:
         utils = ExHentaiUtils("https://exhentai.org/favorites.php", cookies)
         result = utils.fetch_full_image(gid, token, page)
-        
+
         if "error" in result and result["error"]:
             raise HTTPException(status_code=500, detail=result["error"])
-            
+
         return result
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取大图失败: {str(e)}")
 
@@ -303,42 +295,41 @@ def proxy_ex_image(url: str):
     EX：代理图片请求，解决CORS问题
     """
     import requests
-    from fastapi.responses import StreamingResponse
     from core.config import settings
-    
+    from fastapi.responses import StreamingResponse
+
     # 检查必要的配置
-    if not all([
-        getattr(settings, 'EXHENTAI_COOKIE_MEMBER_ID', None),
-        getattr(settings, 'EXHENTAI_COOKIE_PASS_HASH', None),
-        getattr(settings, 'EXHENTAI_COOKIE_IGNEOUS', None)
-    ]):
-        raise HTTPException(
-            status_code=503, 
-            detail="ExHentai 认证信息未配置"
-        )
-    
+    if not all(
+        [
+            getattr(settings, "EXHENTAI_COOKIE_MEMBER_ID", None),
+            getattr(settings, "EXHENTAI_COOKIE_PASS_HASH", None),
+            getattr(settings, "EXHENTAI_COOKIE_IGNEOUS", None),
+        ]
+    ):
+        raise HTTPException(status_code=503, detail="ExHentai 认证信息未配置")
+
     cookies = {
         "ipb_member_id": settings.EXHENTAI_COOKIE_MEMBER_ID,
         "ipb_pass_hash": settings.EXHENTAI_COOKIE_PASS_HASH,
         "igneous": settings.EXHENTAI_COOKIE_IGNEOUS,
     }
-    
+
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Referer': 'https://exhentai.org/'
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Referer": "https://exhentai.org/",
     }
-    
+
     try:
         response = requests.get(url, cookies=cookies, headers=headers, stream=True, timeout=30)
         response.raise_for_status()
-        
+
         # 获取内容类型
-        content_type = response.headers.get('content-type', 'image/jpeg')
-        
+        content_type = response.headers.get("content-type", "image/jpeg")
+
         def generate():
             for chunk in response.iter_content(chunk_size=8192):
                 yield chunk
-        
+
         return StreamingResponse(
             generate(),
             media_type=content_type,
@@ -346,10 +337,10 @@ def proxy_ex_image(url: str):
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Methods": "GET",
                 "Access-Control-Allow-Headers": "*",
-                "Cache-Control": "public, max-age=3600"
-            }
+                "Cache-Control": "public, max-age=3600",
+            },
         )
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"代理图片请求失败: {str(e)}")
 
@@ -358,63 +349,48 @@ def proxy_ex_image(url: str):
 def perform_ocr_recognition(image_data: dict):
     """
     OCR文本识别接口
-    
+
     参数:
         image_data: {"image": "data:image/png;base64,..."} 包含base64编码图片数据的字典
-    
+
     返回:
         {"text": "识别出的文本", "success": true/false, "error": "错误信息"}
     """
     try:
         from core.config import settings
-        
+
         # 检查OCR服务是否启用
         if not settings.OCR_ENABLED:
-            raise HTTPException(
-                status_code=503, 
-                detail="OCR服务已禁用，请在设置中启用 OCR_ENABLED 选项"
-            )
-        
+            raise HTTPException(status_code=503, detail="OCR服务已禁用，请在设置中启用 OCR_ENABLED 选项")
+
         from services.ocr_service import ocr_service
-        
+
         # 检查OCR服务状态
         if not ocr_service.is_loaded:
-            raise HTTPException(
-                status_code=503, 
-                detail="OCR服务未启动，请检查 manga-ocr 是否正确安装"
-            )
-        
+            raise HTTPException(status_code=503, detail="OCR服务未启动，请检查 manga-ocr 是否正确安装")
+
         # 验证请求数据
         if "image" not in image_data:
-            raise HTTPException(
-                status_code=400, 
-                detail="请求缺少 'image' 字段"
-            )
-        
+            raise HTTPException(status_code=400, detail="请求缺少 'image' 字段")
+
         base64_image = image_data["image"]
         if not base64_image:
-            raise HTTPException(
-                status_code=400, 
-                detail="图片数据不能为空"
-            )
-        
+            raise HTTPException(status_code=400, detail="图片数据不能为空")
+
         # 进行OCR识别
         recognized_text = ocr_service.recognize_text(base64_image)
-        
-        return {
-            "success": True,
-            "text": recognized_text,
-            "length": len(recognized_text) if recognized_text else 0
-        }
-        
+
+        return {"success": True, "text": recognized_text, "length": len(recognized_text) if recognized_text else 0}
+
     except HTTPException:
         # 重新抛出 HTTP 异常
         raise
     except Exception as e:
         # 捕获其他异常并返回 500 错误
         import traceback
+
         error_msg = f"OCR识别失败: {str(e)}"
-        print(f"OCR错误详情: {traceback.format_exc()}")
+        logger.error(f"OCR错误详情: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=error_msg)
 
 
@@ -422,51 +398,43 @@ def perform_ocr_recognition(image_data: dict):
 def get_ocr_status():
     """
     获取OCR服务状态
-    
+
     返回:
         {"is_loaded": true/false, "model_available": true/false}
     """
     try:
         from core.config import settings
-        
+
         # 检查OCR服务是否启用
         if not settings.OCR_ENABLED:
-            return {
-                "is_loaded": False,
-                "model_available": False,
-                "enabled": False,
-                "message": "OCR服务已禁用"
-            }
-        
+            return {"is_loaded": False, "model_available": False, "enabled": False, "message": "OCR服务已禁用"}
+
         from services.ocr_service import ocr_service
+
         status = ocr_service.get_status()
         status["enabled"] = True
         return status
     except Exception as e:
         try:
             from core.config import settings
+
             enabled = settings.OCR_ENABLED
         except:
             enabled = False
-        return {
-            "is_loaded": False,
-            "model_available": False,
-            "enabled": enabled,
-            "error": str(e)
-        }
+        return {"is_loaded": False, "model_available": False, "enabled": enabled, "error": str(e)}
 
 
 @router.post("/translate")
 def perform_translation(request_data: dict):
     """
     AI翻译接口
-    
+
     参数:
         request_data: {
             "text": "日文原文",
             "target_language": "zh" (目标语言，默认中文)
         }
-    
+
     返回:
         {
             "success": true/false,
@@ -478,63 +446,52 @@ def perform_translation(request_data: dict):
     """
     try:
         from services.translation_service import translation_service
-        
+
         # 检查翻译服务状态
         status = translation_service.get_status()
         if not status["is_initialized"]:
-            raise HTTPException(
-                status_code=503, 
-                detail="翻译服务未初始化，请检查翻译服务配置"
-            )
-        
+            raise HTTPException(status_code=503, detail="翻译服务未初始化，请检查翻译服务配置")
+
         if not status["api_key_available"]:
-            raise HTTPException(
-                status_code=503,
-                detail="翻译服务 API Key 未设置，请在设置页面配置"
-            )
-        
+            raise HTTPException(status_code=503, detail="翻译服务 API Key 未设置，请在设置页面配置")
+
         # 验证请求数据
         if "text" not in request_data:
-            raise HTTPException(
-                status_code=400, 
-                detail="请求缺少 'text' 字段"
-            )
-        
+            raise HTTPException(status_code=400, detail="请求缺少 'text' 字段")
+
         original_text = request_data["text"]
         target_language = request_data.get("target_language", "zh")
-        
+
         if not original_text or not original_text.strip():
-            raise HTTPException(
-                status_code=400, 
-                detail="待翻译文本不能为空"
-            )
-        
+            raise HTTPException(status_code=400, detail="待翻译文本不能为空")
+
         # 进行翻译
         result = translation_service.translate_text(original_text, target_language)
-        
+
         # 构建响应
         response = {
             "success": result["success"],
             "translation": result["translation"],
             "error": result["error"],
             "original_text": original_text,
-            "target_language": target_language
+            "target_language": target_language,
         }
-        
+
         if not result["success"]:
             # 翻译失败时返回 400 错误
             raise HTTPException(status_code=400, detail=result["error"])
-        
+
         return response
-        
+
     except HTTPException:
         # 重新抛出 HTTP 异常
         raise
     except Exception as e:
         # 捕获其他异常并返回 500 错误
         import traceback
+
         error_msg = f"翻译服务异常: {str(e)}"
-        print(f"翻译错误详情: {traceback.format_exc()}")
+        logger.error(f"翻译错误详情: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=error_msg)
 
 
@@ -542,7 +499,7 @@ def perform_translation(request_data: dict):
 def get_translation_status():
     """
     获取翻译服务状态
-    
+
     返回:
         {
             "is_initialized": true/false,
@@ -552,11 +509,7 @@ def get_translation_status():
     """
     try:
         from services.translation_service import translation_service
+
         return translation_service.get_status()
     except Exception as e:
-        return {
-            "is_initialized": False,
-            "api_key_available": False,
-            "model_name": "",
-            "error": str(e)
-        }
+        return {"is_initialized": False, "api_key_available": False, "model_name": "", "error": str(e)}

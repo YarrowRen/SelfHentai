@@ -6,9 +6,10 @@ import logging
 import asyncio
 import aiofiles
 import re
+from core.logger import get_logger
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class ConfigModel(BaseModel):
     EXHENTAI_BASE_URL: str = "https://exhentai.org/favorites.php"

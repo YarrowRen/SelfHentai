@@ -9,6 +9,9 @@ from api import websocket  # 导入 websocket 路由
 from api import gallery, root, settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 # 创建 lifespan 上下文管理器
@@ -26,27 +29,27 @@ async def lifespan(app: FastAPI):
         from core.config import settings
         if settings.OCR_ENABLED:
             from services.ocr_service import ocr_service
-            print("正在加载 manga-ocr 模型，这可能需要一些时间...")
+            logger.info("正在加载 manga-ocr 模型，这可能需要一些时间...")
             ocr_service.load_model()
-            print("manga-ocr 模型加载完成！")
+            logger.info("manga-ocr 模型加载完成！")
         else:
-            print("OCR 服务已禁用（OCR_ENABLED=false），跳过模型加载")
+            logger.info("OCR 服务已禁用（OCR_ENABLED=false），跳过模型加载")
     except Exception as e:
-        print(f"OCR 模型加载失败: {str(e)}")
-        print("OCR 功能将不可用，但应用会继续运行")
+        logger.error(f"OCR 模型加载失败: {str(e)}")
+        logger.warning("OCR 功能将不可用，但应用会继续运行")
     
     # 初始化翻译服务
     try:
         from services.translation_service import translation_service
-        print("正在初始化 AI 翻译服务...")
+        logger.info("正在初始化 AI 翻译服务...")
         success = translation_service.initialize()
         if success:
-            print("AI 翻译服务初始化完成！")
+            logger.info("AI 翻译服务初始化完成！")
         else:
-            print("AI 翻译服务初始化失败，请检查翻译服务配置")
+            logger.error("AI 翻译服务初始化失败，请检查翻译服务配置")
     except Exception as e:
-        print(f"翻译服务初始化失败: {str(e)}")
-        print("翻译功能将不可用，但应用会继续运行")
+        logger.error(f"翻译服务初始化失败: {str(e)}")
+        logger.warning("翻译功能将不可用，但应用会继续运行")
 
     yield  # 继续运行应用
 
