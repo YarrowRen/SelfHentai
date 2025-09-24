@@ -1,0 +1,607 @@
+/* ============ Reader Styles ============ */
+
+/* 阅读器页面的body样式 */
+body.reader-active {
+  overflow: hidden;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.reader-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg-color);
+  color: var(--text-color);
+  overflow: hidden;
+}
+
+/* ============ Toolbar ============ */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--surface-color);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  position: relative;
+}
+
+.toolbar-left,
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 2;
+  justify-content: center;
+}
+
+.toolbar-right {
+  justify-content: flex-end;
+}
+
+.tool-btn {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.tool-btn:hover {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.title {
+  font-weight: bold;
+  font-size: 16px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.tool-group label {
+  color: var(--text-color);
+  font-weight: 500;
+  min-width: 60px;
+}
+
+.tool-select {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tool-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.page-info {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--text-color);
+  padding: 6px 12px;
+  background: var(--bg-color);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+/* ============ Reader Content ============ */
+.reader-content {
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg-color);
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reader-content:focus {
+  outline: none;
+}
+
+/* 全屏模式 (分页器隐藏时) */
+.reader-content.fullscreen {
+  height: calc(100vh - 80px); /* 只减去工具栏的高度 */
+}
+
+/* Loading and Error States */
+.loading-message,
+.error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  text-align: center;
+}
+
+.loading-message {
+  color: var(--text-color);
+  opacity: 0.7;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+  padding: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  margin: 20px;
+}
+
+/* ============ Images Container ============ */
+.images-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fullscreen-images {
+  position: relative;
+}
+
+/* Single Column Mode */
+.single-column {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Double Column Mode */
+.double-column {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.page-pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+
+/* RTL Mode */
+.rtl-mode .page-pair {
+  flex-direction: row-reverse;
+}
+
+/* ============ Page Container ============ */
+.page-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.page-container.current {
+  /* 移除边框，避免影响图片显示 */
+}
+
+/* 双栏模式下的页面容器 */
+.double-column .page-container {
+  flex: 1;
+  height: 100%;
+}
+
+/* 双栏模式下左右页面对齐 */
+.double-column .page-container.left-page {
+  justify-content: flex-end; /* 左页面内容居右对齐 */
+}
+
+.double-column .page-container.right-page {
+  justify-content: flex-start; /* 右页面内容居左对齐 */
+}
+
+/* ============ Page Images ============ */
+.page-image {
+  max-width: 100%;
+  max-height: calc(100vh - 120px); /* 减去工具栏和分页器的高度，无navigation-bar */
+  height: auto;
+  width: auto;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  object-fit: contain;
+  display: block;
+  position: relative;
+}
+
+/* ============ Click Overlay ============ */
+.click-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.click-zone {
+  position: absolute;
+  top: 0;
+  width: 60px; /* 更窄的宽度 */
+  height: 100%;
+  cursor: pointer;
+  pointer-events: all;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.left-zone {
+  left: 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.right-zone {
+  right: 0;
+  border-radius: 8px 0 0 8px;
+}
+
+/* 悬停时显示提示 */
+.click-zone:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* 延迟显示和快速隐藏 */
+.click-zone {
+  transition: all 0.15s ease; /* 快速消失 */
+  transition-delay: 0.5s; /* 延迟0.5秒显示 */
+}
+
+.click-zone:hover {
+  transition: all 0.3s ease; /* 显示时稍慢 */
+  transition-delay: 0s; /* 悬停时立即显示 */
+}
+
+/* 添加箭头图标 */
+.left-zone::before {
+  content: '‹';
+  font-size: 36px;
+  font-weight: bold;
+}
+
+.right-zone::before {
+  content: '›';
+  font-size: 36px;
+  font-weight: bold;
+}
+
+/* RTL模式下调整箭头方向 */
+.rtl-mode .left-zone::before {
+  content: '›';
+}
+
+.rtl-mode .right-zone::before {
+  content: '‹';
+}
+
+/* 全屏模式下的图片 */
+.reader-content.fullscreen .page-image {
+  max-height: calc(100vh - 80px); /* 全屏时只减去工具栏高度 */
+}
+
+/* 移除hover效果，避免影响阅读 */
+.page-image:hover {
+  opacity: 0.95;
+}
+
+/* 双栏模式下的图片调整 */
+.double-column .page-image {
+  max-width: 50vw; /* 双栏模式下每张图片最多占屏幕宽度的一半 */
+}
+
+
+
+/* ============ Page Loading State ============ */
+.page-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-color);
+  opacity: 0.7;
+  text-align: center;
+}
+
+.page-loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+.page-loading p {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* ============ Page Error State ============ */
+.page-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #e74c3c;
+  text-align: center;
+  background: rgba(231, 76, 60, 0.1);
+  padding: 20px;
+}
+
+.page-error p {
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.retry-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.retry-btn:hover {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
+
+/* ============ Pagination ============ */
+.pagination-container {
+  padding: 15px 20px;
+  background: var(--surface-color);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: center;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-btn {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+}
+
+/* Navigation icons styling */
+.nav-icon {
+  font-size: 16px;
+  line-height: 1;
+  display: inline-block;
+}
+
+/* Tool icons styling */
+.tool-icon {
+  font-size: 16px;
+  line-height: 1;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-input-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 10px;
+}
+
+.page-input {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 6px 10px;
+  border-radius: 4px;
+  width: 60px;
+  text-align: center;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.page-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.page-separator {
+  color: var(--text-color);
+  opacity: 0.6;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.total-pages {
+  color: var(--text-color);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* ============ Responsive Design ============ */
+@media (max-width: 768px) {
+  .toolbar {
+    padding: 8px 15px;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .toolbar-left,
+  .toolbar-center,
+  .toolbar-right {
+    flex: none;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .toolbar-center {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .tool-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .reader-content {
+    padding: 10px;
+  }
+  
+  .double-mode .page-image {
+    max-width: 48%;
+  }
+  
+  .page-pair {
+    gap: 5px;
+  }
+  
+  .title {
+    max-width: none;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbar-center {
+    display: none;
+  }
+  
+  /* 移动设备上强制使用单栏模式 */
+  .double-column {
+    flex-direction: column;
+  }
+  
+  .double-column .page-container {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .double-column .page-image {
+    max-width: 100%;
+  }
+  
+  .page-pair {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  
+  .pagination {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  
+  .page-btn {
+    padding: 6px 10px;
+    min-width: 35px;
+  }
+  
+  /* 移动端点击区域调整 */
+  .click-zone {
+    width: 40px; /* 移动端更窄 */
+    opacity: 0.3; /* 移动端稍微可见，因为没有hover */
+  }
+  
+  .click-zone:active {
+    opacity: 0.8;
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+}

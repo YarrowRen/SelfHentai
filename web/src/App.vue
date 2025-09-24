@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 import { useMomMode } from '@/composables/useMomMode'
 import ThemeToggle from '@/components/ThemeToggle.vue'
@@ -9,6 +10,14 @@ import MomModeToggle from '@/components/MomModeToggle.vue'
 const { isDark } = useTheme()
 const { initMomMode } = useMomMode()
 
+// 路由相关
+const route = useRoute()
+
+// 检测是否为阅读器页面
+const isReaderPage = computed(() => {
+  return route.path.startsWith('/reader/')
+})
+
 onMounted(() => {
   initMomMode()
 })
@@ -16,8 +25,8 @@ onMounted(() => {
 
 <template>
 
-  <!-- Navigation Bar -->
-  <div class="navigation-bar">
+  <!-- Navigation Bar (hidden on reader pages) -->
+  <div class="navigation-bar" v-show="!isReaderPage">
     <ul class="nav-menu">
       <li><a href="/">Front Page</a></li>
       <li><a href="/data">Data Analys</a></li>

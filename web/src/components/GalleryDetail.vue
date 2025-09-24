@@ -12,6 +12,10 @@
       <div :class="['category', { 'jm-category': provider === 'jm' }]">
         <span>{{ getDisplayCategory() }}</span>
       </div>
+      <button class="read-button" @click="startReading">
+        <i class="pi pi-book"></i>
+        开始阅读
+      </button>
     </div>
 
     <!-- 右侧信息 -->
@@ -436,6 +440,15 @@ export default {
       this.loadThumbnails(page);
       this.showPageJump = false;
       this.jumpToPage = page + 1;
+    },
+
+    startReading() {
+      // 跳转到阅读器界面
+      if (this.provider === 'ex' && this.galleryData) {
+        this.$router.push(`/reader/${this.itemId}/${this.galleryData.token}`);
+      } else if (this.provider === 'jm') {
+        this.$router.push(`/reader/jm/${this.itemId}`);
+      }
     },
   },
   computed: {

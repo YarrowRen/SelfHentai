@@ -4,7 +4,8 @@ import SyncData from '@/components/SyncData.vue'
 import DataAnalys from '@/components/DataAnalys.vue';
 import GalleryDetail from '@/components/GalleryDetail.vue';
 import ImageViewer from '@/components/ImageViewer.vue';
-import Settings from '@/components/Settings.vue'; 
+import Settings from '@/components/Settings.vue';
+import Reader from '@/components/Reader.vue'; 
 
 const routes = [
   {
@@ -43,6 +44,18 @@ const routes = [
     path: '/gallery/:gid/:token/page/:page',  // 图片查看器路由
     name: 'ImageViewer',
     component: ImageViewer,
+    props: true,  // 将参数作为props传递给组件
+  },
+  {
+    path: '/reader/:gid/:token',  // EX 阅读器路由
+    name: 'Reader',
+    component: Reader,
+    props: true,  // 将参数作为props传递给组件
+  },
+  {
+    path: '/reader/jm/:id',  // JM 阅读器路由
+    name: 'JMReader',
+    component: Reader,
     props: true,  // 将参数作为props传递给组件
   },
 ];
