@@ -12,10 +12,6 @@
       <div :class="['category', { 'jm-category': provider === 'jm' }]">
         <span>{{ getDisplayCategory() }}</span>
       </div>
-      <button class="read-button" @click="startReading">
-        <i class="pi pi-book"></i>
-        开始阅读
-      </button>
     </div>
 
     <!-- 右侧信息 -->
@@ -46,6 +42,12 @@
               https://exhentai.org/g/{{ itemId }}/{{ galleryData.token }}
             </a>
           </li>
+          <li class="read-button-container">
+            <button class="read-button" @click="startReading">
+              <i class="pi pi-book"></i>
+              开始阅读
+            </button>
+          </li>
         </ul>
 
         <!-- JM 数据信息列表 -->
@@ -56,6 +58,12 @@
           <li><strong>Subcategory:</strong> {{ galleryData.category_sub?.title || '无' }}</li>
           <li><strong>Added:</strong> {{ formatJMDate(galleryData.addtime) }}</li>
           <li v-if="galleryData.latest_ep"><strong>Latest Episode:</strong> {{ galleryData.latest_ep }}</li>
+          <li class="read-button-container">
+            <button class="read-button" @click="startReading">
+              <i class="pi pi-book"></i>
+              开始阅读
+            </button>
+          </li>
         </ul>
 
         <Divider layout="vertical" class="!hidden md:!flex" />

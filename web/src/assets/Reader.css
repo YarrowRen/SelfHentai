@@ -69,7 +69,7 @@ body.reader-active {
   transform: translateY(-1px);
 }
 
-.title {
+.reader-title {
   font-weight: bold;
   font-size: 16px;
   max-width: 200px;
@@ -553,7 +553,7 @@ body.reader-active {
     gap: 5px;
   }
   
-  .title {
+  .reader-title {
     max-width: none;
     text-align: center;
   }

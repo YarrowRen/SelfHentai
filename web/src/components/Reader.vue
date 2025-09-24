@@ -6,7 +6,7 @@
         <button class="tool-btn" @click="goBack">
           返回
         </button>
-        <span class="title">{{ galleryTitle }}</span>
+        <span class="reader-title">{{ galleryTitle }}</span>
       </div>
       
       <div class="toolbar-center">
