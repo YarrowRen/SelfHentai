@@ -43,9 +43,8 @@
             </a>
           </li>
           <li class="read-button-container">
-            <button class="read-button" @click="startReading">
-              <i class="pi pi-book"></i>
-              开始阅读
+            <button class="read-button" @click="startTranslation">
+              开始翻译
             </button>
           </li>
         </ul>
@@ -59,9 +58,8 @@
           <li><strong>Added:</strong> {{ formatJMDate(galleryData.addtime) }}</li>
           <li v-if="galleryData.latest_ep"><strong>Latest Episode:</strong> {{ galleryData.latest_ep }}</li>
           <li class="read-button-container">
-            <button class="read-button" @click="startReading">
-              <i class="pi pi-book"></i>
-              开始阅读
+            <button class="read-button" @click="startTranslation">
+              开始翻译
             </button>
           </li>
         </ul>
@@ -173,7 +171,7 @@
         v-for="(thumb, index) in thumbnailData.thumbnails" 
         :key="index" 
         class="thumbnail-item"
-        @click="openImagePreview(thumb)"
+@click="openReader(thumb)"
       >
         <div 
           class="thumbnail-image"
@@ -431,10 +429,10 @@ export default {
       }
     },
 
-    openImagePreview(thumb) {
-      // 跳转到图片查看器页面
+    openReader(thumb) {
+      // 跳转到阅读器界面的特定页面
       if (thumb.page_number && this.galleryData) {
-        const route = `/gallery/${this.itemId}/${this.galleryData.token}/page/${thumb.page_number}`;
+        const route = `/reader/${this.itemId}/${this.galleryData.token}?page=${thumb.page_number}`;
         this.$router.push(route);
       }
     },
@@ -450,12 +448,15 @@ export default {
       this.jumpToPage = page + 1;
     },
 
-    startReading() {
-      // 跳转到阅读器界面
+    startTranslation() {
+      // 跳转到第一页的翻译界面
       if (this.provider === 'ex' && this.galleryData) {
-        this.$router.push(`/reader/${this.itemId}/${this.galleryData.token}`);
+        const route = `/gallery/${this.itemId}/${this.galleryData.token}/page/1`;
+        this.$router.push(route);
       } else if (this.provider === 'jm') {
-        this.$router.push(`/reader/jm/${this.itemId}`);
+        // JM provider translation route - assuming similar pattern
+        const route = `/gallery/jm/${this.itemId}/page/1`;
+        this.$router.push(route);
       }
     },
   },

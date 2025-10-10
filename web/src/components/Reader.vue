@@ -271,35 +271,41 @@ export default {
       if (this.viewMode === 'double') {
         const pages = [];
         
-        // 当前页
+        let firstPageNumber, secondPageNumber;
+        
+        // 无论LTR还是RTL，页面数字序列保持一致
+        firstPageNumber = this.currentPage;
+        secondPageNumber = this.currentPage + 1;
+        
+        // 第一页
         if (this.pageLoading || !this.currentPageUrl) {
           pages.push({
-            number: this.currentPage,
+            number: firstPageNumber,
             url: null,
             loading: this.pageLoading,
             error: false
           });
         } else {
           pages.push({
-            number: this.currentPage,
+            number: firstPageNumber,
             url: this.currentPageUrl,
             loading: false,
             error: false
           });
         }
         
-        // 下一页
-        if (this.currentPage < this.totalPages) {
+        // 第二页
+        if (secondPageNumber <= this.totalPages) {
           if (this.pageLoading || !this.nextPageUrl) {
             pages.push({
-              number: this.currentPage + 1,
+              number: secondPageNumber,
               url: null,
               loading: this.pageLoading,
               error: false
             });
           } else {
             pages.push({
-              number: this.currentPage + 1,
+              number: secondPageNumber,
               url: this.nextPageUrl,
               loading: false,
               error: false
@@ -317,14 +323,18 @@ export default {
       if (this.viewMode !== 'double' || !this.visiblePages.length) return [];
       
       // 双栏模式下，visiblePages最多包含两页
-      const page1 = this.visiblePages[0];
-      const page2 = this.visiblePages[1] || null;
+      const page1 = this.visiblePages[0]; // 当前页 (较小页码)
+      const page2 = this.visiblePages[1] || null; // 下一页 (较大页码)
       
       if (this.readingDirection === 'rtl') {
-        // 从右到左：右页在前，左页在后
-        return [{ left: page2, right: page1 }];
+        // RTL：CSS会用row-reverse交换显示顺序，所以：
+        // - pair.left 实际显示在右侧 → 应该是较小页码（先读）
+        // - pair.right 实际显示在左侧 → 应该是较大页码（后读）
+        return [{ left: page1, right: page2 }];
       } else {
-        // 从左到右：左页在前，右页在后
+        // LTR：正常显示顺序，所以：
+        // - pair.left 显示在左侧 → 较小页码（先读）
+        // - pair.right 显示在右侧 → 较大页码（后读）
         return [{ left: page1, right: page2 }];
       }
     }
@@ -336,6 +346,32 @@ export default {
     
     // 从localStorage恢复设置
     this.loadSettings();
+  },
+  
+  watch: {
+    '$route'(newRoute, oldRoute) {
+      // 检查是否只是页面参数变化
+      const newPage = newRoute.query.page;
+      const oldPage = oldRoute.query.page;
+      
+      if (newRoute.params.gid === oldRoute.params.gid && 
+          newRoute.params.token === oldRoute.params.token &&
+          newPage !== oldPage) {
+        // 只是页面参数变化，直接跳转到新页面
+        if (newPage && !isNaN(parseInt(newPage))) {
+          const targetPage = Math.max(1, Math.min(this.totalPages, parseInt(newPage)));
+          if (targetPage !== this.currentPage) {
+            this.currentPage = targetPage;
+            this.pageInput = targetPage;
+            this.loadCurrentPages();
+          }
+        }
+      } else {
+        // 其他参数变化，重新初始化
+        this.initializeFromRoute();
+        this.loadGalleryData();
+      }
+    }
   },
   
   mounted() {
@@ -374,6 +410,7 @@ export default {
   methods: {
     initializeFromRoute() {
       const { gid, token, id } = this.$route.params;
+      const { page } = this.$route.query;
       const path = this.$route.path;
       
       if (path.includes('/reader/jm/')) {
@@ -383,6 +420,12 @@ export default {
         this.provider = 'ex';
         this.gid = gid;
         this.token = token;
+      }
+      
+      // 设置起始页面
+      if (page && !isNaN(parseInt(page))) {
+        this.currentPage = Math.max(1, parseInt(page));
+        this.pageInput = this.currentPage;
       }
     },
     
@@ -410,8 +453,15 @@ export default {
           this.totalPages = pagesData.pages?.length || 0;
         }
         
-        this.currentPage = 1;
-        this.pageInput = 1;
+        // 如果URL没有指定页面，则默认为第1页
+        if (!this.$route.query.page) {
+          this.currentPage = 1;
+          this.pageInput = 1;
+        }
+        
+        // 确保页面号在有效范围内
+        this.currentPage = Math.max(1, Math.min(this.totalPages, this.currentPage));
+        this.pageInput = this.currentPage;
         
         // 立即加载当前页面
         await this.loadCurrentPages();
@@ -546,7 +596,15 @@ export default {
     },
     
     goBack() {
-      this.$router.go(-1);
+      // 返回到对应的画廊详情页面
+      if (this.provider === 'ex') {
+        this.$router.push(`/gallery/${this.gid}`);
+      } else if (this.provider === 'jm') {
+        this.$router.push(`/jm/${this.gid}`);
+      } else {
+        // 兜底方案：如果provider未知，使用浏览器后退
+        this.$router.go(-1);
+      }
     },
     
     previousPage() {

@@ -223,6 +223,15 @@ body.reader-active {
   flex-direction: row-reverse;
 }
 
+/* RTL模式下调整左右页面对齐方式，确保0间距 */
+.rtl-mode .double-column .page-container.left-page {
+  justify-content: flex-start; /* RTL模式下左页面内容居左对齐 */
+}
+
+.rtl-mode .double-column .page-container.right-page {
+  justify-content: flex-end; /* RTL模式下右页面内容居右对齐 */
+}
+
 /* ============ Page Container ============ */
 .page-container {
   display: flex;
