@@ -388,11 +388,82 @@
   flex-direction: column;
 }
 
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
 .results-section h4 {
-  margin: 0 0 12px 0;
+  margin: 0;
   color: var(--text-color);
   font-size: 16px;
   flex-shrink: 0;
+}
+
+/* Toggle Switch样式 */
+.toggle-switch-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-label {
+  font-size: 12px;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #bdc3c7;
+  transition: 0.3s;
+  border-radius: 20px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #3498db;
+}
+
+.toggle-switch input:focus + .toggle-slider {
+  box-shadow: 0 0 4px rgba(52, 152, 219, 0.4);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
 }
 
 .no-results {
@@ -450,6 +521,16 @@
   color: #7f8c8d;
 }
 
+.merged-badge {
+  background: #e67e22;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
 .text-content {
   display: flex;
   flex-direction: column;
@@ -485,6 +566,36 @@
   margin: 0;
   line-height: 1.4;
   color: var(--text-color);
+}
+
+.merged-details {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.merged-details summary {
+  cursor: pointer;
+  font-size: 11px;
+  color: #3498db;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.merged-details summary:hover {
+  color: #2980b9;
+}
+
+.original-text-list {
+  margin: 4px 0 0 16px;
+  padding: 0;
+}
+
+.original-text-list li {
+  font-size: 11px;
+  color: var(--text-color);
+  margin-bottom: 2px;
+  line-height: 1.3;
 }
 
 /* 状态区域 */
@@ -584,4 +695,12 @@
 
 .my-app-dark .translated-text {
   background: rgba(155, 89, 182, 0.2);
+}
+
+.my-app-dark .toggle-slider {
+  background-color: #4a5568;
+}
+
+.my-app-dark .toggle-switch input:checked + .toggle-slider {
+  background-color: #3498db;
 }

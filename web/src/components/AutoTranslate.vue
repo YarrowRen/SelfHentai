@@ -16,7 +16,7 @@
           />
           
           <!-- OCR 检测框覆盖层 -->
-          <div class="ocr-overlay" v-if="ocrResults.length > 0">
+          <div class="ocr-overlay" v-if="ocrResults.length > 0 && showTextBoxes">
             <div
               v-for="(result, index) in ocrResults"
               :key="index"
@@ -158,7 +158,16 @@
 
         <!-- OCR 结果显示 -->
         <div class="results-section">
-          <h4>识别结果 ({{ ocrResults.length }})</h4>
+          <div class="results-header">
+            <h4>识别结果 ({{ ocrResults.length }})</h4>
+            <div v-if="ocrResults.length > 0" class="toggle-switch-container">
+              <label class="toggle-switch">
+                <input type="checkbox" v-model="showTextBoxes">
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label">显示框框</span>
+            </div>
+          </div>
           
           <div v-if="ocrResults.length === 0" class="no-results">
             点击"开始OCR识别"来识别图片中的文本
@@ -175,12 +184,21 @@
               <div class="result-header">
                 <span class="result-index">{{ index + 1 }}</span>
                 <span class="confidence-score">置信度: {{ (result.confidence * 100).toFixed(1) }}%</span>
+                <span v-if="result.is_merged" class="merged-badge">合并 ({{ result.original_count }})</span>
               </div>
               
               <div class="text-content">
                 <div class="original-text">
                   <strong>原文:</strong>
                   <p>{{ result.text }}</p>
+                  <div v-if="result.is_merged && result.original_texts.length > 1" class="merged-details">
+                    <details>
+                      <summary>查看原始文本 ({{ result.original_count }})</summary>
+                      <ul class="original-text-list">
+                        <li v-for="(text, i) in result.original_texts" :key="i">{{ text }}</li>
+                      </ul>
+                    </details>
+                  </div>
                 </div>
                 
                 <div v-if="result.translation" class="translated-text">
@@ -239,6 +257,7 @@ export default {
       ocrResults: [],
       ocrProcessing: false,
       selectedTextIndex: -1,
+      showTextBoxes: true, // 默认显示矩形框
       
       // 翻译相关
       translating: false,
@@ -260,7 +279,10 @@ export default {
       
       // UI 相关
       imageScale: 1,
-      imageOffset: { x: 0, y: 0 }
+      imageOffset: { x: 0, y: 0 },
+      
+      // 响应式支持
+      windowResizeTimer: null
     }
   },
   computed: {
@@ -274,6 +296,9 @@ export default {
   },
   async mounted() {
     await this.initializeComponent()
+    
+    // 添加窗口大小变化监听器
+    window.addEventListener('resize', this.handleWindowResize)
   },
   methods: {
     async initializeComponent() {
@@ -355,6 +380,11 @@ export default {
     onImageLoad() {
       this.imageLoading = false
       this.setStatus(`第 ${this.currentPage + 1} 页加载完成`, 'success')
+      
+      // 图片加载完成后重绘矩形框
+      this.$nextTick(() => {
+        this.redrawTextBoxes()
+      })
     },
     
     onImageError() {
@@ -396,10 +426,18 @@ export default {
             text: result.text,
             confidence: result.confidence,
             bbox: result.bbox, // [x1, y1, x2, y2]
-            translation: null
+            translation: null,
+            is_merged: result.is_merged || false,
+            original_count: result.original_count || 1,
+            original_texts: result.original_texts || [result.text]
           }))
           
           this.setStatus(`OCR识别完成，识别到 ${this.ocrResults.length} 个文本区域`, 'success')
+          
+          // OCR完成后确保矩形框正确绘制
+          this.$nextTick(() => {
+            this.redrawTextBoxes()
+          })
         } else {
           this.setStatus('OCR识别失败: ' + response.data.error, 'error')
         }
@@ -453,14 +491,24 @@ export default {
     },
     
     getTextBoxStyle(bbox) {
-      if (!bbox || bbox.length !== 4) return {}
+      if (!bbox || bbox.length !== 4) return { display: 'none' }
       
       // 获取图片元素
       const imgElement = this.$refs.mangaImage
-      if (!imgElement) return {}
+      if (!imgElement) return { display: 'none' }
+      
+      // 确保图片已加载且有自然尺寸
+      if (!imgElement.naturalWidth || !imgElement.naturalHeight) {
+        return { display: 'none' }
+      }
       
       const imgRect = imgElement.getBoundingClientRect()
       const containerRect = this.$refs.imageContainer.getBoundingClientRect()
+      
+      // 检查容器是否可见
+      if (containerRect.width === 0 || containerRect.height === 0) {
+        return { display: 'none' }
+      }
       
       // 计算相对于容器的位置
       const relativeX = imgRect.left - containerRect.left
@@ -472,12 +520,19 @@ export default {
       
       const [x1, y1, x2, y2] = bbox
       
+      // 计算矩形框的位置和大小
+      const left = relativeX + x1 * scaleX
+      const top = relativeY + y1 * scaleY
+      const width = (x2 - x1) * scaleX
+      const height = (y2 - y1) * scaleY
+      
       return {
         position: 'absolute',
-        left: (relativeX + x1 * scaleX) + 'px',
-        top: (relativeY + y1 * scaleY) + 'px',
-        width: ((x2 - x1) * scaleX) + 'px',
-        height: ((y2 - y1) * scaleY) + 'px'
+        left: Math.round(left) + 'px',
+        top: Math.round(top) + 'px',
+        width: Math.round(width) + 'px',
+        height: Math.round(height) + 'px',
+        display: 'block'
       }
     },
     
@@ -509,6 +564,25 @@ export default {
       this.$router.go(-1)
     },
     
+    handleWindowResize() {
+      // 使用防抖处理，避免频繁重绘
+      if (this.windowResizeTimer) {
+        clearTimeout(this.windowResizeTimer)
+      }
+      
+      this.windowResizeTimer = setTimeout(() => {
+        this.redrawTextBoxes()
+      }, 150)
+    },
+    
+    redrawTextBoxes() {
+      // 强制重新计算矩形框位置
+      if (this.ocrResults.length > 0) {
+        // 触发Vue的重新渲染
+        this.$forceUpdate()
+      }
+    },
+    
     setStatus(message, type = 'info') {
       this.processingStatus = message
       this.statusType = type
@@ -527,6 +601,14 @@ export default {
   beforeUnmount() {
     // 清理资源
     this.ocrResults = []
+    
+    // 移除窗口大小变化监听器
+    window.removeEventListener('resize', this.handleWindowResize)
+    
+    // 清理定时器
+    if (this.windowResizeTimer) {
+      clearTimeout(this.windowResizeTimer)
+    }
   }
 }
 </script>

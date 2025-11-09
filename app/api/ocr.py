@@ -4,7 +4,8 @@ import os
 import tempfile
 import requests
 import time
-from typing import List, Dict, Any, Optional
+import math
+from typing import List, Dict, Any, Optional, Tuple
 from PIL import Image
 
 from fastapi import APIRouter, HTTPException
@@ -38,6 +39,187 @@ router = APIRouter()
 ocr_engines: Dict[str, Any] = {}
 
 
+class Rectangular:
+    """矩形类，用于碰撞检测"""
+    
+    def __init__(self, x: float, y: float, w: float, h: float):
+        self.x0 = x
+        self.y0 = y
+        self.x1 = x + w
+        self.y1 = y + h
+        self.w = w
+        self.h = h
+    
+    def collision(self, r2) -> bool:
+        """检测与另一个矩形是否碰撞"""
+        return (self.x0 < r2.x1 and self.y0 < r2.y1 and 
+                self.x1 > r2.x0 and self.y1 > r2.y0)
+    
+    def distance_to(self, other) -> float:
+        """计算到另一个矩形的距离"""
+        center1_x = (self.x0 + self.x1) / 2
+        center1_y = (self.y0 + self.y1) / 2
+        center2_x = (other.x0 + other.x1) / 2
+        center2_y = (other.y0 + other.y1) / 2
+        
+        return math.sqrt((center1_x - center2_x)**2 + (center1_y - center2_y)**2)
+    
+    def expand(self, expand_ratio: float = 1.5):
+        """扩展矩形区域"""
+        expand_w = self.w * expand_ratio - self.w
+        expand_h = self.h * expand_ratio - self.h
+        
+        return Rectangular(
+            self.x0 - expand_w / 2,
+            self.y0 - expand_h / 2,
+            self.w + expand_w,
+            self.h + expand_h
+        )
+
+
+class DialogMerger:
+    """对话框合并器"""
+    
+    def __init__(self, expand_ratio: float = 1.3, max_distance: float = 50.0, min_group_size: int = 2):
+        self.expand_ratio = expand_ratio
+        self.max_distance = max_distance
+        self.min_group_size = min_group_size
+    
+    @staticmethod
+    def bbox_to_rect(bbox: List[float]) -> Rectangular:
+        """将bbox [x1, y1, x2, y2] 转换为矩形对象"""
+        x1, y1, x2, y2 = bbox
+        return Rectangular(x1, y1, x2 - x1, y2 - y1)
+    
+    def _find_nearby_texts(self, rect: Rectangular, all_rects: List[Tuple[Rectangular, int]], 
+                          used_indices: set) -> List[int]:
+        """查找附近的文本框"""
+        nearby_indices = []
+        expanded_rect = rect.expand(expand_ratio=self.expand_ratio)
+        
+        for other_rect, original_index in all_rects:
+            if original_index in used_indices:
+                continue
+            
+            # 优先考虑重叠
+            if expanded_rect.collision(other_rect):
+                nearby_indices.append(original_index)
+            elif rect.distance_to(other_rect) <= self.max_distance:
+                nearby_indices.append(original_index)
+        
+        return nearby_indices
+    
+    def _find_connected_texts(self, current_rect: Rectangular, rectangles: List[Tuple[Rectangular, int]], 
+                            used_indices: set, current_group: List[int]):
+        """递归查找相邻的文本框"""
+        nearby_indices = self._find_nearby_texts(current_rect, rectangles, used_indices)
+        
+        for nearby_idx in nearby_indices:
+            if nearby_idx not in used_indices:
+                current_group.append(nearby_idx)
+                used_indices.add(nearby_idx)
+                
+                # 递归查找与新加入文本框相邻的文本框
+                nearby_rect = next(r for r, idx in rectangles if idx == nearby_idx)
+                self._find_connected_texts(nearby_rect, rectangles, used_indices, current_group)
+    
+    def merge_ocr_results(self, ocr_results: List[Dict]) -> List[Dict]:
+        """
+        合并OCR识别结果中的对话框
+        
+        Args:
+            ocr_results: OCR结果列表，每个元素包含text, confidence, bbox
+        
+        Returns:
+            合并后的结果列表
+        """
+        if not ocr_results:
+            return []
+        
+        logger.info(f"开始合并对话框，原始文本区域数量: {len(ocr_results)}")
+        
+        # 转换为矩形对象
+        rectangles = []
+        for i, result in enumerate(ocr_results):
+            rect = self.bbox_to_rect(result['bbox'])
+            rectangles.append((rect, i))
+        
+        # 按面积排序，从大到小处理
+        rectangles.sort(key=lambda x: x[0].w * x[0].h, reverse=True)
+        
+        # 合并逻辑
+        merged_groups = []
+        used_indices = set()
+        
+        for rect, original_index in rectangles:
+            if original_index in used_indices:
+                continue
+            
+            # 创建新的群组
+            current_group = [original_index]
+            used_indices.add(original_index)
+            
+            # 递归查找相邻的文本框
+            self._find_connected_texts(rect, rectangles, used_indices, current_group)
+            
+            # 保留所有群组
+            merged_groups.append(current_group)
+        
+        # 创建合并后的结果
+        merged_results = []
+        
+        for group_indices in merged_groups:
+            if len(group_indices) >= self.min_group_size:
+                # 对话框合并：按从右到左排序文字
+                group_data = []
+                for idx in group_indices:
+                    result = ocr_results[idx]
+                    bbox = result['bbox']
+                    center_x = (bbox[0] + bbox[2]) / 2
+                    group_data.append((idx, center_x, result))
+                
+                # 按x坐标从右到左排序（x值大的在前）
+                group_data.sort(key=lambda x: x[1], reverse=True)
+                
+                # 合并文字（用空格连接）
+                merged_text = " ".join([item[2]['text'] for item in group_data])
+                merged_confidence = sum([item[2]['confidence'] for item in group_data]) / len(group_data)
+                
+                # 计算合并后的边界框
+                all_x = [item[2]['bbox'][0] for item in group_data] + [item[2]['bbox'][2] for item in group_data]
+                all_y = [item[2]['bbox'][1] for item in group_data] + [item[2]['bbox'][3] for item in group_data]
+                
+                merged_bbox = [min(all_x), min(all_y), max(all_x), max(all_y)]
+                
+                merged_results.append({
+                    'text': merged_text,
+                    'confidence': merged_confidence,
+                    'bbox': merged_bbox,
+                    'is_merged': True,
+                    'original_count': len(group_indices),
+                    'original_texts': [item[2]['text'] for item in group_data]
+                })
+            else:
+                # 单独的文本框
+                for idx in group_indices:
+                    result = ocr_results[idx]
+                    merged_results.append({
+                        'text': result['text'],
+                        'confidence': result['confidence'],
+                        'bbox': result['bbox'],
+                        'is_merged': False,
+                        'original_count': 1,
+                        'original_texts': [result['text']]
+                    })
+        
+        # 按置信度排序
+        merged_results.sort(key=lambda x: x['confidence'], reverse=True)
+        
+        logger.info(f"对话框合并完成，生成 {len(merged_results)} 个文本区域")
+        
+        return merged_results
+
+
 class OCRRequest(BaseModel):
     image_url: str
     language: str = "ch"  # ch, en, ja, chinese_cht
@@ -62,6 +244,9 @@ class OCRResult(BaseModel):
     text: str
     confidence: float
     bbox: List[float]  # [x1, y1, x2, y2]
+    is_merged: Optional[bool] = False
+    original_count: Optional[int] = 1
+    original_texts: Optional[List[str]] = None
 
 
 class OCRResponse(BaseModel):
@@ -230,7 +415,7 @@ async def recognize_text(request: OCRRequest):
         ocr_results = ocr_engine.ocr(converted_path)
 
         # 处理OCR结果 - 新版PaddleOCR数据格式
-        results = []
+        raw_results = []
         if ocr_results and len(ocr_results) > 0:
             result_dict = ocr_results[0]
             
@@ -252,7 +437,27 @@ async def recognize_text(request: OCRRequest):
                         float(max(y_coords)),  # y2
                     ]
                     
-                    results.append(OCRResult(text=text, confidence=confidence, bbox=bbox))
+                    raw_results.append({
+                        'text': text,
+                        'confidence': confidence,
+                        'bbox': bbox
+                    })
+        
+        # 使用对话框合并器处理结果
+        dialog_merger = DialogMerger()
+        merged_results = dialog_merger.merge_ocr_results(raw_results)
+        
+        # 转换为OCRResult对象
+        results = []
+        for result in merged_results:
+            results.append(OCRResult(
+                text=result['text'],
+                confidence=result['confidence'],
+                bbox=result['bbox'],
+                is_merged=result.get('is_merged', False),
+                original_count=result.get('original_count', 1),
+                original_texts=result.get('original_texts', [result['text']])
+            ))
 
         processing_time = time.time() - start_time
         logger.info(f"OCR识别完成，识别到 {len(results)} 个文本区域，耗时 {processing_time:.2f}s")
