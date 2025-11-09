@@ -5,7 +5,8 @@ import DataAnalys from '@/components/DataAnalys.vue';
 import GalleryDetail from '@/components/GalleryDetail.vue';
 import ImageViewer from '@/components/ImageViewer.vue';
 import Settings from '@/components/Settings.vue';
-import Reader from '@/components/Reader.vue'; 
+import Reader from '@/components/Reader.vue';
+import AutoTranslate from '@/components/AutoTranslate.vue'; 
 
 const routes = [
   {
@@ -56,6 +57,18 @@ const routes = [
     path: '/reader/jm/:id',  // JM 阅读器路由
     name: 'JMReader',
     component: Reader,
+    props: true,  // 将参数作为props传递给组件
+  },
+  {
+    path: '/auto-translate/:gid/:token',  // EX 自动翻译路由
+    name: 'AutoTranslate',
+    component: AutoTranslate,
+    props: true,  // 将参数作为props传递给组件
+  },
+  {
+    path: '/auto-translate/jm/:id',  // JM 自动翻译路由
+    name: 'JMAutoTranslate',
+    component: AutoTranslate,
     props: true,  // 将参数作为props传递给组件
   },
 ];

@@ -16,9 +16,10 @@
 - 📊 **Statistics**: Comprehensive analytics with charts and quarterly reports
 
 ### 🖼️ Image Viewing & Translation
-- 📷 **Smart Screenshot**: Interactive image area selection with real-time preview
-- 👁️ **OCR Recognition**: manga-ocr powered Japanese text recognition with Apple Silicon optimization
+- 📷 **Smart Screenshot**: Interactive image area selection with real-time preview (Manual Translation)
+- 👁️ **OCR Recognition**: manga-ocr powered Japanese text recognition with Apple Silicon optimization  
 - 🌐 **AI Translation**: Professional Japanese-to-Chinese translation via Volcano Engine API
+- 🤖 **Auto Translation**: PaddleOCR-powered automatic text detection and translation workflow
 - 🔍 **Full-Image Viewer**: High-quality image viewing with pagination controls
 - 👶 **Mom Mode**: Configurable blur effects for sensitive content (20px default)
 
@@ -33,7 +34,7 @@
 ### Backend (FastAPI)
 - **Python FastAPI** with async/await support
 - **Dual Provider Support**: ExHentai and JM (18comic) integration
-- **OCR Service**: manga-ocr integration with CPU fallback for Apple Silicon
+- **Dual OCR Support**: manga-ocr (manual) + PaddleOCR (auto) with configurable parameters
 - **AI Translation**: Volcano Engine API integration with professional prompts
 - **Real-time Communication**: WebSocket for live updates
 - **Auto Backup**: Automatic metadata backup before sync operations
@@ -100,6 +101,10 @@ JM_PASSWORD=your_password
 # AI Translation (Optional)
 ARK_API_KEY=your_volcano_api_key
 
+# OCR Configuration
+MANGA_OCR_ENABLED=true    # Manual translation OCR
+PADDLE_OCR_ENABLED=true   # Auto translation OCR
+
 # Server
 PORT=5001
 ```
@@ -129,13 +134,26 @@ VITE_MOM_MODE_BLUR=20px
 
 ## 🔧 OCR & Translation Setup
 
-### manga-ocr Installation
+### OCR Engines Installation
+
+#### manga-ocr (Manual Translation)
 ```bash
-# Install manga-ocr
+# Install manga-ocr for manual screenshot translation
 pip install manga-ocr
 
 # For Apple Silicon users (if facing MPS issues)
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+```
+
+#### PaddleOCR (Auto Translation)
+```bash
+# Install PaddleOCR for automatic page translation
+pip install paddlepaddle paddleocr
+
+# For Python 3.8 users, create conda environment with Python 3.10+
+conda create -n paddleocr python=3.10
+conda activate paddleocr
+pip install paddlepaddle paddleocr
 ```
 
 ### Volcano Engine API
@@ -159,11 +177,20 @@ app/logs/
 
 ## 🎯 Key Features Deep Dive
 
-### OCR & Translation Workflow
+### OCR & Translation Workflows
+
+#### Manual Translation (Screenshot-based)
 1. **Screenshot**: Select any area of a manga page with interactive selection box
 2. **OCR**: manga-ocr automatically recognizes Japanese text with high accuracy
 3. **Translation**: Professional AI translation optimized for manga content
 4. **Results**: Edit OCR results if needed, copy translations instantly
+
+#### Auto Translation (Full-page)
+1. **Access**: Click "自动翻译" button from gallery detail page
+2. **OCR Detection**: PaddleOCR automatically detects all text regions with configurable parameters
+3. **Coordinate Overlay**: Visual text boxes drawn on detected coordinates
+4. **Batch Translation**: Translate all detected texts simultaneously
+5. **Page Navigation**: Support for full manga reading with page-by-page translation
 
 ### Mom Mode (Content Safety)
 - Configurable blur effects (5px-25px) for sensitive content
@@ -200,7 +227,7 @@ SelfHentai/
 ```
 
 ### Key Technologies
-- **Backend**: FastAPI, Python asyncio, WebSocket, manga-ocr, Volcano Engine API
+- **Backend**: FastAPI, Python asyncio, WebSocket, manga-ocr, PaddleOCR, Volcano Engine API
 - **Frontend**: Vue 3, TypeScript, Vite, PrimeVue, Canvas API
 - **Data**: JSON file storage with automatic backup
 - **Sync**: Multi-threaded concurrent processing with real-time progress
@@ -223,7 +250,8 @@ cd web && npm run build
 The application features:
 - **Gallery Browser**: Clean, organized view of your manga collection
 - **Image Viewer**: Full-screen viewing with OCR and translation tools
-- **Screenshot Tool**: Interactive area selection with real-time preview
+- **Screenshot Tool**: Interactive area selection with real-time preview (Manual Translation)
+- **Auto Translation Interface**: Full-page automatic OCR and translation workflow with coordinate overlay
 - **Translation Interface**: Professional manga text translation workflow
 - **Statistics Dashboard**: Visual analytics of your collection
 - **Sync Interface**: Real-time progress tracking with terminal-style output

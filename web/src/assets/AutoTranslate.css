@@ -1,0 +1,587 @@
+/* ============ Auto Translate Styles ============ */
+
+.auto-translate-container {
+  width: 100%;
+  height: calc(100vh - var(--nav-height, 70px));
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-color);
+  color: var(--text-color);
+  font-family: Arial, sans-serif;
+}
+
+/* 主要内容区域 */
+.main-content {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 左侧图片区域 (40%) */
+.image-section {
+  flex: 0 0 40%;
+  display: flex;
+  flex-direction: column;
+  background: #f8f9fa;
+  position: relative;
+}
+
+/* 中间功能区域 (30%) */
+.function-section {
+  flex: 0 0 30%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-color);
+  min-height: 0;
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+}
+
+/* 强制重置所有margin */
+.auto-translate-container * {
+  box-sizing: border-box;
+}
+
+.auto-translate-container .function-section * {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.image-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+}
+
+.manga-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  user-select: none;
+}
+
+/* OCR 覆盖层 */
+.ocr-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.text-box {
+  position: absolute;
+  border: 2px solid #e74c3c;
+  background: rgba(231, 76, 60, 0.2);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.3s ease;
+}
+
+.text-box:hover {
+  background: rgba(231, 76, 60, 0.3);
+  border-color: #c0392b;
+  box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+}
+
+.text-box.active {
+  border-color: #f39c12;
+  background: rgba(243, 156, 18, 0.3);
+  box-shadow: 0 0 15px rgba(243, 156, 18, 0.7);
+}
+
+/* 加载覆盖层 */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 页面导航样式 */
+.page-navigation {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.page-controls-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.page-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.page-input {
+  width: 60px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--surface-color);
+  color: var(--text-color);
+  font-size: 14px;
+  text-align: center;
+}
+
+.page-total {
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.page-btn {
+  background: var(--primary-color, #3498db);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: 80px;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.page-btn:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.jump-btn {
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.jump-btn:hover {
+  background: #229954;
+}
+
+/* 右侧结果区域 (30%) */
+.results-section-wrapper {
+  flex: 0 0 30%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-color);
+  min-height: 0;
+}
+
+/* OCR控制区域样式调整 */
+.ocr-controls {
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.ocr-button-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+/* 控制面板 */
+.auto-translate-container .control-panel {
+  padding: 15px 16px !important;
+  margin: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+.auto-translate-container .control-panel h3 {
+  margin: 0 0 15px 0;
+  color: var(--text-color);
+  font-size: 18px;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.action-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.ocr-button-row .action-btn {
+  flex: 1;
+  min-width: 0;
+}
+
+.back-btn {
+  background: #95a5a6;
+  color: white;
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.back-btn:hover:not(:disabled) {
+  background: #7f8c8d;
+}
+
+.ocr-btn {
+  background: #27ae60;
+  color: white;
+}
+
+.ocr-btn:hover:not(:disabled) {
+  background: #229954;
+}
+
+.translate-btn {
+  background: #8e44ad;
+  color: white;
+}
+
+.translate-btn:hover:not(:disabled) {
+  background: #7d3c98;
+}
+
+.action-btn:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* 语言选择器 */
+.language-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.language-selector .arrow {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--text-color);
+}
+
+.language-select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--surface-color);
+  color: var(--text-color);
+  font-size: 12px;
+}
+
+/* 高级参数 */
+.advanced-params {
+  margin-top: 10px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.advanced-params h5 {
+  margin: 0 0 8px 0;
+  color: var(--text-color);
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.param-row {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+}
+
+.param-row:last-child {
+  margin-bottom: 0;
+}
+
+.param-row label {
+  font-size: 11px;
+  color: var(--text-color);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.param-select, .param-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--surface-color);
+  color: var(--text-color);
+  font-size: 11px;
+}
+
+.param-input[type="number"] {
+  text-align: right;
+}
+
+/* 结果区域 */
+.results-section {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.results-section h4 {
+  margin: 0 0 12px 0;
+  color: var(--text-color);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.no-results {
+  text-align: center;
+  color: #7f8c8d;
+  font-style: italic;
+  padding: 40px 20px;
+}
+
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.result-item {
+  background: var(--card-background, #fff);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.result-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-color, #3498db);
+}
+
+.result-item.active {
+  border-color: #f39c12;
+  box-shadow: 0 0 10px rgba(243, 156, 18, 0.3);
+  background: rgba(243, 156, 18, 0.05);
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.result-index {
+  background: var(--primary-color, #3498db);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.confidence-score {
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+.text-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.original-text,
+.translated-text {
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.original-text {
+  background: rgba(52, 152, 219, 0.1);
+  border-left: 3px solid #3498db;
+}
+
+.translated-text {
+  background: rgba(155, 89, 182, 0.1);
+  border-left: 3px solid #9b59b6;
+}
+
+.original-text strong,
+.translated-text strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--text-color);
+}
+
+.original-text p,
+.translated-text p {
+  margin: 0;
+  line-height: 1.4;
+  color: var(--text-color);
+}
+
+/* 状态区域 */
+.status-section {
+  padding: 15px;
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.status-section h4 {
+  margin: 0 0 8px 0;
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.status-message {
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.status-message.info {
+  background: rgba(52, 152, 219, 0.1);
+  color: #2980b9;
+  border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.status-message.success {
+  background: rgba(39, 174, 96, 0.1);
+  color: #27ae60;
+  border: 1px solid rgba(39, 174, 96, 0.3);
+}
+
+.status-message.error {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+  }
+  
+  .image-section {
+    flex: 0 0 40%;
+  }
+  
+  .function-section {
+    flex: 0 0 35%;
+  }
+  
+  .results-section-wrapper {
+    flex: 0 0 25%;
+  }
+  
+  .control-panel h3 {
+    font-size: 16px;
+  }
+  
+  .page-controls-row {
+    gap: 5px;
+  }
+  
+  .page-input-row {
+    gap: 5px;
+  }
+  
+  .ocr-button-row {
+    gap: 5px;
+  }
+  
+  .language-selector {
+    gap: 5px;
+  }
+}
+
+/* 深色模式支持 */
+.my-app-dark .image-section {
+  background: #1a1a1a;
+}
+
+.my-app-dark .control-section {
+  background: var(--surface-color);
+}
+
+.my-app-dark .result-item {
+  background: var(--card-background, #2d3748);
+  border-color: var(--border-color);
+}
+
+.my-app-dark .original-text {
+  background: rgba(52, 152, 219, 0.2);
+}
+
+.my-app-dark .translated-text {
+  background: rgba(155, 89, 182, 0.2);
+}

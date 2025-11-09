@@ -30,6 +30,8 @@ python-multipart==0.0.6
 # OCR Dependencies
 manga-ocr==0.1.11
 pillow==10.1.0
+paddlepaddle==3.0.0
+paddleocr==2.8.1
 
 # TensorFlow Dependencies (compatible versions for manga-ocr)
 tensorflow==2.13.1

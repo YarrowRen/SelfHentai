@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 main_event_loop = asyncio.get_event_loop()
 
 from api import websocket  # 导入 websocket 路由
-from api import gallery, root, settings
+from api import gallery, root, settings, ocr
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.logger import get_logger
@@ -24,19 +24,19 @@ async def lifespan(app: FastAPI):
         else:
             continue
     
-    # 初始化 OCR 服务（基于配置决定是否启用）
+    # 初始化 Manga OCR 服务（手动翻译功能）
     try:
         from core.config import settings
-        if settings.OCR_ENABLED:
+        if settings.MANGA_OCR_ENABLED:
             from services.ocr_service import ocr_service
             logger.info("正在加载 manga-ocr 模型，这可能需要一些时间...")
             ocr_service.load_model()
             logger.info("manga-ocr 模型加载完成！")
         else:
-            logger.info("OCR 服务已禁用（OCR_ENABLED=false），跳过模型加载")
+            logger.info("Manga OCR 服务已禁用（MANGA_OCR_ENABLED=false），跳过模型加载")
     except Exception as e:
-        logger.error(f"OCR 模型加载失败: {str(e)}")
-        logger.warning("OCR 功能将不可用，但应用会继续运行")
+        logger.error(f"Manga OCR 模型加载失败: {str(e)}")
+        logger.warning("手动翻译 OCR 功能将不可用，但应用会继续运行")
     
     # 初始化翻译服务
     try:
@@ -70,4 +70,5 @@ app.add_middleware(
 app.include_router(root.router)
 app.include_router(gallery.router, prefix="/api/gallery", tags=["Gallery"])
 app.include_router(settings.router, prefix="/api/settings", tags=["Settings"])
+app.include_router(ocr.router, prefix="/api/ocr", tags=["OCR"])
 app.include_router(websocket.router)

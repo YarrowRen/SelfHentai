@@ -345,6 +345,107 @@ def proxy_ex_image(url: str):
         raise HTTPException(status_code=500, detail=f"代理图片请求失败: {str(e)}")
 
 
+@router.get("/ex/{gid}/{token}/image/{page}")
+def get_ex_manga_page_image(gid: str, token: str, page: int):
+    """
+    EX：获取漫画页面图片（用于自动翻译）
+    """
+    from fastapi.responses import StreamingResponse
+    import requests
+    from core.config import settings
+    from utils.exhentai_utils import ExHentaiUtils
+
+    # 检查配置
+    if not all([
+        getattr(settings, "EXHENTAI_COOKIE_MEMBER_ID", None),
+        getattr(settings, "EXHENTAI_COOKIE_PASS_HASH", None),
+        getattr(settings, "EXHENTAI_COOKIE_IGNEOUS", None),
+    ]):
+        raise HTTPException(status_code=503, detail="ExHentai 认证信息未配置")
+
+    cookies = {
+        "ipb_member_id": settings.EXHENTAI_COOKIE_MEMBER_ID,
+        "ipb_pass_hash": settings.EXHENTAI_COOKIE_PASS_HASH,
+        "igneous": settings.EXHENTAI_COOKIE_IGNEOUS,
+    }
+
+    try:
+        # 首先获取完整图片信息
+        utils = ExHentaiUtils("https://exhentai.org/favorites.php", cookies)
+        image_info = utils.fetch_full_image(gid, token, page)
+        
+        if "error" in image_info:
+            raise HTTPException(status_code=500, detail=image_info["error"])
+        
+        image_url = image_info.get("image_url")
+        if not image_url:
+            raise HTTPException(status_code=404, detail="图片URL未找到")
+
+        # 代理图片请求
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Referer": "https://exhentai.org/",
+        }
+
+        response = requests.get(image_url, cookies=cookies, headers=headers, stream=True, timeout=30)
+        response.raise_for_status()
+
+        def generate():
+            for chunk in response.iter_content(chunk_size=8192):
+                yield chunk
+
+        return StreamingResponse(
+            generate(),
+            media_type=response.headers.get("content-type", "image/jpeg"),
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Cache-Control": "public, max-age=3600",
+            }
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取图片失败: {str(e)}")
+
+
+@router.get("/jm/{id}/image/{page}")
+def get_jm_manga_page_image(id: str, page: int):
+    """
+    JM：获取漫画页面图片（用于自动翻译）
+    """
+    from fastapi.responses import StreamingResponse
+    import requests
+    from core.config import settings
+
+    try:
+        # JM的图片URL格式（需要根据实际API调整）
+        # 这里是示例，需要根据JM的实际图片获取逻辑调整
+        image_url = f"https://cdn-msp.18comic.vip/media/photos/{id}/{page:05d}.jpg"
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Referer": "https://18comic.vip/",
+        }
+
+        response = requests.get(image_url, headers=headers, stream=True, timeout=30)
+        response.raise_for_status()
+
+        def generate():
+            for chunk in response.iter_content(chunk_size=8192):
+                yield chunk
+
+        return StreamingResponse(
+            generate(),
+            media_type=response.headers.get("content-type", "image/jpeg"),
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Cache-Control": "public, max-age=3600",
+            }
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取JM图片失败: {str(e)}")
+
+
 @router.post("/ocr")
 def perform_ocr_recognition(image_data: dict):
     """
@@ -359,9 +460,9 @@ def perform_ocr_recognition(image_data: dict):
     try:
         from core.config import settings
 
-        # 检查OCR服务是否启用
-        if not settings.OCR_ENABLED:
-            raise HTTPException(status_code=503, detail="OCR服务已禁用，请在设置中启用 OCR_ENABLED 选项")
+        # 检查Manga OCR服务是否启用
+        if not settings.MANGA_OCR_ENABLED:
+            raise HTTPException(status_code=503, detail="Manga OCR服务已禁用，请在设置中启用 MANGA_OCR_ENABLED 选项")
 
         from services.ocr_service import ocr_service
 

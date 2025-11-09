@@ -46,6 +46,9 @@
             <button class="read-button" @click="startTranslation">
               开始翻译
             </button>
+            <button class="auto-translate-button" @click="startAutoTranslation">
+              自动翻译
+            </button>
           </li>
         </ul>
 
@@ -60,6 +63,9 @@
           <li class="read-button-container">
             <button class="read-button" @click="startTranslation">
               开始翻译
+            </button>
+            <button class="auto-translate-button" @click="startAutoTranslation">
+              自动翻译
             </button>
           </li>
         </ul>
@@ -456,6 +462,17 @@ export default {
       } else if (this.provider === 'jm') {
         // JM provider translation route - assuming similar pattern
         const route = `/gallery/jm/${this.itemId}/page/1`;
+        this.$router.push(route);
+      }
+    },
+
+    startAutoTranslation() {
+      // 跳转到自动翻译界面
+      if (this.provider === 'ex' && this.galleryData) {
+        const route = `/auto-translate/${this.itemId}/${this.galleryData.token}`;
+        this.$router.push(route);
+      } else if (this.provider === 'jm') {
+        const route = `/auto-translate/jm/${this.itemId}`;
         this.$router.push(route);
       }
     },

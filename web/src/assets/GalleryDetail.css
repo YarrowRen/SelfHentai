@@ -70,6 +70,13 @@
   background: #e74c3c;
 }
 
+/* 按钮容器 */
+.read-button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* 阅读按钮 */
 .read-button {
   background: #27ae60;
@@ -80,7 +87,6 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: bold;
-  margin-top: 10px;
   width: 100%;
   display: flex;
   align-items: center;
@@ -97,6 +103,35 @@
 }
 
 .read-button:active {
+  transform: translateY(0);
+}
+
+/* 自动翻译按钮 */
+.auto-translate-button {
+  background: #9b59b6;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.auto-translate-button:hover {
+  background: #8e44ad;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.auto-translate-button:active {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
