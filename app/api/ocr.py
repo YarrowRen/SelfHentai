@@ -80,7 +80,7 @@ class Rectangular:
 class DialogMerger:
     """对话框合并器"""
     
-    def __init__(self, expand_ratio: float = 1.3, max_distance: float = 50.0, min_group_size: int = 2):
+    def __init__(self, expand_ratio: float = 1.2, max_distance: float = 30.0, min_group_size: int = 2):
         self.expand_ratio = expand_ratio
         self.max_distance = max_distance
         self.min_group_size = min_group_size
@@ -447,9 +447,23 @@ async def recognize_text(request: OCRRequest):
         dialog_merger = DialogMerger()
         merged_results = dialog_merger.merge_ocr_results(raw_results)
         
+        # 按漫画阅读顺序排序（右到左，上到下）
+        def sort_manga_reading_order(result):
+            bbox = result['bbox']  # [x1, y1, x2, y2]
+            
+            # 使用右上角坐标作为排序基准
+            right_x = bbox[2]  # x2 (右边界)
+            top_y = bbox[1]    # y1 (上边界)
+            
+            # 排序键：(y坐标, -x坐标)
+            # y坐标越小越靠前（从上到下），x坐标越大越靠前（从右到左）
+            return (top_y, -right_x)
+        
+        sorted_merged_results = sorted(merged_results, key=sort_manga_reading_order)
+        
         # 转换为OCRResult对象
         results = []
-        for result in merged_results:
+        for result in sorted_merged_results:
             results.append(OCRResult(
                 text=result['text'],
                 confidence=result['confidence'],
@@ -497,37 +511,198 @@ def map_language_code(lang_code: str, to_translation_service: bool = True):
         return translation_to_ocr.get(lang_code, lang_code)
 
 
+async def translate_japanese_to_chinese_batch(texts: List[str]) -> List[str]:
+    """
+    日译中专用批量翻译函数
+    """
+    import json
+    try:
+        from services.translation_service import translation_service
+        
+        # 构造输入JSON格式
+        input_data = {str(i + 1): text for i, text in enumerate(texts)}
+        
+        # 构造日译中专用prompt
+        manga_translation_prompt = """**你的身份**
+
+* 你是"日→中漫画翻译 agent"。你的唯一目标：在理解语境的前提下，把可能含有 OCR 错误的日文文本**纠正后**准确翻译为自然流畅的**简体中文**。
+* 不进行创作与删改，不做剧透或点评，不自行审查或弱化用词；只做纠错与忠实翻译。若平台政策必须约束内容，请在不改变核心意义的前提下采用中性表达，而非删减。
+
+---
+
+## **输入格式（用户给你的内容）**
+
+用户输入一定是一个只有日文文本内容的 JSON：
+
+```json
+{
+  "1": "日文文本1",
+  "2": "日文文本2",
+  "3": "..."
+}
+```
+
+键为id顺序，无语义。值为漫画 OCR 文本，可能有错误。
+
+---
+
+## **输出格式（你必须返回）**
+
+只返回对应中文的 JSON（值为最终译文），注意要保持id顺序以及匹配：
+
+```json
+{
+  "1": "中文翻译1",
+  "2": "中文翻译2"
+}
+```
+
+
+## 翻译流程（必须逐步执行，但不要在输出中显式展现步骤）
+
+1. **纠错清洗**
+   * 修正 OCR 常见错误：长音、假名/片假名混淆、助词误读、汉字近形、符号错位等。
+   * 根据上下文补齐省略，恢复自然语序。
+   * 合并同气泡断行，分离不同文本块。
+
+2. **语境判定**
+   * 判别对白、独白、旁白、拟声词（SFX）、招牌/界面文字。
+   * 推断角色语气（尊敬/随意/粗口/撒娇/吐槽等）。
+
+3. **术语与称谓**
+   * 保持人名、地名、专有名词统一。
+   * 敬称映射：
+     * さん → "先生/小姐/同学"等
+     * ちゃん → "小X/—酱"
+     * くん → "同学/君"
+     * 様 → "大人/阁下/您"
+     * 先輩 → "前辈"，先生 → "老师"
+   * 第一/二人称根据语境自然化。
+
+4. **翻译策略**
+   * 忠实准确，中文口语自然。
+   * 保持粗口、俚语力度，避免弱化。
+   * 双关/梗：保留笑点，必要时加【译注】（≤20字）。
+   * 标点：使用中文全角，省略号统一"……"。
+
+5. **拟声词（SFX）**
+   * 画面拟声词采用双轨：`原文（中文释义）`，如 `ドン（砰！）`。
+   * 若与剧情强相关，可加【译注】。
+
+6. **不确定性**
+   * 模糊/多解：给出最自然的译文，并在行尾加 `〔? 备选：…〕`。
+   * 难辨字符用 `□` 占位，并附猜测。
+
+7. **一致性与校对**
+   * 统一译名、称谓、标点。
+   * 保持角色口吻前后一致。
+
+---
+
+## 输出要求（纯中文模式）
+
+* 仅输出中文译文，按输入**输出格式**要求严格输出标准json格式。
+* 拟声词用 `原文（中文释义）` 格式。
+* 必要的【译注】直接写在行尾。
+* 不输出原文，不输出纠错过程，不输出说明，只输出翻译后内容的json格式结果。
+
+---
+
+请翻译以下日文文本内容：
+
+""" + json.dumps(input_data, ensure_ascii=False)
+        
+        # 调用翻译服务
+        logger.info(f"开始日译中翻译，文本数量: {len(texts)}")
+        result = translation_service.translate_batch_with_prompt(manga_translation_prompt)
+        
+        # 检查翻译是否成功
+        if not result.get("success", False):
+            error_msg = result.get("error", "翻译服务调用失败")
+            logger.error(f"翻译服务调用失败: {error_msg}")
+            return texts  # 返回原文
+        
+        # 解析返回的JSON结果
+        translation_text = result.get("translation", "{}")
+        
+        try:
+            # 清理响应文本，移除可能的markdown代码块标记
+            cleaned_text = translation_text.strip()
+            if cleaned_text.startswith('```json'):
+                cleaned_text = cleaned_text.replace('```json', '').replace('```', '').strip()
+            elif cleaned_text.startswith('```'):
+                cleaned_text = cleaned_text.replace('```', '').strip()
+            
+            # 尝试解析JSON响应
+            translation_json = json.loads(cleaned_text)
+            
+            # 按顺序提取翻译结果
+            translations = []
+            for i in range(len(texts)):
+                key = str(i + 1)
+                translation = translation_json.get(key, texts[i])  # 如果没有对应翻译，使用原文
+                translations.append(translation)
+            
+            logger.info(f"日译中翻译完成，成功翻译 {len(translations)} 个文本")
+            return translations
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"解析翻译结果JSON失败: {e}, 原始响应: {translation_text}")
+            # JSON解析失败，尝试提取可能的JSON内容
+            try:
+                # 寻找JSON结构
+                start_idx = translation_text.find('{')
+                end_idx = translation_text.rfind('}') + 1
+                if start_idx >= 0 and end_idx > start_idx:
+                    json_part = translation_text[start_idx:end_idx]
+                    translation_json = json.loads(json_part)
+                    
+                    translations = []
+                    for i in range(len(texts)):
+                        key = str(i + 1)
+                        translation = translation_json.get(key, texts[i])
+                        translations.append(translation)
+                    
+                    logger.info(f"从响应中提取JSON成功，翻译 {len(translations)} 个文本")
+                    return translations
+            except:
+                pass
+            
+            # 完全解析失败，返回原文
+            return texts
+            
+    except Exception as e:
+        logger.error(f"日译中翻译失败: {e}")
+        return texts
+
+
 @router.post("/translate/batch")
 async def translate_batch(request: BatchTranslateRequest):
     """
     批量翻译文本（集成现有翻译服务）
     """
     try:
-        from services.translation_service import translation_service
-
-        # 映射语言代码到翻译服务
-        source_lang = map_language_code(request.source_language, True)
-        target_lang = map_language_code(request.target_language, True)
-
-        if not hasattr(translation_service, "translate_batch"):
-            # 如果没有批量翻译方法，使用单个翻译
-            translations = []
-            for text in request.texts:
-                try:
-                    result = translation_service.translate_text(text, source_lang=source_lang, target_lang=target_lang)
-                    translations.append(result.get("translation", text))
-                except Exception as e:
-                    logger.warning(f"翻译失败 '{text}': {e}")
-                    translations.append(text)  # 翻译失败时返回原文
-        else:
-            # 使用批量翻译方法
-            translations = translation_service.translate_batch(request.texts, source_lang=source_lang, target_lang=target_lang)
-
+        # 检查是否为日译中场景
+        if request.source_language == "japan" and request.target_language == "zh":
+            logger.info("检测到日译中翻译请求，使用专用prompt")
+            translations = await translate_japanese_to_chinese_batch(request.texts)
+            
+            return {
+                "success": True,
+                "translations": translations,
+                "source_language": request.source_language,
+                "target_language": request.target_language,
+                "translation_method": "japanese_manga_prompt"
+            }
+        
+        # 其他语言组合暂时返回原文（待后续实现）
+        logger.info(f"暂不支持 {request.source_language} → {request.target_language} 翻译，返回原文")
         return {
             "success": True,
-            "translations": translations,
+            "translations": request.texts,  # 直接返回原文
             "source_language": request.source_language,
             "target_language": request.target_language,
+            "translation_method": "passthrough"
         }
 
     except ImportError:

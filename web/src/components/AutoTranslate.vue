@@ -474,7 +474,17 @@ export default {
             }
           })
           
-          this.setStatus('翻译完成', 'success')
+          // 根据翻译方法显示不同的成功消息
+          const translationMethod = response.data.translation_method
+          let successMessage = '翻译完成'
+          
+          if (translationMethod === 'japanese_manga_prompt') {
+            successMessage = '日译中翻译完成（使用漫画专用模型）'
+          } else if (translationMethod === 'passthrough') {
+            successMessage = '暂不支持该语言组合，显示原文'
+          }
+          
+          this.setStatus(successMessage, 'success')
         } else {
           this.setStatus('翻译失败: ' + response.data.error, 'error')
         }

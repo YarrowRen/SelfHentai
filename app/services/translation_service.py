@@ -160,6 +160,52 @@ class TranslationService:
             logger.error(f"翻译请求失败: {str(e)}")
             return {"success": False, "translation": "", "error": f"翻译失败: {str(e)}"}
 
+    def translate_batch_with_prompt(self, prompt_text: str) -> dict:
+        """
+        使用自定义prompt进行翻译
+        
+        Args:
+            prompt_text: 完整的prompt文本（包括待翻译内容）
+            
+        Returns:
+            {"success": bool, "translation": str, "error": str}
+        """
+        if not self.is_initialized:
+            error_msg = "翻译服务未初始化"
+            logger.error(error_msg)
+            return {"success": False, "translation": "", "error": error_msg}
+
+        try:
+            logger.info("开始使用自定义prompt翻译")
+
+            # 构建消息
+            messages = [
+                {"role": "user", "content": prompt_text}
+            ]
+
+            # 调用 API
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                temperature=0.3,  # 更低的温度确保格式化输出的一致性
+                max_tokens=4000,  # 增加token限制以支持批量翻译
+            )
+
+            # 提取翻译结果
+            if response.choices and len(response.choices) > 0:
+                translation = response.choices[0].message.content.strip()
+
+                logger.info(f"自定义prompt翻译完成，结果长度: {len(translation)}")
+
+                return {"success": True, "translation": translation, "error": ""}
+            else:
+                logger.error("API 响应中没有翻译结果")
+                return {"success": False, "translation": "", "error": "API 响应格式错误"}
+
+        except Exception as e:
+            logger.error(f"自定义prompt翻译请求失败: {str(e)}")
+            return {"success": False, "translation": "", "error": f"翻译失败: {str(e)}"}
+
     def get_status(self) -> dict:
         """获取翻译服务状态"""
         return {
