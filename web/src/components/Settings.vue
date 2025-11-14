@@ -53,59 +53,6 @@
         </div>
       </div>
 
-      <!-- JM配置区域 -->
-      <div class="config-section">
-        <h2 class="section-title">
-          JM Configuration
-        </h2>
-        
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="jmUsername">Username</label>
-            <input 
-              v-model="config.JM_USERNAME"
-              id="jmUsername"
-              type="text"
-              class="form-input"
-              placeholder="输入你的JM用户名"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="jmPassword">Password</label>
-            <input 
-              v-model="config.JM_PASSWORD"
-              id="jmPassword"
-              type="password"
-              class="form-input"
-              placeholder="输入你的JM密码"
-            />
-          </div>
-
-          <div class="form-group full-width">
-            <label for="jmVersion">App Version</label>
-            <input 
-              v-model="config.JM_APP_VERSION"
-              id="jmVersion"
-              type="text"
-              class="form-input"
-              placeholder="JM App版本号 (默认: 1.8.0)"
-            />
-          </div>
-
-          <div class="form-group full-width">
-            <label for="jmApiBases">API Base URLs</label>
-            <textarea 
-              v-model="apiBasesText"
-              id="jmApiBases"
-              class="form-textarea"
-              rows="4"
-              placeholder="输入API域名，每行一个"
-            ></textarea>
-            <small class="form-hint">每行输入一个API域名</small>
-          </div>
-        </div>
-      </div>
 
       <!-- AI翻译配置区域 -->
       <div class="config-section">
@@ -227,10 +174,6 @@ const config = ref({
   EXHENTAI_COOKIE_MEMBER_ID: '',
   EXHENTAI_COOKIE_PASS_HASH: '',
   EXHENTAI_COOKIE_IGNEOUS: '',
-  JM_USERNAME: '',
-  JM_PASSWORD: '',
-  JM_APP_VERSION: '1.8.0',
-  JM_API_BASES: [],
   // AI翻译配置
   TRANSLATION_PROVIDER: 'volcano',
   TRANSLATION_BASE_URL: 'https://ark.cn-beijing.volces.com/api/v3',
@@ -248,13 +191,6 @@ const loading = ref(false)
 const message = ref('')
 const messageType = ref('info') // info, success, error
 
-// API Base URLs 的文本表示
-const apiBasesText = computed({
-  get: () => config.value.JM_API_BASES.join('\n'),
-  set: (value) => {
-    config.value.JM_API_BASES = value.split('\n').filter(url => url.trim())
-  }
-})
 
 // 检测是否有变更
 const hasChanges = computed(() => {

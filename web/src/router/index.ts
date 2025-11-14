@@ -30,14 +30,8 @@ const routes = [
     component: Settings,
   },
   {
-    path: '/gallery/:gid',  // EX 动态路由
+    path: '/gallery/:gid',  // ExHentai 动态路由
     name: 'GalleryDetail',
-    component: GalleryDetail,
-    props: true,  // 将参数作为props传递给组件
-  },
-  {
-    path: '/jm/:id',  // JM 动态路由
-    name: 'JMGalleryDetail',
     component: GalleryDetail,
     props: true,  // 将参数作为props传递给组件
   },
@@ -48,26 +42,14 @@ const routes = [
     props: true,  // 将参数作为props传递给组件
   },
   {
-    path: '/reader/:gid/:token',  // EX 阅读器路由
+    path: '/reader/:gid/:token',  // ExHentai 阅读器路由
     name: 'Reader',
     component: Reader,
     props: true,  // 将参数作为props传递给组件
   },
   {
-    path: '/reader/jm/:id',  // JM 阅读器路由
-    name: 'JMReader',
-    component: Reader,
-    props: true,  // 将参数作为props传递给组件
-  },
-  {
-    path: '/auto-translate/:gid/:token',  // EX 自动翻译路由
+    path: '/auto-translate/:gid/:token',  // ExHentai 自动翻译路由
     name: 'AutoTranslate',
-    component: AutoTranslate,
-    props: true,  // 将参数作为props传递给组件
-  },
-  {
-    path: '/auto-translate/jm/:id',  // JM 自动翻译路由
-    name: 'JMAutoTranslate',
     component: AutoTranslate,
     props: true,  // 将参数作为props传递给组件
   },

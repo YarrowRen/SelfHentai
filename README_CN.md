@@ -2,7 +2,7 @@
 
 中文版 | [English README](./README.md)
 
-📚 **SelfHentai**: 一个支持 ExHentai 和 JM (18comic) 平台的自托管漫画收藏管理器，集成 OCR 和 AI 翻译功能。
+📚 **SelfHentai**: 专门针对 ExHentai 平台的自托管漫画收藏管理器，集成 OCR 和 AI 翻译功能。
 
 ---
 
@@ -11,7 +11,7 @@
 ### 📚 收藏管理
 - 🖼️ **浏览与搜索**: 查看您的漫画收藏，包含标题、标签、分类、评分等信息
 - 🔍 **高级过滤**: 关键词搜索、分类过滤和分页浏览
-- 🔁 **一键同步**: 自动同步 ExHentai 和 JM 收藏，支持元数据备份
+- 🔁 **一键同步**: 自动同步 ExHentai 收藏，支持元数据备份
 - 🏷️ **标签翻译**: 支持中英文标签识别和翻译
 - 📊 **数据统计**: 全面的数据分析，包含图表和季度报告
 
@@ -24,7 +24,7 @@
 
 ### 🎨 用户体验
 - 🎨 **双主题**: 深色和浅色模式支持，平滑过渡效果
-- ⚙️ **网页配置**: 通过网页界面轻松设置 ExHentai/JM 凭据
+- ⚙️ **网页配置**: 通过网页界面轻松设置 ExHentai 凭据
 - 🔄 **实时更新**: WebSocket 驱动的实时同步进度跟踪
 - 📱 **响应式设计**: 移动端友好界面，支持触摸操作
 
@@ -32,7 +32,7 @@
 
 ### 后端 (FastAPI)
 - **Python FastAPI** 支持 async/await
-- **双平台支持**: ExHentai 和 JM (18comic) 集成
+- **ExHentai 平台**: 专门针对 ExHentai 平台的深度集成
 - **OCR 服务**: manga-ocr 集成，Apple Silicon CPU 回退
 - **AI 翻译**: API 集成，专业提示词
 - **实时通信**: WebSocket 实时更新
@@ -53,7 +53,6 @@
 - **Python 3.8+**
 - **Node.js 16+**
 - **ExHentai/E-Hentai 账户** （用于 ExHentai 同步）
-- **JM 账户** （用于 18comic 同步）
 - **火山引擎 API Key** （用于 AI 翻译，可选）
 
 ### 后端设置
@@ -78,7 +77,7 @@ npm run dev
 
 ### 配置
 1. 访问 `http://localhost:5173/settings`
-2. 配置您的 ExHentai cookies 和/或 JM 凭据
+2. 配置您的 ExHentai cookies
 3. 测试连接并保存设置
 4. 开始同步您的收藏！
 
@@ -92,10 +91,6 @@ npm run dev
 EXHENTAI_COOKIE_MEMBER_ID=你的member_id
 EXHENTAI_COOKIE_PASS_HASH=你的pass_hash
 EXHENTAI_COOKIE_IGNEOUS=你的igneous
-
-# JM 配置
-JM_USERNAME=你的用户名
-JM_PASSWORD=你的密码
 
 # AI 翻译（可选）
 ARK_API_KEY=你的火山引擎api_key
@@ -121,12 +116,6 @@ VITE_MOM_MODE_BLUR=20px
 - **Pass Hash**: 从 cookies 获取的 ExHentai pass hash
 - **Igneous**: igneous cookie（可选，用于增强访问）
 
-#### JM (18comic) 设置
-- **用户名**: 您的 JM 账户用户名
-- **密码**: 您的 JM 账户密码
-- **App 版本**: JM app 版本（默认: 1.8.0）
-- **API 端点**: 多个 API 基础 URL 用于冗余
-
 ## 🔧 OCR 与翻译设置
 
 ### manga-ocr 安装
@@ -148,10 +137,8 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 ```
 app/data/
 ├── exhentai_favs_metadata.json    # ExHentai 画廊数据
-├── jm_favs_metadata.json          # JM 画廊数据
 ├── db.text.json                   # 标签翻译数据库
-├── ex_backup_favs/                # ExHentai 备份
-└── jm_backup_favs/                # JM 备份
+└── backup_favs/                   # ExHentai 备份
 
 app/logs/
 └── app.log                        # 应用日志
@@ -227,4 +214,4 @@ cd web && npm run build
 - **翻译界面**: 专业的漫画文本翻译工作流程
 - **统计仪表板**: 收藏的可视化分析
 - **同步界面**: 终端风格输出的实时进度跟踪
-- **设置面板**: 所有平台的简易配置管理
+- **设置面板**: ExHentai 平台的简易配置管理

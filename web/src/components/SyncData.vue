@@ -1,18 +1,9 @@
 <template> 
   <div class="container">
     <div class="sync-controls">
-      <div class="provider-selection">
-        <label>
-          <input type="radio" v-model="selectedProvider" value="ex" />
-          <span>EX 数据同步</span>
-        </label>
-        <label>
-          <input type="radio" v-model="selectedProvider" value="jm" />
-          <span>JM 数据同步</span>
-        </label>
-      </div>
+      <h2>ExHentai 数据同步</h2>
       <button @click="startSync" :disabled="syncing">
-        开始{{ selectedProvider === 'ex' ? 'EX' : 'JM' }}同步
+        {{ syncing ? '同步中...' : '开始EX同步' }}
       </button>
     </div>
     <div class="terminal">
@@ -27,7 +18,7 @@ import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 const logs = ref([])
 const syncing = ref(false)
 const terminalContent = ref(null)
-const selectedProvider = ref('ex')
+// 移除了JM相关功能，固定使用ExHentai提供商
 const API = import.meta.env.VITE_API_BASE
 const WS = import.meta.env.VITE_WS_BASE
 let ws = null
@@ -71,11 +62,11 @@ async function startSync() {
   connectWebSocket()
 
   try {
-    const res = await fetch(`${API}/api/gallery/sync?provider=${selectedProvider.value}`, {
+    const res = await fetch(`${API}/api/gallery/sync?provider=ex`, {
       method: "POST"
     })
     const data = await res.json()
-    logs.value.push(`[INFO] ${selectedProvider.value.toUpperCase()} 同步完成：共 ${data.count} 项`)
+    logs.value.push(`[INFO] ExHentai 同步完成：共 ${data.count} 项`)
   } catch (err) {
     logs.value.push("[ERROR] 同步请求失败")
   } finally {

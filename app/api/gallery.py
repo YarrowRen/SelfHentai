@@ -1,9 +1,17 @@
 # app/api/gallery.py
 
 from typing import Optional
+from functools import wraps
+from urllib.parse import urlparse
+import traceback
+import httpx
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import StreamingResponse
+from starlette.concurrency import run_in_threadpool
+
 from core.logger import get_logger
+from core.config import settings
 from services.ex_gallery_service import (
     get_ex_gallery_data,
     get_ex_gallery_data_by_gid,
@@ -11,77 +19,122 @@ from services.ex_gallery_service import (
     get_ex_quarterly_stats,
     get_ex_top_tags,
 )
-from services.jm_gallery_service import (
-    get_jm_gallery_data,
-    get_jm_gallery_data_by_id,
-    get_jm_gallery_stats,
-    get_jm_quarterly_stats,
-    get_jm_top_tags,
-)
-from services.sync_service import sync_ex_favorites, sync_jm_favorites
-from starlette.concurrency import run_in_threadpool
+from services.sync_service import sync_ex_favorites
 from utils.sync_lock import sync_lock
+from utils.exhentai_utils import ExHentaiUtils
+
+# 延迟导入的服务，避免循环导入
+def get_ocr_service():
+    from services.ocr_service import ocr_service
+    return ocr_service
+
+def get_translation_service():
+    from services.translation_service import translation_service
+    return translation_service
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+# 配置常量
+DEFAULT_PAGE_SIZE = settings.DEFAULT_PAGE_SIZE
+MAX_PAGE_SIZE = settings.MAX_PAGE_SIZE
+TIMEOUT_SECONDS = settings.REQUEST_TIMEOUT
+MAX_TOP_TAGS = settings.MAX_TOP_TAGS
+CHUNK_SIZE = settings.STREAM_CHUNK_SIZE
+
+
+def require_exhentai_auth(func):
+    """ExHentai认证装饰器，支持同步和异步函数"""
+    @wraps(func)
+    async def async_wrapper(*args, **kwargs):
+        if not all([
+            settings.EXHENTAI_COOKIE_MEMBER_ID,
+            settings.EXHENTAI_COOKIE_PASS_HASH,
+            settings.EXHENTAI_COOKIE_IGNEOUS,
+        ]):
+            raise HTTPException(
+                status_code=503, 
+                detail="ExHentai 认证信息未配置，请在设置页面配置 ExHentai cookies"
+            )
+        return await func(*args, **kwargs)
+    
+    @wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        if not all([
+            settings.EXHENTAI_COOKIE_MEMBER_ID,
+            settings.EXHENTAI_COOKIE_PASS_HASH,
+            settings.EXHENTAI_COOKIE_IGNEOUS,
+        ]):
+            raise HTTPException(
+                status_code=503, 
+                detail="ExHentai 认证信息未配置，请在设置页面配置 ExHentai cookies"
+            )
+        return func(*args, **kwargs)
+    
+    # 检查函数是否是异步的
+    import asyncio
+    if asyncio.iscoroutinefunction(func):
+        return async_wrapper
+    else:
+        return sync_wrapper
+
+
+def get_ex_cookies():
+    """获取ExHentai cookies"""
+    return {
+        "ipb_member_id": settings.EXHENTAI_COOKIE_MEMBER_ID,
+        "ipb_pass_hash": settings.EXHENTAI_COOKIE_PASS_HASH,
+        "igneous": settings.EXHENTAI_COOKIE_IGNEOUS,
+    }
+
+
+def get_ex_headers():
+    """获取ExHentai请求头"""
+    return {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Referer": "https://exhentai.org/",
+    }
+
+
+def validate_image_url(url: str, allowed_domains: tuple) -> bool:
+    """验证图片URL域名"""
+    try:
+        parsed_url = urlparse(url)
+        hostname = parsed_url.hostname
+        if not hostname:
+            return False
+        
+        # 检查主机名是否匹配允许的域名
+        for domain in allowed_domains:
+            if hostname == domain.lstrip('.') or hostname.endswith(domain):
+                return True
+        return False
+    except Exception:
+        return False
 
 
 @router.get("/", response_model=dict)
 def get_gallery(
     page: int = Query(1, ge=1),
-    per_page: int = Query(10, ge=1, le=100),
+    per_page: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     keyword: Optional[str] = Query(None),
-    # EX 专用过滤（保持向后兼容）
     type: Optional[str] = Query(None),
-    # 选择数据源：ex（默认）或 jm
-    provider: str = Query("ex", pattern="^(ex|jm)$"),
-    # JM 专用过滤与排序（对 EX 不生效）
-    category: Optional[str] = Query(None, description="JM 主分类，可传 id 或 title"),
-    subcategory: Optional[str] = Query(None, description="JM 子分类，可传 id 或 title"),
-    sort: Optional[str] = Query(
-        "recent",
-        description="JM 排序：recent(默认)/views/likes；对 EX 无效",
-        pattern="^(recent|views|likes)$",
-    ),
 ):
     """
-    通用列表接口：
-      - provider=ex：走 EX 数据（支持 keyword、type）
-      - provider=jm：走 JM 数据（支持 keyword、category、subcategory、sort）
+    获取ExHentai画廊列表
     """
-    if provider == "ex":
-        return get_ex_gallery_data(page, per_page, keyword, type)
-    elif provider == "jm":
-        return get_jm_gallery_data(
-            page=page,
-            per_page=per_page,
-            keyword=keyword,
-            category=category,
-            subcategory=subcategory,
-            sort=sort,
-        )
-    else:
-        raise HTTPException(status_code=400, detail="Invalid provider, must be 'ex' or 'jm'.")
+    return get_ex_gallery_data(page, per_page, keyword, type)
 
 
 @router.post("/sync")
-async def sync_now(
-    provider: str = Query("ex", pattern="^(ex|jm)$"),
-):
+async def sync_now():
     """
-    同步收藏数据：
-      - provider=ex：同步 EX 收藏（默认）
-      - provider=jm：同步 JM 收藏
+    同步ExHentai收藏数据
     """
     if sync_lock.locked():
         raise HTTPException(status_code=409, detail="已有同步任务正在进行中")
     async with sync_lock:
-        if provider == "ex":
-            result = await run_in_threadpool(sync_ex_favorites)
-        elif provider == "jm":
-            result = await run_in_threadpool(sync_jm_favorites)
-        else:
-            raise HTTPException(status_code=400, detail="Invalid provider, must be 'ex' or 'jm'.")
+        result = await run_in_threadpool(sync_ex_favorites)
         return result
 
 
@@ -91,62 +144,36 @@ def get_sync_status():
 
 
 @router.get("/stats")
-def gallery_stats(
-    provider: str = Query("ex", pattern="^(ex|jm)$"),
-):
+def gallery_stats():
     """
-    统计：
-      - provider=ex：返回 EX 的总量与各固定分类计数
-      - provider=jm：返回 JM 的总量、主分类计数、子分类计数
+    获取ExHentai画廊统计信息
     """
-    if provider == "ex":
-        return get_ex_gallery_stats()
-    elif provider == "jm":
-        return get_jm_gallery_stats()
-    else:
-        raise HTTPException(status_code=400, detail="Invalid provider, must be 'ex' or 'jm'.")
+    return get_ex_gallery_stats()
 
 
 @router.get("/quarterly-stats")
-def quarterly_stats(
-    provider: str = Query("ex", pattern="^(ex|jm)$"),
-):
+def quarterly_stats():
     """
-    季度统计（UTC）：
-      - EX 使用 posted 字段
-      - JM 使用 addtime 字段
+    获取ExHentai季度统计（UTC）
     """
-    if provider == "ex":
-        return get_ex_quarterly_stats()
-    elif provider == "jm":
-        return get_jm_quarterly_stats()
-    else:
-        raise HTTPException(status_code=400, detail="Invalid provider, must be 'ex' or 'jm'.")
+    return get_ex_quarterly_stats()
 
 
 @router.get("/top-tags")
 def top_tags(
-    n: int = Query(20, ge=1, le=100),
-    type: Optional[str] = Query(None, description="EX 的 namespace 过滤"),
-    provider: str = Query("ex", pattern="^(ex|jm)$"),
+    n: int = Query(20, ge=1, le=MAX_TOP_TAGS),
+    type: Optional[str] = Query(None, description="namespace过滤，如'artist'"),
 ):
     """
-    热门标签：
-      - provider=ex：支持按 namespace（如 'artist'）过滤
-      - provider=jm：JM 标签为普通字符串，不支持 namespace，忽略 type
+    获取ExHentai热门标签
     """
-    if provider == "ex":
-        return get_ex_top_tags(n=n, type_=type)
-    elif provider == "jm":
-        return get_jm_top_tags(n=n)
-    else:
-        raise HTTPException(status_code=400, detail="Invalid provider, must be 'ex' or 'jm'.")
+    return get_ex_top_tags(n=n, type_=type)
 
 
 @router.get("/item/{gid}", response_model=dict)
 def get_gallery_by_gid(gid: int):
     """
-    EX：根据 gid 获取单条记录。
+    根据gid获取单个画廊信息
     """
     data = get_ex_gallery_data_by_gid(gid)
     if not data:
@@ -154,54 +181,8 @@ def get_gallery_by_gid(gid: int):
     return data
 
 
-@router.get("/jm/item/{id_}", response_model=dict)
-def get_jm_item_by_id(id_: str):
-    """
-    JM：根据 id 获取单条记录。
-    """
-    data = get_jm_gallery_data_by_id(id_)
-    if not data:
-        raise HTTPException(status_code=404, detail="Gallery not found")
-    return data
-
-
-@router.get("/jm/debug")
-def debug_jm_data():
-    """
-    JM：调试数据加载状态。
-    """
-    from core.config import settings
-    from services.jm_gallery_service import jm_gallery_data
-
-    result = {
-        "data_path": getattr(settings, "JM_GALLERY_DATA_PATH", "未设置"),
-        "data_count": len(jm_gallery_data),
-        "first_item_keys": [],
-        "first_item_sample": {},
-    }
-
-    if jm_gallery_data:
-        result["first_item_keys"] = list(jm_gallery_data[0].keys())
-        first_item = jm_gallery_data[0]
-        result["first_item_sample"] = {
-            k: first_item.get(k) for k in ["id", "addtime", "tags", "total_views"] if k in first_item
-        }
-
-    return result
-
-
-@router.post("/jm/reload")
-def reload_jm_data():
-    """
-    JM：重新加载数据。
-    """
-    from services.jm_gallery_service import load_jm_gallery_data
-
-    load_jm_gallery_data(force_reload=True)
-    return {"message": "JM数据已重新加载"}
-
-
 @router.get("/ex/thumbnails/{gid}/{token}")
+@require_exhentai_auth
 def get_ex_gallery_thumbnails(gid: str, token: str, page: int = Query(0, ge=0, description="页码，从0开始")):
     """
     EX：获取画廊缩略图数据
@@ -211,27 +192,8 @@ def get_ex_gallery_thumbnails(gid: str, token: str, page: int = Query(0, ge=0, d
         token: Gallery token
         page: 页码，从0开始
     """
-    from core.config import settings
-    from utils.exhentai_utils import ExHentaiUtils
-
-    # 检查必要的配置
-    if not all(
-        [
-            getattr(settings, "EXHENTAI_COOKIE_MEMBER_ID", None),
-            getattr(settings, "EXHENTAI_COOKIE_PASS_HASH", None),
-            getattr(settings, "EXHENTAI_COOKIE_IGNEOUS", None),
-        ]
-    ):
-        raise HTTPException(status_code=503, detail="ExHentai 认证信息未配置，请在设置页面配置 ExHentai cookies")
-
-    cookies = {
-        "ipb_member_id": settings.EXHENTAI_COOKIE_MEMBER_ID,
-        "ipb_pass_hash": settings.EXHENTAI_COOKIE_PASS_HASH,
-        "igneous": settings.EXHENTAI_COOKIE_IGNEOUS,
-    }
-
     try:
-        utils = ExHentaiUtils("https://exhentai.org/favorites.php", cookies)
+        utils = ExHentaiUtils("https://exhentai.org/favorites.php", get_ex_cookies())
         result = utils.fetch_gallery_thumbnails(gid, token, page)
 
         if "error" in result:
@@ -239,11 +201,15 @@ def get_ex_gallery_thumbnails(gid: str, token: str, page: int = Query(0, ge=0, d
 
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"获取缩略图失败: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"获取缩略图失败: {str(e)}")
 
 
 @router.get("/ex/full-image/{gid}/{token}/{page}")
+@require_exhentai_auth
 def get_ex_full_image(gid: str, token: str, page: int):
     """
     EX：获取画廊大图信息
@@ -253,31 +219,12 @@ def get_ex_full_image(gid: str, token: str, page: int):
         token: Gallery token
         page: 页码，从1开始
     """
-    from core.config import settings
-    from utils.exhentai_utils import ExHentaiUtils
-
-    # 检查必要的配置
-    if not all(
-        [
-            getattr(settings, "EXHENTAI_COOKIE_MEMBER_ID", None),
-            getattr(settings, "EXHENTAI_COOKIE_PASS_HASH", None),
-            getattr(settings, "EXHENTAI_COOKIE_IGNEOUS", None),
-        ]
-    ):
-        raise HTTPException(status_code=503, detail="ExHentai 认证信息未配置，请在设置页面配置 ExHentai cookies")
-
-    cookies = {
-        "ipb_member_id": settings.EXHENTAI_COOKIE_MEMBER_ID,
-        "ipb_pass_hash": settings.EXHENTAI_COOKIE_PASS_HASH,
-        "igneous": settings.EXHENTAI_COOKIE_IGNEOUS,
-    }
-
     # 验证页码参数
     if page < 1:
         raise HTTPException(status_code=400, detail="页码必须大于等于1")
 
     try:
-        utils = ExHentaiUtils("https://exhentai.org/favorites.php", cookies)
+        utils = ExHentaiUtils("https://exhentai.org/favorites.php", get_ex_cookies())
         result = utils.fetch_full_image(gid, token, page)
 
         if "error" in result and result["error"]:
@@ -285,93 +232,66 @@ def get_ex_full_image(gid: str, token: str, page: int):
 
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"获取大图失败: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"获取大图失败: {str(e)}")
 
 
 @router.get("/ex/proxy-image")
-def proxy_ex_image(url: str):
+@require_exhentai_auth
+async def proxy_ex_image(url: str):
     """
     EX：代理图片请求，解决CORS问题
     """
-    import requests
-    from core.config import settings
-    from fastapi.responses import StreamingResponse
-
-    # 检查必要的配置
-    if not all(
-        [
-            getattr(settings, "EXHENTAI_COOKIE_MEMBER_ID", None),
-            getattr(settings, "EXHENTAI_COOKIE_PASS_HASH", None),
-            getattr(settings, "EXHENTAI_COOKIE_IGNEOUS", None),
-        ]
-    ):
-        raise HTTPException(status_code=503, detail="ExHentai 认证信息未配置")
-
-    cookies = {
-        "ipb_member_id": settings.EXHENTAI_COOKIE_MEMBER_ID,
-        "ipb_pass_hash": settings.EXHENTAI_COOKIE_PASS_HASH,
-        "igneous": settings.EXHENTAI_COOKIE_IGNEOUS,
-    }
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Referer": "https://exhentai.org/",
-    }
+    # 验证URL域名 (包括ExHentai的官方图片CDN)
+    if not validate_image_url(url, ('.exhentai.org', '.e-hentai.org', '.hath.network')):
+        raise HTTPException(status_code=400, detail="无效的图片URL域名")
 
     try:
-        response = requests.get(url, cookies=cookies, headers=headers, stream=True, timeout=30)
-        response.raise_for_status()
+        async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
+            response = await client.get(
+                url, 
+                cookies=get_ex_cookies(), 
+                headers=get_ex_headers()
+            )
+            response.raise_for_status()
 
-        # 获取内容类型
-        content_type = response.headers.get("content-type", "image/jpeg")
+            # 获取内容类型
+            content_type = response.headers.get("content-type", "image/jpeg")
 
-        def generate():
-            for chunk in response.iter_content(chunk_size=8192):
-                yield chunk
+            def generate():
+                for chunk in response.iter_bytes(chunk_size=CHUNK_SIZE):
+                    yield chunk
 
-        return StreamingResponse(
-            generate(),
-            media_type=content_type,
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET",
-                "Access-Control-Allow-Headers": "*",
-                "Cache-Control": "public, max-age=3600",
-            },
-        )
+            return StreamingResponse(
+                generate(),
+                media_type=content_type,
+                headers={
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "GET",
+                    "Access-Control-Allow-Headers": "*",
+                    "Cache-Control": "public, max-age=3600",
+                },
+            )
 
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"代理图片请求失败: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"代理图片请求失败: {str(e)}")
 
 
 @router.get("/ex/{gid}/{token}/image/{page}")
-def get_ex_manga_page_image(gid: str, token: str, page: int):
+@require_exhentai_auth
+async def get_ex_manga_page_image(gid: str, token: str, page: int):
     """
     EX：获取漫画页面图片（用于自动翻译）
     """
-    from fastapi.responses import StreamingResponse
-    import requests
-    from core.config import settings
-    from utils.exhentai_utils import ExHentaiUtils
-
-    # 检查配置
-    if not all([
-        getattr(settings, "EXHENTAI_COOKIE_MEMBER_ID", None),
-        getattr(settings, "EXHENTAI_COOKIE_PASS_HASH", None),
-        getattr(settings, "EXHENTAI_COOKIE_IGNEOUS", None),
-    ]):
-        raise HTTPException(status_code=503, detail="ExHentai 认证信息未配置")
-
-    cookies = {
-        "ipb_member_id": settings.EXHENTAI_COOKIE_MEMBER_ID,
-        "ipb_pass_hash": settings.EXHENTAI_COOKIE_PASS_HASH,
-        "igneous": settings.EXHENTAI_COOKIE_IGNEOUS,
-    }
-
     try:
         # 首先获取完整图片信息
-        utils = ExHentaiUtils("https://exhentai.org/favorites.php", cookies)
+        utils = ExHentaiUtils("https://exhentai.org/favorites.php", get_ex_cookies())
         image_info = utils.fetch_full_image(gid, token, page)
         
         if "error" in image_info:
@@ -381,69 +301,37 @@ def get_ex_manga_page_image(gid: str, token: str, page: int):
         if not image_url:
             raise HTTPException(status_code=404, detail="图片URL未找到")
 
+        # 验证图片URL (包括ExHentai的官方图片CDN)
+        if not validate_image_url(image_url, ('.exhentai.org', '.e-hentai.org', '.hath.network')):
+            raise HTTPException(status_code=400, detail="无效的图片URL")
+
         # 代理图片请求
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Referer": "https://exhentai.org/",
-        }
+        async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
+            response = await client.get(
+                image_url, 
+                cookies=get_ex_cookies(), 
+                headers=get_ex_headers()
+            )
+            response.raise_for_status()
 
-        response = requests.get(image_url, cookies=cookies, headers=headers, stream=True, timeout=30)
-        response.raise_for_status()
+            def generate():
+                for chunk in response.iter_bytes(chunk_size=CHUNK_SIZE):
+                    yield chunk
 
-        def generate():
-            for chunk in response.iter_content(chunk_size=8192):
-                yield chunk
+            return StreamingResponse(
+                generate(),
+                media_type=response.headers.get("content-type", "image/jpeg"),
+                headers={
+                    "Access-Control-Allow-Origin": "*",
+                    "Cache-Control": "public, max-age=3600",
+                }
+            )
 
-        return StreamingResponse(
-            generate(),
-            media_type=response.headers.get("content-type", "image/jpeg"),
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Cache-Control": "public, max-age=3600",
-            }
-        )
-
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"获取图片失败: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"获取图片失败: {str(e)}")
-
-
-@router.get("/jm/{id}/image/{page}")
-def get_jm_manga_page_image(id: str, page: int):
-    """
-    JM：获取漫画页面图片（用于自动翻译）
-    """
-    from fastapi.responses import StreamingResponse
-    import requests
-    from core.config import settings
-
-    try:
-        # JM的图片URL格式（需要根据实际API调整）
-        # 这里是示例，需要根据JM的实际图片获取逻辑调整
-        image_url = f"https://cdn-msp.18comic.vip/media/photos/{id}/{page:05d}.jpg"
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Referer": "https://18comic.vip/",
-        }
-
-        response = requests.get(image_url, headers=headers, stream=True, timeout=30)
-        response.raise_for_status()
-
-        def generate():
-            for chunk in response.iter_content(chunk_size=8192):
-                yield chunk
-
-        return StreamingResponse(
-            generate(),
-            media_type=response.headers.get("content-type", "image/jpeg"),
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Cache-Control": "public, max-age=3600",
-            }
-        )
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"获取JM图片失败: {str(e)}")
 
 
 @router.post("/ocr")
@@ -464,7 +352,7 @@ def perform_ocr_recognition(image_data: dict):
         if not settings.MANGA_OCR_ENABLED:
             raise HTTPException(status_code=503, detail="Manga OCR服务已禁用，请在设置中启用 MANGA_OCR_ENABLED 选项")
 
-        from services.ocr_service import ocr_service
+        ocr_service = get_ocr_service()
 
         # 检查OCR服务状态
         if not ocr_service.is_loaded:
@@ -488,8 +376,6 @@ def perform_ocr_recognition(image_data: dict):
         raise
     except Exception as e:
         # 捕获其他异常并返回 500 错误
-        import traceback
-
         error_msg = f"OCR识别失败: {str(e)}"
         logger.error(f"OCR错误详情: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=error_msg)
@@ -504,25 +390,27 @@ def get_ocr_status():
         {"is_loaded": true/false, "model_available": true/false}
     """
     try:
-        from core.config import settings
+        # 检查Manga OCR服务是否启用
+        if not settings.MANGA_OCR_ENABLED:
+            raise HTTPException(
+                status_code=503, 
+                detail="Manga OCR服务已禁用，请在设置中启用 MANGA_OCR_ENABLED 选项"
+            )
 
-        # 检查OCR服务是否启用
-        if not settings.OCR_ENABLED:
-            return {"is_loaded": False, "model_available": False, "enabled": False, "message": "OCR服务已禁用"}
-
-        from services.ocr_service import ocr_service
+        ocr_service = get_ocr_service()
 
         status = ocr_service.get_status()
         status["enabled"] = True
         return status
+    except HTTPException:
+        # 重新抛出 HTTP 异常
+        raise
     except Exception as e:
-        try:
-            from core.config import settings
-
-            enabled = settings.OCR_ENABLED
-        except:
-            enabled = False
-        return {"is_loaded": False, "model_available": False, "enabled": enabled, "error": str(e)}
+        logger.error(f"获取OCR状态失败: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"获取OCR状态失败: {str(e)}"
+        )
 
 
 @router.post("/translate")
@@ -546,7 +434,7 @@ def perform_translation(request_data: dict):
         }
     """
     try:
-        from services.translation_service import translation_service
+        translation_service = get_translation_service()
 
         # 检查翻译服务状态
         status = translation_service.get_status()
@@ -589,8 +477,6 @@ def perform_translation(request_data: dict):
         raise
     except Exception as e:
         # 捕获其他异常并返回 500 错误
-        import traceback
-
         error_msg = f"翻译服务异常: {str(e)}"
         logger.error(f"翻译错误详情: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=error_msg)
@@ -609,7 +495,7 @@ def get_translation_status():
         }
     """
     try:
-        from services.translation_service import translation_service
+        translation_service = get_translation_service()
 
         return translation_service.get_status()
     except Exception as e:

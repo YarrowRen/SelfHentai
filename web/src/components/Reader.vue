@@ -413,14 +413,10 @@ export default {
       const { page } = this.$route.query;
       const path = this.$route.path;
       
-      if (path.includes('/reader/jm/')) {
-        this.provider = 'jm';
-        this.gid = id;
-      } else {
-        this.provider = 'ex';
-        this.gid = gid;
-        this.token = token;
-      }
+      // 只支持ExHentai阅读器
+      this.provider = 'ex';
+      this.gid = gid;
+      this.token = token;
       
       // 设置起始页面
       if (page && !isNaN(parseInt(page))) {
@@ -434,24 +430,13 @@ export default {
       this.error = null;
       
       try {
-        // 获取画廊基本信息
-        let galleryUrl;
-        if (this.provider === 'ex') {
-          galleryUrl = `${API}/api/gallery/item/${this.gid}`;
-        } else {
-          galleryUrl = `${API}/api/gallery/jm/item/${this.gid}`;
-        }
+        // 获取ExHentai画廊基本信息
+        const galleryUrl = `${API}/api/gallery/item/${this.gid}`;
         
         const { data: galleryData } = await axios.get(galleryUrl);
         this.galleryTitle = galleryData.title || galleryData.name || 'Unknown Title';
         
-        if (this.provider === 'ex') {
-          this.totalPages = galleryData.filecount || 0;
-        } else {
-          // JM 需要获取页面总数
-          const { data: pagesData } = await axios.get(`${API}/api/gallery/jm/pages/${this.gid}`);
-          this.totalPages = pagesData.pages?.length || 0;
-        }
+        this.totalPages = galleryData.filecount || 0;
         
         // 如果URL没有指定页面，则默认为第1页
         if (!this.$route.query.page) {
@@ -566,14 +551,8 @@ export default {
         }
         
         // 缓存中没有，发起网络请求
-        if (this.provider === 'ex') {
-          const { data } = await axios.get(`${API}/api/gallery/ex/full-image/${this.gid}/${this.token}/${pageNumber}`);
-          imageUrl = `${API}/api/gallery/ex/proxy-image?url=${encodeURIComponent(data.imageUrl)}`;
-        } else {
-          // JM 页面URL逻辑
-          const { data } = await axios.get(`${API}/api/gallery/jm/page/${this.gid}/${pageNumber}`);
-          imageUrl = data.imageUrl;
-        }
+        const { data } = await axios.get(`${API}/api/gallery/ex/full-image/${this.gid}/${this.token}/${pageNumber}`);
+        imageUrl = `${API}/api/gallery/ex/proxy-image?url=${encodeURIComponent(data.imageUrl)}`;
         
         // 缓存URL
         this.setCachedUrl(pageNumber, imageUrl);
@@ -596,15 +575,8 @@ export default {
     },
     
     goBack() {
-      // 返回到对应的画廊详情页面
-      if (this.provider === 'ex') {
-        this.$router.push(`/gallery/${this.gid}`);
-      } else if (this.provider === 'jm') {
-        this.$router.push(`/jm/${this.gid}`);
-      } else {
-        // 兜底方案：如果provider未知，使用浏览器后退
-        this.$router.go(-1);
-      }
+      // 返回到ExHentai画廊详情页面
+      this.$router.push(`/gallery/${this.gid}`);
     },
     
     previousPage() {

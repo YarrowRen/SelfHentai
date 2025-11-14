@@ -232,7 +232,6 @@ export default {
   props: {
     gid: String,
     token: String,
-    id: String // for JM provider
   },
   data() {
     return {
@@ -303,10 +302,6 @@ export default {
   methods: {
     async initializeComponent() {
       try {
-        // 判断提供商
-        if (this.$route.path.includes('/jm/')) {
-          this.provider = 'jm'
-        }
         
         // 获取画廊信息
         await this.loadGalleryData()
@@ -322,13 +317,7 @@ export default {
     
     async loadGalleryData() {
       try {
-        let url
-        
-        if (this.provider === 'ex') {
-          url = `${API}/api/gallery/item/${this.gid}`
-        } else {
-          url = `${API}/api/gallery/jm/item/${this.id}`
-        }
+        const url = `${API}/api/gallery/item/${this.gid}`
         
         const { data } = await axios.get(url)
         this.galleryData = data
@@ -355,20 +344,14 @@ export default {
       try {
         this.setStatus(`正在加载第 ${this.currentPage + 1} 页...`, 'info')
         
-        if (this.provider === 'ex') {
-          // 使用现有的API获取完整图片信息
-          const url = `${API}/api/gallery/ex/full-image/${this.gid}/${this.token}/${this.currentPage + 1}`
-          const { data } = await axios.get(url)
-          
-          // 保存原始URL用于OCR，代理URL用于显示
-          this.originalImageUrl = data.imageUrl
-          const proxyImageUrl = `${API}/api/gallery/ex/proxy-image?url=${encodeURIComponent(data.imageUrl)}`
-          this.currentImageUrl = proxyImageUrl
-          
-        } else {
-          // JM的图片URL（需要根据实际JM API调整）
-          this.currentImageUrl = `${API}/api/gallery/jm/${this.id}/image/${this.currentPage + 1}`
-        }
+        // 使用ExHentai API获取完整图片信息
+        const url = `${API}/api/gallery/ex/full-image/${this.gid}/${this.token}/${this.currentPage + 1}`
+        const { data } = await axios.get(url)
+        
+        // 保存原始URL用于OCR，代理URL用于显示
+        this.originalImageUrl = data.imageUrl
+        const proxyImageUrl = `${API}/api/gallery/ex/proxy-image?url=${encodeURIComponent(data.imageUrl)}`
+        this.currentImageUrl = proxyImageUrl
         
       } catch (error) {
         this.imageError = true

@@ -36,14 +36,6 @@
           severity="secondary"
           :disabled="loading && !searchQuery && !activeType"
         />
-        <!-- 数据源切换 -->
-        <Button
-          :label="provider.toUpperCase()"
-          class="btn provider-toggle-btn"
-          @click="toggleProvider"
-          severity="secondary"
-          v-tooltip="`当前数据源: ${provider.toUpperCase()}, 点击切换`"
-        />
       </div>
     </div>
 
@@ -58,28 +50,18 @@
 
     <!-- 表格展示 -->
     <div class="results-table">
-      <table :class="{ 'jm-table': provider === 'jm' }">
+      <table>
         <thead>
-          <tr v-if="provider === 'ex'">
+          <tr>
             <th>Type</th>
             <th>Title</th>
             <th style="width: 150px;">Published</th>
             <th>Uploader</th>
           </tr>
-          <tr v-else-if="provider === 'jm'">
-            <th>Type</th>
-            <th>ID</th>
-            <th>Title</th>
-            <th>Author</th>
-            <th>Category</th>
-            <th style="width: 120px;">AddTime</th>
-          </tr>
         </thead>
 
         <tbody v-if="!loading && paddedResults.length">
-          <!-- EX 数据表格行 -->
           <tr
-            v-if="provider === 'ex'"
             v-for="item in paddedResults"
             :key="item.gid ?? 'placeholder-' + item.__placeholderId"
             :class="{ 'is-placeholder': item.__placeholder }"
@@ -122,58 +104,17 @@
             </td>
             <td v-else></td>
           </tr>
-
-          <!-- JM 数据表格行 -->
-          <tr
-            v-else-if="provider === 'jm'"
-            v-for="item in paddedResults"
-            :key="item.id ?? 'placeholder-' + item.__placeholderId"
-            :class="{ 'is-placeholder': item.__placeholder }"
-          >
-            <td>
-              <span v-if="!item.__placeholder" :class="'badge ' + item.typeClass">{{ item.type }}</span>
-            </td>
-            <td v-if="!item.__placeholder">{{ item.id }}</td>
-            <td v-else></td>
-            <td
-              v-if="!item.__placeholder"
-              class="title-cell"
-              @click="navigateToGallery(item.id, item.gid)"
-              @mouseenter="showPopover($event, item)"
-              @mouseleave="hidePopover"
-            >
-              <div class="title-container">
-                {{ item.title }}
-              </div>
-              <div class="tags-container" v-if="item.tags && item.tags.length > 0">
-                <Tag
-                  v-for="(tag, tIdx) in item.tags"
-                  :key="tIdx"
-                  :value="tag"
-                  class="tag"
-                  severity="secondary"
-                />
-              </div>
-            </td>
-            <td v-else class="title-cell"></td>
-            <td v-if="!item.__placeholder">{{ item.author }}</td>
-            <td v-else></td>
-            <td v-if="!item.__placeholder">{{ item.category }}</td>
-            <td v-else></td>
-            <td v-if="!item.__placeholder">{{ item.addtime }}</td>
-            <td v-else></td>
-          </tr>
         </tbody>
 
         <tbody v-else-if="loading">
           <tr>
-            <td :colspan="provider === 'ex' ? 4 : 6" class="empty-state">Loading…</td>
+            <td colspan="4" class="empty-state">Loading…</td>
           </tr>
         </tbody>
 
         <tbody v-else>
           <tr>
-            <td :colspan="provider === 'ex' ? 4 : 6" class="empty-state">No data</td>
+            <td colspan="4" class="empty-state">No data</td>
           </tr>
         </tbody>
       </table>
@@ -214,7 +155,7 @@ const perPage = ref(25)
 const totalRecords = ref(0)
 const activeType = ref(null)
 const loading = ref(false)
-const provider = ref('ex') // 默认使用 EX 数据源
+// 移除了JM相关功能，只支持ExHentai数据源
 
 const popover = ref()
 const popoverData = ref(null)
@@ -233,22 +174,12 @@ const exTypeList = [
   { name: 'Misc',       color: 'gray' }
 ]
 
-// JM 类型配置
-const jmTypeList = [
-  { name: '同人', color: 'red' },
-  { name: '单本', color: 'orange' },
-  { name: '短篇', color: 'yellow' },
-  { name: '韩漫', color: 'purple' },
-  { name: '其他类', color: 'gray' }
-]
-
 // 预计算类型->颜色映射
 const exTypeClassMap = Object.fromEntries(exTypeList.map(t => [t.name, t.color]))
-const jmTypeClassMap = Object.fromEntries(jmTypeList.map(t => [t.name, t.color]))
 
-// 当前类型列表（根据数据源切换）
-const currentTypeList = computed(() => provider.value === 'ex' ? exTypeList : jmTypeList)
-const currentTypeClassMap = computed(() => provider.value === 'ex' ? exTypeClassMap : jmTypeClassMap)
+// ExHentai专用类型列表和映射
+const currentTypeList = computed(() => exTypeList)
+const currentTypeClassMap = computed(() => exTypeClassMap)
 
 /** ========= 工具计算 ========= */
 const firstIndex = computed(() => (currentPage.value - 1) * perPage.value)
@@ -273,47 +204,22 @@ function formatTimestamp(timestamp) {
   }).replace(/\//g, '-')
 }
 
-// 数据映射和填充逻辑
+// ExHentai数据映射和填充逻辑
 const paddedResults = computed(() => {
   const mapped = results.value.map(item => {
-    if (provider.value === 'ex') {
-      return {
-        type: item.category,
-        typeClass: currentTypeClassMap.value[item.category] || 'default',
-        title: item.title,
-        title_jpn: item.title_jpn,
-        published: item.favTime ? item.favTime.replace('T', ' ').slice(0, 16) : '',
-        gid: item.gid,
-        id: null,
-        uploader: item.uploader,
-        filecount: item.filecount ? `${item.filecount} pages` : '',
-        tags: Array.isArray(item.tags) ? item.tags : [],
-        rating: item.rating,
-        thumb: item.thumb,
-        author: null,
-        category_info: null,
-        latest_ep: null
-      }
-    } else {
-      // JM 数据映射
-      return {
-        type: item.category?.title || '未知',
-        typeClass: currentTypeClassMap.value[item.category?.title] || 'default',
-        title: item.name,
-        title_jpn: null,
-        published: null,
-        gid: null,
-        id: item.id,
-        uploader: null,
-        filecount: null,
-        tags: Array.isArray(item.tags) ? item.tags.filter(tag => tag && tag.trim()) : [],
-        rating: null,
-        thumb: item.image,
-        author: item.author || '未知作者',
-        category: item.category?.title || '未知分类',
-        addtime: item.addtime ? formatTimestamp(item.addtime) : '未知时间',
-        latest_ep: item.latest_ep
-      }
+    return {
+      type: item.category,
+      typeClass: currentTypeClassMap.value[item.category] || 'default',
+      title: item.title,
+      title_jpn: item.title_jpn,
+      published: item.favTime ? item.favTime.replace('T', ' ').slice(0, 16) : '',
+      gid: item.gid,
+      id: null,
+      uploader: item.uploader,
+      filecount: item.filecount ? `${item.filecount} pages` : '',
+      tags: Array.isArray(item.tags) ? item.tags : [],
+      rating: item.rating,
+      thumb: item.thumb
     }
   })
 
@@ -341,15 +247,9 @@ async function fetchData (page = 1, keyword = '', type = null) {
     const params = {
       page,
       per_page: perPage.value,
-      provider: provider.value,
-      ...(keyword ? { keyword } : {})
-    }
-
-    // 根据数据源添加相应的筛选参数
-    if (provider.value === 'ex' && type) {
-      params.type = type
-    } else if (provider.value === 'jm' && type) {
-      params.category = type
+      provider: 'ex', // 固定使用ExHentai数据源
+      ...(keyword ? { keyword } : {}),
+      ...(type ? { type } : {})
     }
 
     const { data } = await axios.get(`${API}/api/gallery`, {
@@ -394,25 +294,10 @@ function toggleType (type) {
   fetchData(1, searchQuery.value, activeType.value)
 }
 
-function switchProvider (newProvider) {
-  if (provider.value === newProvider) return
-  provider.value = newProvider
-  activeType.value = null // 重置类型筛选
-  searchQuery.value = '' // 重置搜索
-  fetchData(1)
-}
-
-function toggleProvider () {
-  const newProvider = provider.value === 'ex' ? 'jm' : 'ex'
-  switchProvider(newProvider)
-}
 
 function navigateToGallery (id, gid) {
-  if (provider.value === 'ex' && gid) {
+  if (gid) {
     const url = `/gallery/${gid}/`
-    window.open(url, '_blank', 'noopener,noreferrer')
-  } else if (provider.value === 'jm' && id) {
-    const url = `/jm/${id}/`
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 }

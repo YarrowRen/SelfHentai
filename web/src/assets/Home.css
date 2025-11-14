@@ -396,29 +396,6 @@ th:nth-child(2), td:nth-child(2) { width: 70%; }
 th:nth-child(3), td:nth-child(3) { width: 10%; }
 th:nth-child(4), td:nth-child(4) { width: 10%; }
 
-/* JM表格额外列宽 (第5、6列) */
-th:nth-child(5), td:nth-child(5) { width: 12%; }
-th:nth-child(6), td:nth-child(6) { width: 10%; }
-
-/* JM表格调整前面列宽 */
-table.jm-table th:nth-child(1), table.jm-table td:nth-child(1) { width: 10%; }  /* Type */
-table.jm-table th:nth-child(2), table.jm-table td:nth-child(2) { width: 8%; }  /* ID */
-table.jm-table th:nth-child(3), table.jm-table td:nth-child(3) { width: 50%; }  /* Title */
-table.jm-table th:nth-child(4), table.jm-table td:nth-child(4) { width: 15%; }  /* Author */
-table.jm-table th:nth-child(5), table.jm-table td:nth-child(5) { width: 7%; }  /* Category */
-table.jm-table th:nth-child(6), table.jm-table td:nth-child(6) { width: 10%; }  /* AddTime */
-
-/* JM表格ID列居中对齐 */
-table.jm-table td:nth-child(2) {
-  text-align: center;
-  font-family: monospace;
-}
-
-/* JM表格时间列居中对齐 */
-table.jm-table td:nth-child(6) {
-  text-align: center;
-  font-size: 12px;
-}
 
 /* 标题与标签 */
 .title-container {
@@ -449,13 +426,6 @@ table.jm-table td:nth-child(6) {
   padding: 2px 6px;
 }
 
-/* JM表格中的tags容器允许换行 */
-table.jm-table .tags-container {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: initial;
-  line-height: 1.3;
-}
 
 /* ============ Badges ============ */
 .results-table table td:first-child {

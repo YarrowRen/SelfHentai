@@ -2,7 +2,7 @@
 
 [中文版 README](./README_CN.md) | English
 
-📚 **SelfHentai**: A self-hosted manga collection manager for ExHentai and JM (18comic) platforms with advanced OCR and AI translation capabilities.
+📚 **SelfHentai**: A self-hosted manga collection manager for ExHentai with advanced OCR and AI translation capabilities.
 
 ---
 
@@ -11,7 +11,7 @@
 ### 📚 Collection Management
 - 🖼️ **Browse & Search**: View your manga collection with titles, tags, categories, ratings, and more
 - 🔍 **Advanced Filtering**: Keyword search, category filtering, and paginated browsing
-- 🔁 **One-Click Sync**: Automatically sync your ExHentai and JM favorites with metadata backup
+- 🔁 **One-Click Sync**: Automatically sync your ExHentai favorites with metadata backup
 - 🏷️ **Tag Translation**: Support for Chinese/English tag recognition and translation
 - 📊 **Statistics**: Comprehensive analytics with charts and quarterly reports
 
@@ -25,7 +25,7 @@
 
 ### 🎨 User Experience
 - 🎨 **Dual Theme**: Dark and light mode support with smooth transitions
-- ⚙️ **Web Configuration**: Easy setup of ExHentai/JM credentials through web interface
+- ⚙️ **Web Configuration**: Easy setup of ExHentai credentials through web interface
 - 🔄 **Real-time Updates**: WebSocket-powered live sync progress tracking
 - 📱 **Responsive Design**: Mobile-friendly interface with touch support
 
@@ -33,7 +33,7 @@
 
 ### Backend (FastAPI)
 - **Python FastAPI** with async/await support
-- **Dual Provider Support**: ExHentai and JM (18comic) integration
+- **ExHentai Support**: Dedicated ExHentai integration
 - **Dual OCR Support**: manga-ocr (manual) + PaddleOCR (auto) with configurable parameters
 - **AI Translation**: Volcano Engine API integration with professional prompts
 - **Real-time Communication**: WebSocket for live updates
@@ -54,7 +54,6 @@
 - **Python 3.8+**
 - **Node.js 16+**
 - **ExHentai/E-Hentai account** (for ExHentai sync)
-- **JM account** (for 18comic sync)
 - **Volcano Engine API Key** (for AI translation, optional)
 
 ### Backend Setup
@@ -79,7 +78,7 @@ The frontend will run on `http://localhost:5173`
 
 ### Configuration
 1. Visit `http://localhost:5173/settings` 
-2. Configure your ExHentai cookies and/or JM credentials
+2. Configure your ExHentai cookies
 3. Test the connection and save your settings
 4. Start syncing your favorites!
 
@@ -93,10 +92,6 @@ The frontend will run on `http://localhost:5173`
 EXHENTAI_COOKIE_MEMBER_ID=your_member_id
 EXHENTAI_COOKIE_PASS_HASH=your_pass_hash
 EXHENTAI_COOKIE_IGNEOUS=your_igneous
-
-# JM Configuration  
-JM_USERNAME=your_username
-JM_PASSWORD=your_password
 
 # AI Translation (Optional)
 ARK_API_KEY=your_volcano_api_key
@@ -125,12 +120,6 @@ VITE_MOM_MODE_BLUR=20px
 - **Member ID**: Your ExHentai member ID from cookies
 - **Pass Hash**: Your ExHentai pass hash from cookies  
 - **Igneous**: Your igneous cookie (optional, for enhanced access)
-
-#### JM (18comic) Setup
-- **Username**: Your JM account username
-- **Password**: Your JM account password
-- **App Version**: JM app version (default: 1.8.0)
-- **API Endpoints**: Multiple API base URLs for redundancy
 
 ## 🔧 OCR & Translation Setup
 

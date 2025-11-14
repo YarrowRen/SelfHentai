@@ -9,7 +9,7 @@
     <!-- 左侧封面 -->
     <div class="cover">
       <img :src="galleryData.thumb || galleryData.image || '/placeholder.png'" alt="Cover" />
-      <div :class="['category', { 'jm-category': provider === 'jm' }]">
+      <div class="category">
         <span>{{ getDisplayCategory() }}</span>
       </div>
     </div>
@@ -52,23 +52,6 @@
           </li>
         </ul>
 
-        <!-- JM 数据信息列表 -->
-        <ul v-else-if="provider === 'jm'" class="info-list">
-          <li><strong>ID:</strong> {{ galleryData.id }}</li>
-          <li><strong>Author:</strong> {{ galleryData.author || '未知作者' }}</li>
-          <li><strong>Category:</strong> {{ galleryData.category?.title || '未知分类' }}</li>
-          <li><strong>Subcategory:</strong> {{ galleryData.category_sub?.title || '无' }}</li>
-          <li><strong>Added:</strong> {{ formatJMDate(galleryData.addtime) }}</li>
-          <li v-if="galleryData.latest_ep"><strong>Latest Episode:</strong> {{ galleryData.latest_ep }}</li>
-          <li class="read-button-container">
-            <button class="read-button" @click="startTranslation">
-              开始翻译
-            </button>
-            <button class="auto-translate-button" @click="startAutoTranslation">
-              自动翻译
-            </button>
-          </li>
-        </ul>
 
         <Divider layout="vertical" class="!hidden md:!flex" />
 
@@ -87,22 +70,6 @@
           </div>
         </div>
 
-        <!-- JM Tags -->
-        <div v-else-if="provider === 'jm'" class="jm-tags">
-          <strong>Tags:</strong>
-          <div v-if="galleryData.tags && galleryData.tags.length">
-            <span
-              v-for="(tag, index) in galleryData.tags"
-              :key="index"
-              class="jm-tag"
-            >
-              {{ tag }}
-            </span>
-          </div>
-          <div v-else style="color: #bdc3c7; font-style: italic;">
-            No tags available
-          </div>
-        </div>
       </div>
     </div>
     </div>
@@ -134,32 +101,6 @@
     </table>
   </section>
 
-  <!-- JM Stats Section -->
-  <section v-if="provider === 'jm'" class="jm-stats">
-    <h4>Statistics</h4>
-    <div class="stats-grid">
-      <div class="stat-item">
-        <div class="stat-value">{{ formatNumber(galleryData.total_views) }}</div>
-        <div class="stat-label">Total Views</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value">{{ formatNumber(galleryData.likes) }}</div>
-        <div class="stat-label">Likes</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value">{{ formatNumber(galleryData.comment_total) }}</div>
-        <div class="stat-label">Comments</div>
-      </div>
-    </div>
-    
-    <!-- Description Section for JM -->
-    <div v-if="galleryData.description" style="margin-top: 20px;">
-      <h4>Description</h4>
-      <div style="background: rgba(52, 73, 94, 0.3); padding: 15px; border-radius: 8px; line-height: 1.6;">
-        {{ galleryData.description }}
-      </div>
-    </div>
-  </section>
 
   <!-- EX Thumbnail Gallery Section -->
   <section v-if="provider === 'ex'" class="thumbnail-gallery">
@@ -279,7 +220,7 @@ export default {
   data() {
     return {
       itemId: null,
-      provider: 'ex', // 默认为 EX
+provider: 'ex', // 只支持ExHentai数据源
       galleryData: null,
       isChinese: true,
       loading: true,
@@ -317,21 +258,11 @@ export default {
   },
   methods: {
     initializeFromRoute() {
-      // 支持多种路由格式：
-      // /gallery/:gid (EX)
-      // /jm/:id (JM)
-      // 或者通过查询参数 ?provider=jm&id=xxx
-      const path = this.$route.path;
+      // 只支持ExHentai路由格式：/gallery/:gid
       const params = this.$route.params;
-      const query = this.$route.query;
-
-      if (path.startsWith('/jm/') || query.provider === 'jm') {
-        this.provider = 'jm';
-        this.itemId = params.id || query.id;
-      } else {
-        this.provider = 'ex';
-        this.itemId = params.gid || query.gid;
-      }
+      
+      this.provider = 'ex';
+      this.itemId = params.gid;
     },
 
     async fetchGalleryData() {
@@ -339,12 +270,7 @@ export default {
       this.error = null;
       
       try {
-        let url;
-        if (this.provider === 'ex') {
-          url = `${API}/api/gallery/item/${this.itemId}`;
-        } else if (this.provider === 'jm') {
-          url = `${API}/api/gallery/jm/item/${this.itemId}`;
-        }
+        const url = `${API}/api/gallery/item/${this.itemId}`;
 
         const { data } = await axios.get(url);
         this.galleryData = data;
@@ -362,21 +288,11 @@ export default {
     },
 
     getDisplayTitle() {
-      if (this.provider === 'ex') {
-        return this.galleryData.title;
-      } else if (this.provider === 'jm') {
-        return this.galleryData.name || this.galleryData.title;
-      }
-      return 'Unknown Title';
+      return this.galleryData.title || 'Unknown Title';
     },
 
     getDisplayCategory() {
-      if (this.provider === 'ex') {
-        return this.galleryData.category;
-      } else if (this.provider === 'jm') {
-        return this.galleryData.category?.title || 'Unknown Category';
-      }
-      return 'Unknown';
+      return this.galleryData.category || 'Unknown Category';
     },
 
     formatDate(timestamp) {
@@ -384,15 +300,6 @@ export default {
       return date.toISOString().replace("T", " ").split(".")[0];
     },
 
-    formatJMDate(timestamp) {
-      if (!timestamp) return 'Unknown';
-      const date = new Date(parseInt(timestamp) * 1000);
-      return date.toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).replace(/\//g, '-');
-    },
 
     formatFileSize(bytes) {
       if (bytes === 0) return "0 B";
@@ -456,23 +363,16 @@ export default {
 
     startTranslation() {
       // 跳转到第一页的翻译界面
-      if (this.provider === 'ex' && this.galleryData) {
+      if (this.galleryData) {
         const route = `/gallery/${this.itemId}/${this.galleryData.token}/page/1`;
-        this.$router.push(route);
-      } else if (this.provider === 'jm') {
-        // JM provider translation route - assuming similar pattern
-        const route = `/gallery/jm/${this.itemId}/page/1`;
         this.$router.push(route);
       }
     },
 
     startAutoTranslation() {
       // 跳转到自动翻译界面
-      if (this.provider === 'ex' && this.galleryData) {
+      if (this.galleryData) {
         const route = `/auto-translate/${this.itemId}/${this.galleryData.token}`;
-        this.$router.push(route);
-      } else if (this.provider === 'jm') {
-        const route = `/auto-translate/jm/${this.itemId}`;
         this.$router.push(route);
       }
     },
