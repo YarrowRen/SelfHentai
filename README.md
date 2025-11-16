@@ -16,8 +16,7 @@
 - 📊 **Statistics**: Comprehensive analytics with charts and quarterly reports
 
 ### 🖼️ Image Viewing & Translation
-- 📷 **Smart Screenshot**: Interactive image area selection with real-time preview (Manual Translation)
-- 👁️ **OCR Recognition**: manga-ocr powered Japanese text recognition with Apple Silicon optimization  
+- 👁️ **OCR Recognition**: PaddleOCR powered automatic text recognition
 - 🌐 **AI Translation**: Professional Japanese-to-Chinese translation via Volcano Engine API
 - 🤖 **Auto Translation**: PaddleOCR-powered automatic text detection and translation workflow
 - 🔍 **Full-Image Viewer**: High-quality image viewing with pagination controls
@@ -34,7 +33,7 @@
 ### Backend (FastAPI)
 - **Python FastAPI** with async/await support
 - **ExHentai Support**: Dedicated ExHentai integration
-- **Dual OCR Support**: manga-ocr (manual) + PaddleOCR (auto) with configurable parameters
+- **OCR Support**: PaddleOCR with configurable parameters
 - **AI Translation**: Volcano Engine API integration with professional prompts
 - **Real-time Communication**: WebSocket for live updates
 - **Auto Backup**: Automatic metadata backup before sync operations
@@ -125,21 +124,14 @@ VITE_MOM_MODE_BLUR=20px
 
 ### OCR Engines Installation
 
-#### manga-ocr (Manual Translation)
-```bash
-# Install manga-ocr for manual screenshot translation
-pip install manga-ocr
-
-# For Apple Silicon users (if facing MPS issues)
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-```
-
 #### PaddleOCR (Auto Translation)
 ```bash
-# Install PaddleOCR for automatic page translation
+# Install PaddleOCR for automatic text recognition
 pip install paddlepaddle paddleocr
+```
 
-# For Python 3.8 users, create conda environment with Python 3.10+
+**Note**: For Python 3.8 users, create conda environment with Python 3.10+:
+```bash
 conda create -n paddleocr python=3.10
 conda activate paddleocr
 pip install paddlepaddle paddleocr
@@ -170,7 +162,7 @@ app/logs/
 
 #### Manual Translation (Screenshot-based)
 1. **Screenshot**: Select any area of a manga page with interactive selection box
-2. **OCR**: manga-ocr automatically recognizes Japanese text with high accuracy
+2. **OCR**: PaddleOCR automatically recognizes text with high accuracy
 3. **Translation**: Professional AI translation optimized for manga content
 4. **Results**: Edit OCR results if needed, copy translations instantly
 
@@ -216,7 +208,7 @@ SelfHentai/
 ```
 
 ### Key Technologies
-- **Backend**: FastAPI, Python asyncio, WebSocket, manga-ocr, PaddleOCR, Volcano Engine API
+- **Backend**: FastAPI, Python asyncio, WebSocket, PaddleOCR, Volcano Engine API
 - **Frontend**: Vue 3, TypeScript, Vite, PrimeVue, Canvas API
 - **Data**: JSON file storage with automatic backup
 - **Sync**: Multi-threaded concurrent processing with real-time progress

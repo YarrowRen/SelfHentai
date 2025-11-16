@@ -41,7 +41,6 @@ class Settings:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     
     # OCR服务配置
-    MANGA_OCR_ENABLED = os.getenv("MANGA_OCR_ENABLED", "false").lower() in ("true", "1", "yes", "on")
     PADDLE_OCR_ENABLED = os.getenv("PADDLE_OCR_ENABLED", "false").lower() in ("true", "1", "yes", "on")
     
     # API配置项

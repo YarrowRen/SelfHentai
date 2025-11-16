@@ -24,19 +24,6 @@ async def lifespan(app: FastAPI):
         else:
             continue
     
-    # 初始化 Manga OCR 服务（手动翻译功能）
-    try:
-        from core.config import settings
-        if settings.MANGA_OCR_ENABLED:
-            from services.ocr_service import ocr_service
-            logger.info("正在加载 manga-ocr 模型，这可能需要一些时间...")
-            ocr_service.load_model()
-            logger.info("manga-ocr 模型加载完成！")
-        else:
-            logger.info("Manga OCR 服务已禁用（MANGA_OCR_ENABLED=false），跳过模型加载")
-    except Exception as e:
-        logger.error(f"Manga OCR 模型加载失败: {str(e)}")
-        logger.warning("手动翻译 OCR 功能将不可用，但应用会继续运行")
     
     # 初始化翻译服务
     try:

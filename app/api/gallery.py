@@ -24,9 +24,6 @@ from utils.sync_lock import sync_lock
 from utils.exhentai_utils import ExHentaiUtils
 
 # 延迟导入的服务，避免循环导入
-def get_ocr_service():
-    from services.ocr_service import ocr_service
-    return ocr_service
 
 def get_translation_service():
     from services.translation_service import translation_service
@@ -334,83 +331,8 @@ async def get_ex_manga_page_image(gid: str, token: str, page: int):
         raise HTTPException(status_code=500, detail=f"获取图片失败: {str(e)}")
 
 
-@router.post("/ocr")
-def perform_ocr_recognition(image_data: dict):
-    """
-    OCR文本识别接口
-
-    参数:
-        image_data: {"image": "data:image/png;base64,..."} 包含base64编码图片数据的字典
-
-    返回:
-        {"text": "识别出的文本", "success": true/false, "error": "错误信息"}
-    """
-    try:
-        from core.config import settings
-
-        # 检查Manga OCR服务是否启用
-        if not settings.MANGA_OCR_ENABLED:
-            raise HTTPException(status_code=503, detail="Manga OCR服务已禁用，请在设置中启用 MANGA_OCR_ENABLED 选项")
-
-        ocr_service = get_ocr_service()
-
-        # 检查OCR服务状态
-        if not ocr_service.is_loaded:
-            raise HTTPException(status_code=503, detail="OCR服务未启动，请检查 manga-ocr 是否正确安装")
-
-        # 验证请求数据
-        if "image" not in image_data:
-            raise HTTPException(status_code=400, detail="请求缺少 'image' 字段")
-
-        base64_image = image_data["image"]
-        if not base64_image:
-            raise HTTPException(status_code=400, detail="图片数据不能为空")
-
-        # 进行OCR识别
-        recognized_text = ocr_service.recognize_text(base64_image)
-
-        return {"success": True, "text": recognized_text, "length": len(recognized_text) if recognized_text else 0}
-
-    except HTTPException:
-        # 重新抛出 HTTP 异常
-        raise
-    except Exception as e:
-        # 捕获其他异常并返回 500 错误
-        error_msg = f"OCR识别失败: {str(e)}"
-        logger.error(f"OCR错误详情: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=error_msg)
 
 
-@router.get("/ocr/status")
-def get_ocr_status():
-    """
-    获取OCR服务状态
-
-    返回:
-        {"is_loaded": true/false, "model_available": true/false}
-    """
-    try:
-        # 检查Manga OCR服务是否启用
-        if not settings.MANGA_OCR_ENABLED:
-            raise HTTPException(
-                status_code=503, 
-                detail="Manga OCR服务已禁用，请在设置中启用 MANGA_OCR_ENABLED 选项"
-            )
-
-        ocr_service = get_ocr_service()
-
-        status = ocr_service.get_status()
-        status["enabled"] = True
-        return status
-    except HTTPException:
-        # 重新抛出 HTTP 异常
-        raise
-    except Exception as e:
-        logger.error(f"获取OCR状态失败: {traceback.format_exc()}")
-        raise HTTPException(
-            status_code=500, 
-            detail=f"获取OCR状态失败: {str(e)}"
-        )
 
 
 @router.post("/translate")

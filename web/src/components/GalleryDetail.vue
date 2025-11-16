@@ -43,9 +43,6 @@
             </a>
           </li>
           <li class="read-button-container">
-            <button class="read-button" @click="startTranslation">
-              开始翻译
-            </button>
             <button class="auto-translate-button" @click="startAutoTranslation">
               自动翻译
             </button>
@@ -361,13 +358,6 @@ provider: 'ex', // 只支持ExHentai数据源
       this.jumpToPage = page + 1;
     },
 
-    startTranslation() {
-      // 跳转到第一页的翻译界面
-      if (this.galleryData) {
-        const route = `/gallery/${this.itemId}/${this.galleryData.token}/page/1`;
-        this.$router.push(route);
-      }
-    },
 
     startAutoTranslation() {
       // 跳转到自动翻译界面

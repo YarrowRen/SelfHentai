@@ -17,7 +17,7 @@
 
 ### 🖼️ 图片查看与翻译
 - 📷 **智能截图**: 交互式图片区域选择，实时预览
-- 👁️ **OCR 识别**: 基于 manga-ocr 的日文文本识别，针对 Apple Silicon 优化
+- 👁️ **OCR 识别**: 基于 PaddleOCR 的自动文本识别
 - 🌐 **AI 翻译**: 通过 API 提供专业的日中翻译
 - 🔍 **全屏查看器**: 高质量图片查看，支持分页控制
 - 👶 **妈妈模式**: 可配置的敏感内容模糊效果（默认 20px）
@@ -33,7 +33,7 @@
 ### 后端 (FastAPI)
 - **Python FastAPI** 支持 async/await
 - **ExHentai 平台**: 专门针对 ExHentai 平台的深度集成
-- **OCR 服务**: manga-ocr 集成，Apple Silicon CPU 回退
+- **OCR 服务**: PaddleOCR 集成，自动文本检测
 - **AI 翻译**: API 集成，专业提示词
 - **实时通信**: WebSocket 实时更新
 - **自动备份**: 同步操作前自动元数据备份
@@ -118,13 +118,10 @@ VITE_MOM_MODE_BLUR=20px
 
 ## 🔧 OCR 与翻译设置
 
-### manga-ocr 安装
+### PaddleOCR 安装
 ```bash
-# 安装 manga-ocr
-pip install manga-ocr
-
-# Apple Silicon 用户（如果遇到 MPS 问题）
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# 安装 PaddleOCR
+pip install paddlepaddle paddleocr
 ```
 
 ### 火山引擎 API
@@ -148,7 +145,7 @@ app/logs/
 
 ### OCR 与翻译工作流程
 1. **截图**: 使用交互式选择框选择漫画页面的任意区域
-2. **OCR**: manga-ocr 自动识别日文文本，准确率很高
+2. **OCR**: PaddleOCR 自动识别文本，支持多语言
 3. **翻译**: 针对漫画内容优化的专业 AI 翻译
 4. **结果**: 可编辑 OCR 结果，一键复制翻译
 
@@ -187,7 +184,7 @@ SelfHentai/
 ```
 
 ### 核心技术
-- **后端**: FastAPI, Python asyncio, WebSocket, manga-ocr, 火山引擎 API
+- **后端**: FastAPI, Python asyncio, WebSocket, PaddleOCR, 火山引擎 API
 - **前端**: Vue 3, TypeScript, Vite, PrimeVue, Canvas API
 - **数据**: JSON 文件存储，自动备份
 - **同步**: 多线程并发处理，实时进度
