@@ -1,5 +1,5 @@
 <template>
-  <div class="auto-translate-container">
+  <div class="auto-translate-container" :class="{ 'delete-mode': deleteMode }">
     <!-- 主要内容区域 -->
     <div class="main-content">
       <!-- 左侧图片区域 (40%) -->
@@ -22,8 +22,11 @@
               :key="index"
               class="text-box"
               :style="getTextBoxStyle(result.bbox)"
-              @click="selectTextBox(index)"
-              :class="{ active: selectedTextIndex === index }"
+              @click="handleTextBoxClick(index)"
+              :class="{ 
+                active: selectedTextIndex === index,
+                'selected-for-delete': deleteMode && selectedForDelete.includes(index)
+              }"
             >
             </div>
           </div>
@@ -97,6 +100,23 @@
               >
                 <span v-if="translating">翻译中...</span>
                 <span v-else>翻译全部</span>
+              </button>
+              
+              <button 
+                class="action-btn delete-btn" 
+                @click="toggleDeleteMode"
+                :disabled="!hasOcrResults"
+                :class="{ active: deleteMode }"
+              >
+                <span v-if="deleteMode && selectedForDelete.length > 0">
+                  删除选中 ({{ selectedForDelete.length }})
+                </span>
+                <span v-else-if="deleteMode">
+                  取消删除
+                </span>
+                <span v-else>
+                  删除模式
+                </span>
               </button>
             </div>
 
@@ -178,8 +198,11 @@
               v-for="(result, index) in ocrResults"
               :key="index"
               class="result-item"
-              :class="{ active: selectedTextIndex === index }"
-              @click="selectTextBox(index)"
+              :class="{ 
+                active: selectedTextIndex === index,
+                'selected-for-delete': deleteMode && selectedForDelete.includes(index)
+              }"
+              @click="handleResultItemClick(index)"
             >
               <div class="result-header">
                 <span class="result-index">{{ index + 1 }}</span>
@@ -257,6 +280,10 @@ export default {
       ocrProcessing: false,
       selectedTextIndex: -1,
       showTextBoxes: true, // 默认显示矩形框
+      
+      // 删除模式相关
+      deleteMode: false,
+      selectedForDelete: [], // 选中要删除的项目索引数组
       
       // 翻译相关
       translating: false,
@@ -480,8 +507,112 @@ export default {
     },
     
     selectTextBox(index) {
-      this.selectedTextIndex = index
+      // 如果点击的是已选中的项目，则取消选中
+      if (this.selectedTextIndex === index) {
+        this.selectedTextIndex = -1
+      } else {
+        this.selectedTextIndex = index
+      }
     },
+    
+    // 处理文本框点击事件
+    handleTextBoxClick(index) {
+      if (this.deleteMode) {
+        this.toggleSelectionForDelete(index)
+      } else {
+        this.selectTextBox(index)
+      }
+    },
+    
+    // 处理结果项点击事件
+    handleResultItemClick(index) {
+      if (this.deleteMode) {
+        this.toggleSelectionForDelete(index)
+      } else {
+        this.selectTextBox(index)
+      }
+    },
+    
+    // 切换选择状态（用于删除）
+    toggleSelectionForDelete(index) {
+      const currentIndex = this.selectedForDelete.indexOf(index)
+      if (currentIndex > -1) {
+        // 如果已经选中，则取消选中
+        this.selectedForDelete.splice(currentIndex, 1)
+      } else {
+        // 如果未选中，则添加到选中列表
+        this.selectedForDelete.push(index)
+      }
+    },
+    
+    // 切换删除模式
+    toggleDeleteMode() {
+      if (this.deleteMode) {
+        // 退出删除模式
+        if (this.selectedForDelete.length > 0) {
+          // 如果有选中的项目，执行删除
+          this.deleteSelectedResults()
+        } else {
+          // 如果没有选中项目，直接退出删除模式
+          this.exitDeleteMode()
+        }
+      } else {
+        // 进入删除模式
+        this.enterDeleteMode()
+      }
+    },
+    
+    // 进入删除模式
+    enterDeleteMode() {
+      this.deleteMode = true
+      this.selectedForDelete = []
+      this.selectedTextIndex = -1
+      this.setStatus('进入删除模式，点击选择要删除的文本', 'info')
+    },
+    
+    // 退出删除模式
+    exitDeleteMode() {
+      this.deleteMode = false
+      this.selectedForDelete = []
+      this.setStatus('已退出删除模式', 'info')
+    },
+    
+    // 删除选中的结果
+    deleteSelectedResults() {
+      if (this.selectedForDelete.length === 0) {
+        this.setStatus('没有选中要删除的项目', 'warning')
+        return
+      }
+      
+      const deleteCount = this.selectedForDelete.length
+      
+      // 按索引从大到小排序，确保删除时不会影响后续索引
+      const sortedIndices = [...this.selectedForDelete].sort((a, b) => b - a)
+      
+      // 执行删除
+      sortedIndices.forEach(index => {
+        this.ocrResults.splice(index, 1)
+      })
+      
+      // 重新分配ID，确保连续性
+      this.ocrResults.forEach((result, newIndex) => {
+        result.id = newIndex
+      })
+      
+      // 退出删除模式
+      this.exitDeleteMode()
+      
+      // 更新状态提示
+      if (this.ocrResults.length === 0) {
+        this.setStatus('所有识别结果已清空', 'info')
+      } else {
+        this.setStatus(`删除成功，删除了 ${deleteCount} 个识别结果，剩余 ${this.ocrResults.length} 个`, 'success')
+      }
+      
+      // 强制重新渲染
+      this.$forceUpdate()
+    },
+    
     
     getTextBoxStyle(bbox) {
       if (!bbox || bbox.length !== 4) return { display: 'none' }

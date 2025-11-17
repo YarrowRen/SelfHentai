@@ -495,9 +495,10 @@
 }
 
 .result-item.active {
-  border-color: #f39c12;
-  box-shadow: 0 0 10px rgba(243, 156, 18, 0.3);
-  background: rgba(243, 156, 18, 0.05);
+  border-color: #f39c12 !important;
+  box-shadow: 0 0 15px rgba(243, 156, 18, 0.5) !important;
+  background: rgba(243, 156, 18, 0.1) !important;
+  transform: scale(1.02);
 }
 
 .result-header {
@@ -703,4 +704,116 @@
 
 .my-app-dark .toggle-switch input:checked + .toggle-slider {
   background-color: #3498db;
+}
+
+/* ============ 多选删除模式样式 ============ */
+
+/* 删除模式按钮样式 */
+.delete-btn {
+  background: #ef4444;
+  color: white;
+  border: 2px solid #ef4444;
+  transition: all 0.3s ease;
+}
+
+.delete-btn:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.delete-btn.active {
+  background: #16a34a;
+  border-color: #16a34a;
+  animation: deleteButtonPulse 2s infinite;
+}
+
+.delete-btn.active:hover {
+  background: #15803d;
+  border-color: #15803d;
+}
+
+@keyframes deleteButtonPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+  }
+}
+
+
+/* 删除模式下所有项目的基础样式（绿色） */
+.text-box {
+  transition: all 0.3s ease;
+}
+
+.result-item {
+  transition: all 0.3s ease;
+}
+
+/* 删除模式下左侧文本框的红色状态 */
+.delete-mode .text-box {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.2) !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* 右侧结果项在删除模式下保持原样，不改变颜色 */
+
+/* 选中删除状态变为绿色（点击后变绿） */
+.text-box.selected-for-delete {
+  border-color: #22c55e !important;
+  background: rgba(34, 197, 94, 0.3) !important;
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.5) !important;
+}
+
+.result-item.selected-for-delete {
+  border-color: #22c55e !important;
+  background: rgba(34, 197, 94, 0.1) !important;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.3) !important;
+}
+
+/* 深色主题适配 */
+.my-app-dark .delete-btn {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+.my-app-dark .delete-btn:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.my-app-dark .delete-btn.active {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+
+.my-app-dark .delete-btn.active:hover {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+
+/* 深色主题下删除模式左侧文本框的红色状态 */
+.my-app-dark.delete-mode .text-box {
+  border-color: #f87171 !important;
+  background: rgba(248, 113, 113, 0.15) !important;
+  box-shadow: 0 0 8px rgba(248, 113, 113, 0.25) !important;
+}
+
+/* 深色主题右侧结果项在删除模式下保持原样 */
+
+/* 深色主题下选中删除状态变为绿色（点击后变绿） */
+.my-app-dark .text-box.selected-for-delete {
+  border-color: #4ade80 !important;
+  background: rgba(74, 222, 128, 0.25) !important;
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.4) !important;
+}
+
+.my-app-dark .result-item.selected-for-delete {
+  border-color: #4ade80 !important;
+  background: rgba(74, 222, 128, 0.08) !important;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.25) !important;
 }
