@@ -817,3 +817,142 @@
   background: rgba(74, 222, 128, 0.08) !important;
   box-shadow: 0 0 8px rgba(74, 222, 128, 0.25) !important;
 }
+
+/* ============ 文字替换按钮样式 ============ */
+
+.text-replace-btn {
+  background: #8b5cf6;
+  color: white;
+  border: 2px solid #8b5cf6;
+  transition: all 0.3s ease;
+}
+
+.text-replace-btn:hover {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+}
+
+.text-replace-btn:disabled {
+  background: #6b7280;
+  border-color: #6b7280;
+  color: #d1d5db;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 深色主题适配 */
+.my-app-dark .text-replace-btn {
+  background: #8b5cf6;
+  border-color: #8b5cf6;
+}
+
+.my-app-dark .text-replace-btn:hover {
+  background: #7c3aed;
+  border-color: #7c3aed;
+}
+
+/* ============ 独立删除控制区域样式 ============ */
+
+.delete-control-section {
+  width: 30%;
+  margin-left: 70%;
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.delete-control-section .delete-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+/* ============ 文字替换模式样式 ============ */
+
+/* 文字替换按钮激活状态 */
+.text-replace-btn.active {
+  background: #059669;
+  border-color: #059669;
+  animation: textReplaceButtonPulse 2s infinite;
+}
+
+.text-replace-btn.active:hover {
+  background: #047857;
+  border-color: #047857;
+}
+
+@keyframes textReplaceButtonPulse {
+  0%, 100% {
+    box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.5);
+  }
+}
+
+/* 文字替换模式下的文本框样式 */
+.text-box.text-replace-mode {
+  background: white !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 替换文字样式 - 为Fitty优化（水平布局） */
+.replacement-text {
+  color: #000;
+  font-weight: 500;
+  text-shadow: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: Arial, sans-serif, "Microsoft YaHei", "微软雅黑";
+  box-sizing: border-box;
+  
+  /* 水平文字排列 - Fitty最适合的布局方式 */
+  writing-mode: horizontal-tb;
+  direction: ltr;
+  
+  /* 布局 - 使用flex来居中 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  
+  /* 尺寸 */
+  width: 100%;
+  height: 100%;
+  
+  /* 文字样式 - 让Fitty处理 */
+  white-space: normal;
+  text-align: center;
+  line-height: 1.1;
+  word-break: break-all;
+  
+  /* 防止动画 - 设置小的初始字体值 */
+  font-size: 8px;
+}
+
+/* 深色主题适配 */
+.my-app-dark .text-replace-btn.active {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.my-app-dark .text-replace-btn.active:hover {
+  background: #059669;
+  border-color: #059669;
+}
+
+/* 深色主题下文字替换模式的文本框保持白底 */
+.my-app-dark .text-box.text-replace-mode {
+  background: white !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.my-app-dark .replacement-text {
+  color: #000;
+}

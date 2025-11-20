@@ -25,9 +25,20 @@
               @click="handleTextBoxClick(index)"
               :class="{ 
                 active: selectedTextIndex === index,
-                'selected-for-delete': deleteMode && selectedForDelete.includes(index)
+                'selected-for-delete': deleteMode && selectedForDelete.includes(index),
+                'text-replace-mode': textReplaceMode && result.translation
               }"
             >
+              <!-- 文字替换模式下显示翻译文字 -->
+              <div 
+                v-if="textReplaceMode && result.translation" 
+                class="replacement-text"
+                :class="{ 'fitty-ready': fittyReadyStates[index] }"
+                :ref="el => { if (el) setFittyRef(el, index) }"
+                :data-index="index"
+              >
+                {{ result.translation }}
+              </div>
             </div>
           </div>
           
@@ -103,20 +114,13 @@
               </button>
               
               <button 
-                class="action-btn delete-btn" 
-                @click="toggleDeleteMode"
-                :disabled="!hasOcrResults"
-                :class="{ active: deleteMode }"
+                class="action-btn text-replace-btn" 
+                @click="toggleTextReplaceMode"
+                :disabled="!hasTranslations"
+                :class="{ active: textReplaceMode }"
               >
-                <span v-if="deleteMode && selectedForDelete.length > 0">
-                  删除选中 ({{ selectedForDelete.length }})
-                </span>
-                <span v-else-if="deleteMode">
-                  取消删除
-                </span>
-                <span v-else>
-                  删除模式
-                </span>
+                <span v-if="textReplaceMode">退出替换</span>
+                <span v-else>文字替换</span>
               </button>
             </div>
 
@@ -168,6 +172,26 @@
                   class="param-input"
                 />
               </div>
+            </div>
+            
+            <!-- 独立的删除按钮区域 -->
+            <div class="delete-control-section">
+              <button 
+                class="action-btn delete-btn" 
+                @click="toggleDeleteMode"
+                :disabled="!hasOcrResults"
+                :class="{ active: deleteMode }"
+              >
+                <span v-if="deleteMode && selectedForDelete.length > 0">
+                  删除选中 ({{ selectedForDelete.length }})
+                </span>
+                <span v-else-if="deleteMode">
+                  取消删除
+                </span>
+                <span v-else>
+                  删除
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -247,6 +271,7 @@
 
 <script>
 import axios from 'axios'
+import fitty from 'fitty'
 
 const API = import.meta.env.VITE_API_BASE;
 
@@ -290,6 +315,12 @@ export default {
       sourceLanguage: 'japan',
       targetLanguage: 'zh',
       
+      // 文字替换模式相关
+      textReplaceMode: false,
+      fittyInstances: [], // 存储fitty实例
+      fittyElements: {}, // 存储动态ref元素
+      fittyReadyStates: {}, // 记录每个文字是否已经调整完成
+      
       // OCR 高级参数
       ocrParams: {
         det_limit_type: 'max',
@@ -314,6 +345,10 @@ export default {
   computed: {
     hasOcrResults() {
       return this.ocrResults.length > 0
+    },
+    
+    hasTranslations() {
+      return this.ocrResults.some(result => result.translation && result.translation.trim())
     },
     
     currentImageData() {
@@ -367,6 +402,7 @@ export default {
       this.imageLoading = true
       this.imageError = false
       this.ocrResults = []
+      this.textReplaceMode = false // 切换页面时退出文字替换模式
       
       try {
         this.setStatus(`正在加载第 ${this.currentPage + 1} 页...`, 'info')
@@ -719,12 +755,120 @@ export default {
           }
         }, 3000)
       }
+    },
+
+    // 设置动态ref
+    setFittyRef(el, index) {
+      this.fittyElements[index] = el
+      console.log(`设置动态ref ${index}:`, el)
+    },
+
+    // 初始化Fitty文字适配
+    initializeFitty() {
+      console.log('开始初始化Fitty...')
+      console.log('当前fittyElements:', this.fittyElements)
+      
+      // 只清理fitty实例，不清理元素引用
+      this.fittyInstances.forEach(instance => {
+        if (instance && typeof instance.unsubscribe === 'function') {
+          instance.unsubscribe()
+        }
+      })
+      this.fittyInstances = []
+      
+      this.$nextTick(() => {
+        console.log('OCR结果数量:', this.ocrResults.length)
+        
+        // 为每个替换文字创建fitty实例
+        this.ocrResults.forEach((result, index) => {
+          if (result.translation) {
+            console.log(`处理第${index}个翻译结果:`, result.translation)
+            
+            const element = this.fittyElements[index]
+            console.log(`查找元素 ${index}:`, element)
+            
+            if (element) {
+              console.log('找到DOM元素:', element)
+              console.log('元素尺寸:', element.getBoundingClientRect())
+              console.log('父容器尺寸:', element.parentElement?.getBoundingClientRect())
+              
+              // 添加事件监听器检测fitty是否工作
+              element.addEventListener('fit', (e) => {
+                console.log(`Fitty调整完成 - 索引${index}:`, e.detail)
+                // 标记这个文字为准备就绪
+                this.$set(this.fittyReadyStates, index, true)
+              })
+              
+              const fittyInstance = fitty(element, {
+                minSize: 8,
+                maxSize: 48,
+                multiLine: true, // 支持多行文字
+                observeMutations: false // 我们手动控制更新
+              })
+              
+              console.log('Fitty实例创建成功:', fittyInstance)
+              this.fittyInstances.push(fittyInstance)
+              
+              // 强制触发一次fit
+              setTimeout(() => {
+                console.log('强制触发fit...')
+                fittyInstance.fit({ sync: true })
+              }, 200)
+            } else {
+              console.warn(`未找到索引${index}的DOM元素`)
+            }
+          } else {
+            console.log(`第${index}个结果没有翻译`)
+          }
+        })
+        
+        console.log('Fitty实例总数:', this.fittyInstances.length)
+      })
+    },
+    
+    // 清理fitty实例
+    clearFittyInstances() {
+      console.log('清理Fitty实例...')
+      this.fittyInstances.forEach(instance => {
+        if (instance && typeof instance.unsubscribe === 'function') {
+          instance.unsubscribe()
+        }
+      })
+      this.fittyInstances = []
+      this.fittyElements = {} // 清理元素引用
+      this.fittyReadyStates = {} // 清理ready状态
+    },
+
+    // 文字替换模式相关方法
+    toggleTextReplaceMode() {
+      if (this.textReplaceMode) {
+        // 退出文字替换模式
+        this.textReplaceMode = false
+        this.clearFittyInstances()
+        this.setStatus('已退出文字替换模式', 'info')
+      } else {
+        // 进入文字替换模式
+        if (!this.hasTranslations) {
+          this.setStatus('请先完成翻译后再使用文字替换功能', 'error')
+          return
+        }
+        this.textReplaceMode = true
+        this.setStatus('已进入文字替换模式', 'success')
+        
+        // 延迟初始化Fitty，确保DOM完全渲染
+        setTimeout(() => {
+          this.initializeFitty()
+        }, 300)
+      }
     }
   },
   
   beforeUnmount() {
     // 清理资源
     this.ocrResults = []
+    
+    // 清理Fitty实例
+    this.clearFittyInstances()
     
     // 移除窗口大小变化监听器
     window.removeEventListener('resize', this.handleWindowResize)

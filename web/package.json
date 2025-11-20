@@ -12,6 +12,7 @@
     "@primevue/themes": "^4.2.4",
     "axios": "^1.7.9",
     "chart.js": "^4.4.7",
+    "fitty": "^2.4.2",
     "primevue": "^4.2.4",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
