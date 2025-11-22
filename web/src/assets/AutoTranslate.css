@@ -896,7 +896,7 @@
 /* 文字替换模式下的文本框样式 */
 .text-box.text-replace-mode {
   background: white !important;
-  border: none !important;
+  border: 2px solid transparent !important; /* 保持边框占位，避免布局跳动 */
   box-shadow: none !important;
 }
 
@@ -931,8 +931,15 @@
   line-height: 1.1;
   word-break: break-all;
   
-  /* 防止动画 - 设置小的初始字体值 */
+  /* 防止动画 - 设置小的初始字体值，初始隐藏避免跳跃 */
   font-size: 8px;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+/* Fitty调整完成后显示文字 */
+.replacement-text.fitty-ready {
+  opacity: 1;
 }
 
 /* 深色主题适配 */
@@ -949,7 +956,7 @@
 /* 深色主题下文字替换模式的文本框保持白底 */
 .my-app-dark .text-box.text-replace-mode {
   background: white !important;
-  border: none !important;
+  border: 2px solid transparent !important; /* 保持边框占位，避免布局跳动 */
   box-shadow: none !important;
 }
 

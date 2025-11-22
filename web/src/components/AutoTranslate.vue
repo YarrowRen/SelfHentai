@@ -327,7 +327,7 @@ export default {
         det_limit_side_len: 960,
         use_doc_orientation_classify: false,
         use_doc_unwarping: false,
-        confidence_threshold: 0.75
+        confidence_threshold: 0.5
       },
       
       // 状态信息
@@ -795,8 +795,8 @@ export default {
               // 添加事件监听器检测fitty是否工作
               element.addEventListener('fit', (e) => {
                 console.log(`Fitty调整完成 - 索引${index}:`, e.detail)
-                // 标记这个文字为准备就绪
-                this.$set(this.fittyReadyStates, index, true)
+                // 标记这个文字为准备就绪 - Vue 3 兼容写法
+                this.fittyReadyStates[index] = true
               })
               
               const fittyInstance = fitty(element, {
@@ -858,7 +858,7 @@ export default {
         // 延迟初始化Fitty，确保DOM完全渲染
         setTimeout(() => {
           this.initializeFitty()
-        }, 300)
+        }, 50)
       }
     }
   },

@@ -1,17 +1,17 @@
 # app/api/ocr.py
 
+import math
 import os
 import tempfile
-import requests
 import time
-import math
-from typing import List, Dict, Any, Optional, Tuple
-from PIL import Image
+from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from core.logger import get_logger
+import requests
 from core.config import settings
+from core.logger import get_logger
+from fastapi import APIRouter, HTTPException
+from PIL import Image
+from pydantic import BaseModel
 
 # 获取logger
 logger = get_logger(__name__)
@@ -41,7 +41,7 @@ ocr_engines: Dict[str, Any] = {}
 
 class Rectangular:
     """矩形类，用于碰撞检测"""
-    
+
     def __init__(self, x: float, y: float, w: float, h: float):
         self.x0 = x
         self.y0 = y
@@ -49,174 +49,172 @@ class Rectangular:
         self.y1 = y + h
         self.w = w
         self.h = h
-    
+
     def collision(self, r2) -> bool:
         """检测与另一个矩形是否碰撞"""
-        return (self.x0 < r2.x1 and self.y0 < r2.y1 and 
-                self.x1 > r2.x0 and self.y1 > r2.y0)
-    
+        return self.x0 < r2.x1 and self.y0 < r2.y1 and self.x1 > r2.x0 and self.y1 > r2.y0
+
     def distance_to(self, other) -> float:
         """计算到另一个矩形的距离"""
         center1_x = (self.x0 + self.x1) / 2
         center1_y = (self.y0 + self.y1) / 2
         center2_x = (other.x0 + other.x1) / 2
         center2_y = (other.y0 + other.y1) / 2
-        
-        return math.sqrt((center1_x - center2_x)**2 + (center1_y - center2_y)**2)
-    
+
+        return math.sqrt((center1_x - center2_x) ** 2 + (center1_y - center2_y) ** 2)
+
     def expand(self, expand_ratio: float = 1.5):
         """扩展矩形区域"""
         expand_w = self.w * expand_ratio - self.w
         expand_h = self.h * expand_ratio - self.h
-        
-        return Rectangular(
-            self.x0 - expand_w / 2,
-            self.y0 - expand_h / 2,
-            self.w + expand_w,
-            self.h + expand_h
-        )
+
+        return Rectangular(self.x0 - expand_w / 2, self.y0 - expand_h / 2, self.w + expand_w, self.h + expand_h)
 
 
 class DialogMerger:
     """对话框合并器"""
-    
+
     def __init__(self, expand_ratio: float = 1.2, max_distance: float = 30.0, min_group_size: int = 2):
         self.expand_ratio = expand_ratio
         self.max_distance = max_distance
         self.min_group_size = min_group_size
-    
+
     @staticmethod
     def bbox_to_rect(bbox: List[float]) -> Rectangular:
         """将bbox [x1, y1, x2, y2] 转换为矩形对象"""
         x1, y1, x2, y2 = bbox
         return Rectangular(x1, y1, x2 - x1, y2 - y1)
-    
-    def _find_nearby_texts(self, rect: Rectangular, all_rects: List[Tuple[Rectangular, int]], 
-                          used_indices: set) -> List[int]:
+
+    def _find_nearby_texts(self, rect: Rectangular, all_rects: List[Tuple[Rectangular, int]], used_indices: set) -> List[int]:
         """查找附近的文本框"""
         nearby_indices = []
         expanded_rect = rect.expand(expand_ratio=self.expand_ratio)
-        
+
         for other_rect, original_index in all_rects:
             if original_index in used_indices:
                 continue
-            
+
             # 优先考虑重叠
             if expanded_rect.collision(other_rect):
                 nearby_indices.append(original_index)
             elif rect.distance_to(other_rect) <= self.max_distance:
                 nearby_indices.append(original_index)
-        
+
         return nearby_indices
-    
-    def _find_connected_texts(self, current_rect: Rectangular, rectangles: List[Tuple[Rectangular, int]], 
-                            used_indices: set, current_group: List[int]):
+
+    def _find_connected_texts(
+        self, current_rect: Rectangular, rectangles: List[Tuple[Rectangular, int]], used_indices: set, current_group: List[int]
+    ):
         """递归查找相邻的文本框"""
         nearby_indices = self._find_nearby_texts(current_rect, rectangles, used_indices)
-        
+
         for nearby_idx in nearby_indices:
             if nearby_idx not in used_indices:
                 current_group.append(nearby_idx)
                 used_indices.add(nearby_idx)
-                
+
                 # 递归查找与新加入文本框相邻的文本框
                 nearby_rect = next(r for r, idx in rectangles if idx == nearby_idx)
                 self._find_connected_texts(nearby_rect, rectangles, used_indices, current_group)
-    
+
     def merge_ocr_results(self, ocr_results: List[Dict]) -> List[Dict]:
         """
         合并OCR识别结果中的对话框
-        
+
         Args:
             ocr_results: OCR结果列表，每个元素包含text, confidence, bbox
-        
+
         Returns:
             合并后的结果列表
         """
         if not ocr_results:
             return []
-        
+
         logger.info(f"开始合并对话框，原始文本区域数量: {len(ocr_results)}")
-        
+
         # 转换为矩形对象
         rectangles = []
         for i, result in enumerate(ocr_results):
-            rect = self.bbox_to_rect(result['bbox'])
+            rect = self.bbox_to_rect(result["bbox"])
             rectangles.append((rect, i))
-        
+
         # 按面积排序，从大到小处理
         rectangles.sort(key=lambda x: x[0].w * x[0].h, reverse=True)
-        
+
         # 合并逻辑
         merged_groups = []
         used_indices = set()
-        
+
         for rect, original_index in rectangles:
             if original_index in used_indices:
                 continue
-            
+
             # 创建新的群组
             current_group = [original_index]
             used_indices.add(original_index)
-            
+
             # 递归查找相邻的文本框
             self._find_connected_texts(rect, rectangles, used_indices, current_group)
-            
+
             # 保留所有群组
             merged_groups.append(current_group)
-        
+
         # 创建合并后的结果
         merged_results = []
-        
+
         for group_indices in merged_groups:
             if len(group_indices) >= self.min_group_size:
                 # 对话框合并：按从右到左排序文字
                 group_data = []
                 for idx in group_indices:
                     result = ocr_results[idx]
-                    bbox = result['bbox']
+                    bbox = result["bbox"]
                     center_x = (bbox[0] + bbox[2]) / 2
                     group_data.append((idx, center_x, result))
-                
+
                 # 按x坐标从右到左排序（x值大的在前）
                 group_data.sort(key=lambda x: x[1], reverse=True)
-                
+
                 # 合并文字（用空格连接）
-                merged_text = " ".join([item[2]['text'] for item in group_data])
-                merged_confidence = sum([item[2]['confidence'] for item in group_data]) / len(group_data)
-                
+                merged_text = " ".join([item[2]["text"] for item in group_data])
+                merged_confidence = sum([item[2]["confidence"] for item in group_data]) / len(group_data)
+
                 # 计算合并后的边界框
-                all_x = [item[2]['bbox'][0] for item in group_data] + [item[2]['bbox'][2] for item in group_data]
-                all_y = [item[2]['bbox'][1] for item in group_data] + [item[2]['bbox'][3] for item in group_data]
-                
+                all_x = [item[2]["bbox"][0] for item in group_data] + [item[2]["bbox"][2] for item in group_data]
+                all_y = [item[2]["bbox"][1] for item in group_data] + [item[2]["bbox"][3] for item in group_data]
+
                 merged_bbox = [min(all_x), min(all_y), max(all_x), max(all_y)]
-                
-                merged_results.append({
-                    'text': merged_text,
-                    'confidence': merged_confidence,
-                    'bbox': merged_bbox,
-                    'is_merged': True,
-                    'original_count': len(group_indices),
-                    'original_texts': [item[2]['text'] for item in group_data]
-                })
+
+                merged_results.append(
+                    {
+                        "text": merged_text,
+                        "confidence": merged_confidence,
+                        "bbox": merged_bbox,
+                        "is_merged": True,
+                        "original_count": len(group_indices),
+                        "original_texts": [item[2]["text"] for item in group_data],
+                    }
+                )
             else:
                 # 单独的文本框
                 for idx in group_indices:
                     result = ocr_results[idx]
-                    merged_results.append({
-                        'text': result['text'],
-                        'confidence': result['confidence'],
-                        'bbox': result['bbox'],
-                        'is_merged': False,
-                        'original_count': 1,
-                        'original_texts': [result['text']]
-                    })
-        
+                    merged_results.append(
+                        {
+                            "text": result["text"],
+                            "confidence": result["confidence"],
+                            "bbox": result["bbox"],
+                            "is_merged": False,
+                            "original_count": 1,
+                            "original_texts": [result["text"]],
+                        }
+                    )
+
         # 按置信度排序
-        merged_results.sort(key=lambda x: x['confidence'], reverse=True)
-        
+        merged_results.sort(key=lambda x: x["confidence"], reverse=True)
+
         logger.info(f"对话框合并完成，生成 {len(merged_results)} 个文本区域")
-        
+
         return merged_results
 
 
@@ -226,7 +224,7 @@ class OCRRequest(BaseModel):
     page_number: Optional[int] = 1
     gallery_id: Optional[str] = None
     provider: Optional[str] = "ex"
-    confidence_threshold: Optional[float] = 0.75
+    confidence_threshold: Optional[float] = 0.0
     # OCR 引擎参数
     det_limit_type: Optional[str] = "max"
     det_limit_side_len: Optional[int] = 960
@@ -263,7 +261,7 @@ def get_ocr_engine(request: OCRRequest) -> Any:
 
     # 使用参数组合作为缓存key
     cache_key = f"{request.language}_{request.det_limit_type}_{request.det_limit_side_len}_{request.use_doc_orientation_classify}_{request.use_doc_unwarping}"
-    
+
     if cache_key not in ocr_engines:
         try:
             logger.info(f"初始化OCR引擎，语言: {request.language}, 参数: {request.det_limit_type}_{request.det_limit_side_len}")
@@ -272,7 +270,7 @@ def get_ocr_engine(request: OCRRequest) -> Any:
                 text_det_limit_type=request.det_limit_type,
                 text_det_limit_side_len=request.det_limit_side_len,
                 use_doc_orientation_classify=request.use_doc_orientation_classify,
-                use_doc_unwarping=request.use_doc_unwarping
+                use_doc_unwarping=request.use_doc_unwarping,
             )
             logger.info(f"OCR引擎初始化完成: {cache_key}")
         except Exception as e:
@@ -293,7 +291,7 @@ def download_image(image_url: str) -> str:
         if "localhost" in image_url or "127.0.0.1" in image_url:
             # 如果是代理URL，提取原始URL
             if "proxy-image?url=" in image_url:
-                from urllib.parse import unquote, parse_qs, urlparse
+                from urllib.parse import parse_qs, unquote, urlparse
 
                 parsed = urlparse(image_url)
                 query_params = parse_qs(parsed.query)
@@ -418,12 +416,12 @@ async def recognize_text(request: OCRRequest):
         raw_results = []
         if ocr_results and len(ocr_results) > 0:
             result_dict = ocr_results[0]
-            
+
             # 获取识别文本、置信度和坐标
-            rec_texts = result_dict.get('rec_texts', [])
-            rec_scores = result_dict.get('rec_scores', [])
-            rec_polys = result_dict.get('rec_polys', [])
-            
+            rec_texts = result_dict.get("rec_texts", [])
+            rec_scores = result_dict.get("rec_scores", [])
+            rec_polys = result_dict.get("rec_polys", [])
+
             for i, (text, confidence, bbox_points) in enumerate(zip(rec_texts, rec_scores, rec_polys)):
                 # 过滤空文本和低置信度结果
                 if text and text.strip() and confidence >= request.confidence_threshold:
@@ -436,42 +434,40 @@ async def recognize_text(request: OCRRequest):
                         float(max(x_coords)),  # x2
                         float(max(y_coords)),  # y2
                     ]
-                    
-                    raw_results.append({
-                        'text': text,
-                        'confidence': confidence,
-                        'bbox': bbox
-                    })
-        
+
+                    raw_results.append({"text": text, "confidence": confidence, "bbox": bbox})
+
         # 使用对话框合并器处理结果
         dialog_merger = DialogMerger()
         merged_results = dialog_merger.merge_ocr_results(raw_results)
-        
+
         # 按漫画阅读顺序排序（右到左，上到下）
         def sort_manga_reading_order(result):
-            bbox = result['bbox']  # [x1, y1, x2, y2]
-            
+            bbox = result["bbox"]  # [x1, y1, x2, y2]
+
             # 使用右上角坐标作为排序基准
             right_x = bbox[2]  # x2 (右边界)
-            top_y = bbox[1]    # y1 (上边界)
-            
+            top_y = bbox[1]  # y1 (上边界)
+
             # 排序键：(y坐标, -x坐标)
             # y坐标越小越靠前（从上到下），x坐标越大越靠前（从右到左）
             return (top_y, -right_x)
-        
+
         sorted_merged_results = sorted(merged_results, key=sort_manga_reading_order)
-        
+
         # 转换为OCRResult对象
         results = []
         for result in sorted_merged_results:
-            results.append(OCRResult(
-                text=result['text'],
-                confidence=result['confidence'],
-                bbox=result['bbox'],
-                is_merged=result.get('is_merged', False),
-                original_count=result.get('original_count', 1),
-                original_texts=result.get('original_texts', [result['text']])
-            ))
+            results.append(
+                OCRResult(
+                    text=result["text"],
+                    confidence=result["confidence"],
+                    bbox=result["bbox"],
+                    is_merged=result.get("is_merged", False),
+                    original_count=result.get("original_count", 1),
+                    original_texts=result.get("original_texts", [result["text"]]),
+                )
+            )
 
         processing_time = time.time() - start_time
         logger.info(f"OCR识别完成，识别到 {len(results)} 个文本区域，耗时 {processing_time:.2f}s")
@@ -516,12 +512,13 @@ async def translate_japanese_to_chinese_batch(texts: List[str]) -> List[str]:
     日译中专用批量翻译函数
     """
     import json
+
     try:
         from services.translation_service import translation_service
-        
+
         # 构造输入JSON格式
         input_data = {str(i + 1): text for i, text in enumerate(texts)}
-        
+
         # 构造日译中专用prompt
         manga_translation_prompt = """**你的身份**
 
@@ -610,67 +607,69 @@ async def translate_japanese_to_chinese_batch(texts: List[str]) -> List[str]:
 
 请翻译以下日文文本内容：
 
-""" + json.dumps(input_data, ensure_ascii=False)
-        
+""" + json.dumps(
+            input_data, ensure_ascii=False
+        )
+
         # 调用翻译服务
         logger.info(f"开始日译中翻译，文本数量: {len(texts)}")
         result = translation_service.translate_batch_with_prompt(manga_translation_prompt)
-        
+
         # 检查翻译是否成功
         if not result.get("success", False):
             error_msg = result.get("error", "翻译服务调用失败")
             logger.error(f"翻译服务调用失败: {error_msg}")
             return texts  # 返回原文
-        
+
         # 解析返回的JSON结果
         translation_text = result.get("translation", "{}")
-        
+
         try:
             # 清理响应文本，移除可能的markdown代码块标记
             cleaned_text = translation_text.strip()
-            if cleaned_text.startswith('```json'):
-                cleaned_text = cleaned_text.replace('```json', '').replace('```', '').strip()
-            elif cleaned_text.startswith('```'):
-                cleaned_text = cleaned_text.replace('```', '').strip()
-            
+            if cleaned_text.startswith("```json"):
+                cleaned_text = cleaned_text.replace("```json", "").replace("```", "").strip()
+            elif cleaned_text.startswith("```"):
+                cleaned_text = cleaned_text.replace("```", "").strip()
+
             # 尝试解析JSON响应
             translation_json = json.loads(cleaned_text)
-            
+
             # 按顺序提取翻译结果
             translations = []
             for i in range(len(texts)):
                 key = str(i + 1)
                 translation = translation_json.get(key, texts[i])  # 如果没有对应翻译，使用原文
                 translations.append(translation)
-            
+
             logger.info(f"日译中翻译完成，成功翻译 {len(translations)} 个文本")
             return translations
-            
+
         except json.JSONDecodeError as e:
             logger.error(f"解析翻译结果JSON失败: {e}, 原始响应: {translation_text}")
             # JSON解析失败，尝试提取可能的JSON内容
             try:
                 # 寻找JSON结构
-                start_idx = translation_text.find('{')
-                end_idx = translation_text.rfind('}') + 1
+                start_idx = translation_text.find("{")
+                end_idx = translation_text.rfind("}") + 1
                 if start_idx >= 0 and end_idx > start_idx:
                     json_part = translation_text[start_idx:end_idx]
                     translation_json = json.loads(json_part)
-                    
+
                     translations = []
                     for i in range(len(texts)):
                         key = str(i + 1)
                         translation = translation_json.get(key, texts[i])
                         translations.append(translation)
-                    
+
                     logger.info(f"从响应中提取JSON成功，翻译 {len(translations)} 个文本")
                     return translations
             except:
                 pass
-            
+
             # 完全解析失败，返回原文
             return texts
-            
+
     except Exception as e:
         logger.error(f"日译中翻译失败: {e}")
         return texts
@@ -686,15 +685,15 @@ async def translate_batch(request: BatchTranslateRequest):
         if request.source_language == "japan" and request.target_language == "zh":
             logger.info("检测到日译中翻译请求，使用专用prompt")
             translations = await translate_japanese_to_chinese_batch(request.texts)
-            
+
             return {
                 "success": True,
                 "translations": translations,
                 "source_language": request.source_language,
                 "target_language": request.target_language,
-                "translation_method": "japanese_manga_prompt"
+                "translation_method": "japanese_manga_prompt",
             }
-        
+
         # 其他语言组合暂时返回原文（待后续实现）
         logger.info(f"暂不支持 {request.source_language} → {request.target_language} 翻译，返回原文")
         return {
@@ -702,7 +701,7 @@ async def translate_batch(request: BatchTranslateRequest):
             "translations": request.texts,  # 直接返回原文
             "source_language": request.source_language,
             "target_language": request.target_language,
-            "translation_method": "passthrough"
+            "translation_method": "passthrough",
         }
 
     except ImportError:
@@ -723,5 +722,3 @@ async def get_ocr_status():
         "active_engines": list(ocr_engines.keys()),
         "supported_languages": ["ch", "en", "japan", "chinese_cht"],
     }
-
-
