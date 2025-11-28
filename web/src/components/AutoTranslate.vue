@@ -33,8 +33,8 @@
               <div 
                 v-if="textReplaceMode && result.translation" 
                 class="replacement-text"
-                :class="{ 'fitty-ready': fittyReadyStates[index] }"
-                :ref="el => { if (el) setFittyRef(el, index) }"
+                :class="{ 'text-fit-ready': textFitReadyStates[index] }"
+                :ref="el => { if (el) setTextFitRef(el, index) }"
                 :data-index="index"
               >
                 {{ result.translation }}
@@ -121,6 +121,17 @@
               >
                 <span v-if="textReplaceMode">退出替换</span>
                 <span v-else>文字替换</span>
+              </button>
+              
+              <button 
+                class="action-btn text-orientation-btn" 
+                @click="toggleTextOrientation"
+                :disabled="!textReplaceMode"
+                :class="{ active: isVerticalText }"
+                :title="isVerticalText ? '切换到横排' : '切换到竖排'"
+              >
+                <span v-if="isVerticalText">竖排</span>
+                <span v-else>横排</span>
               </button>
             </div>
 
@@ -271,7 +282,6 @@
 
 <script>
 import axios from 'axios'
-import fitty from 'fitty'
 
 const API = import.meta.env.VITE_API_BASE;
 
@@ -317,9 +327,9 @@ export default {
       
       // 文字替换模式相关
       textReplaceMode: false,
-      fittyInstances: [], // 存储fitty实例
-      fittyElements: {}, // 存储动态ref元素
-      fittyReadyStates: {}, // 记录每个文字是否已经调整完成
+      isVerticalText: false, // 文字排列方向：false=横排，true=竖排
+      textFitElements: {}, // 存储文字元素引用
+      textFitReadyStates: {}, // 记录每个文字是否已经调整完成
       
       // OCR 高级参数
       ocrParams: {
@@ -732,6 +742,11 @@ export default {
       
       this.windowResizeTimer = setTimeout(() => {
         this.redrawTextBoxes()
+        
+        // 如果在文字替换模式下，重新进行智能适配
+        if (this.textReplaceMode) {
+          this.initializeSmartTextFit()
+        }
       }, 150)
     },
     
@@ -757,86 +772,284 @@ export default {
       }
     },
 
-    // 设置动态ref
-    setFittyRef(el, index) {
-      this.fittyElements[index] = el
-      console.log(`设置动态ref ${index}:`, el)
+    // 设置文字元素引用
+    setTextFitRef(el, index) {
+      if (!this.textFitElements) {
+        this.textFitElements = {}
+      }
+      this.textFitElements[index] = el
     },
 
-    // 初始化Fitty文字适配
-    initializeFitty() {
-      console.log('开始初始化Fitty...')
-      console.log('当前fittyElements:', this.fittyElements)
+    // 初始化智能文字适配
+    initializeSmartTextFit() {
+      // 确保对象已初始化
+      if (!this.textFitElements) {
+        this.textFitElements = {}
+      }
+      if (!this.textFitReadyStates) {
+        this.textFitReadyStates = {}
+      }
       
-      // 只清理fitty实例，不清理元素引用
-      this.fittyInstances.forEach(instance => {
-        if (instance && typeof instance.unsubscribe === 'function') {
-          instance.unsubscribe()
-        }
-      })
-      this.fittyInstances = []
+      // 清理之前的适配状态
+      this.clearTextFitStates()
       
       this.$nextTick(() => {
-        console.log('OCR结果数量:', this.ocrResults.length)
-        
-        // 为每个替换文字创建fitty实例
+        // 为每个替换文字进行智能适配
         this.ocrResults.forEach((result, index) => {
           if (result.translation) {
-            console.log(`处理第${index}个翻译结果:`, result.translation)
-            
-            const element = this.fittyElements[index]
-            console.log(`查找元素 ${index}:`, element)
+            const element = this.textFitElements[index]
             
             if (element) {
-              console.log('找到DOM元素:', element)
-              console.log('元素尺寸:', element.getBoundingClientRect())
-              console.log('父容器尺寸:', element.parentElement?.getBoundingClientRect())
-              
-              // 添加事件监听器检测fitty是否工作
-              element.addEventListener('fit', (e) => {
-                console.log(`Fitty调整完成 - 索引${index}:`, e.detail)
-                // 标记这个文字为准备就绪 - Vue 3 兼容写法
-                this.fittyReadyStates[index] = true
-              })
-              
-              const fittyInstance = fitty(element, {
-                minSize: 8,
-                maxSize: 48,
-                multiLine: true, // 支持多行文字
-                observeMutations: false // 我们手动控制更新
-              })
-              
-              console.log('Fitty实例创建成功:', fittyInstance)
-              this.fittyInstances.push(fittyInstance)
-              
-              // 强制触发一次fit
-              setTimeout(() => {
-                console.log('强制触发fit...')
-                fittyInstance.fit({ sync: true })
-              }, 200)
+              this.fitTextToContainer(element, result.translation, index)
             } else {
               console.warn(`未找到索引${index}的DOM元素`)
             }
-          } else {
-            console.log(`第${index}个结果没有翻译`)
           }
         })
-        
-        console.log('Fitty实例总数:', this.fittyInstances.length)
       })
     },
-    
-    // 清理fitty实例
-    clearFittyInstances() {
-      console.log('清理Fitty实例...')
-      this.fittyInstances.forEach(instance => {
-        if (instance && typeof instance.unsubscribe === 'function') {
-          instance.unsubscribe()
+
+    // 智能文字适配算法 - 支持横排和竖排
+    fitTextToContainer(element, text, index) {
+      try {
+        const container = element.parentElement
+        if (!container) return
+
+        // 获取容器尺寸（减去padding）
+        const containerStyle = window.getComputedStyle(container)
+        const containerWidth = container.clientWidth - 
+          parseFloat(containerStyle.paddingLeft) - 
+          parseFloat(containerStyle.paddingRight)
+        const containerHeight = container.clientHeight - 
+          parseFloat(containerStyle.paddingTop) - 
+          parseFloat(containerStyle.paddingBottom)
+
+
+        if (containerWidth <= 0 || containerHeight <= 0) return
+
+        // 设置文本内容和基础样式
+        element.textContent = text
+        element.style.overflow = 'hidden'
+        element.style.width = '100%'
+        element.style.height = '100%'
+        element.style.display = 'flex'
+        element.style.alignItems = 'center'
+        element.style.justifyContent = 'center'
+        element.style.textAlign = 'center'
+
+        // 根据用户选择设置文字方向
+        if (this.isVerticalText) {
+          // 竖排模式
+          element.style.writingMode = 'vertical-rl'
+          element.style.textOrientation = 'mixed'
+          element.style.whiteSpace = 'pre-wrap'
+          element.style.wordBreak = 'keep-all'
+        } else {
+          // 横排模式
+          element.style.writingMode = 'horizontal-tb'
+          element.style.whiteSpace = 'pre-wrap'
+          element.style.wordBreak = 'break-word'
         }
-      })
-      this.fittyInstances = []
-      this.fittyElements = {} // 清理元素引用
-      this.fittyReadyStates = {} // 清理ready状态
+
+        // 使用二分查找找到最佳字体大小
+        let minSize = 6
+        let maxSize = 100
+        let bestSize = minSize
+        let attempts = 0
+        const maxAttempts = 20
+
+        while (minSize <= maxSize && attempts < maxAttempts) {
+          attempts++
+          const currentSize = Math.floor((minSize + maxSize) / 2)
+          element.style.fontSize = currentSize + 'px'
+          
+          // 根据排列方向调整行间距
+          if (this.isVerticalText) {
+            element.style.lineHeight = '1.0'
+            element.style.letterSpacing = '0.1em'
+          } else {
+            element.style.lineHeight = '1.2'
+            element.style.letterSpacing = 'normal'
+          }
+
+          // 强制重排获取准确尺寸
+          element.offsetHeight
+
+          const textWidth = element.scrollWidth
+          const textHeight = element.scrollHeight
+
+
+          // 检查是否同时满足宽高约束
+          if (textWidth <= containerWidth && textHeight <= containerHeight) {
+            bestSize = currentSize
+            minSize = currentSize + 1 // 尝试更大的字体
+          } else {
+            maxSize = currentSize - 1 // 字体太大，减小
+          }
+        }
+
+        // 应用最佳字体大小
+        element.style.fontSize = bestSize + 'px'
+
+        // 竖排模式下的特殊优化
+        if (this.isVerticalText) {
+          this.optimizeVerticalTextLayout(element, containerWidth, containerHeight, bestSize)
+        } else {
+          this.optimizeTextLayout(element, containerWidth, containerHeight, bestSize)
+        }
+
+        // 标记为准备就绪
+        this.textFitReadyStates[index] = true
+        element.style.opacity = '1'
+
+      } catch (error) {
+        console.error(`文字适配失败 ${index}:`, error)
+      }
+    },
+
+    // 竖排文字的特殊优化
+    optimizeVerticalTextLayout(element, containerWidth, containerHeight, fontSize) {
+      // 尝试不同的字符间距
+      const letterSpacings = ['0', '0.05em', '0.1em', '0.15em', '0.2em']
+      let bestSpacing = '0.1em'
+
+      for (const spacing of letterSpacings) {
+        element.style.letterSpacing = spacing
+        element.offsetHeight // 强制重排
+
+        if (element.scrollWidth <= containerWidth && 
+            element.scrollHeight <= containerHeight) {
+          bestSpacing = spacing
+        } else {
+          break // 超出容器，停止尝试
+        }
+      }
+
+      element.style.letterSpacing = bestSpacing
+
+      // 竖排文字换行处理
+      if (element.scrollHeight > containerHeight) {
+        this.addVerticalLineBreaks(element, containerHeight)
+      }
+    },
+
+    // 竖排文字的智能换行
+    addVerticalLineBreaks(element, containerHeight) {
+      const text = element.textContent
+      const chars = text.split('')
+      let lines = []
+      let currentLine = ''
+
+      for (const char of chars) {
+        const testLine = currentLine + char
+        element.textContent = testLine
+        element.offsetHeight // 强制重排
+
+        if (element.scrollHeight > containerHeight && currentLine.length > 0) {
+          lines.push(currentLine)
+          currentLine = char
+        } else {
+          currentLine = testLine
+        }
+      }
+
+      if (currentLine.length > 0) {
+        lines.push(currentLine)
+      }
+
+      // 对于竖排，每列用换行分隔
+      element.textContent = lines.join('\n')
+    },
+
+    // 优化文字布局
+    optimizeTextLayout(element, containerWidth, containerHeight, fontSize) {
+      // 尝试不同的行间距以获得更好的布局
+      const lineHeights = [1.0, 1.1, 1.2, 1.3, 1.4]
+      let bestLineHeight = 1.2
+
+      for (const lineHeight of lineHeights) {
+        element.style.lineHeight = lineHeight.toString()
+        element.offsetHeight // 强制重排
+
+        if (element.scrollWidth <= containerWidth && 
+            element.scrollHeight <= containerHeight) {
+          bestLineHeight = lineHeight
+        } else {
+          break // 超出容器，停止尝试
+        }
+      }
+
+      element.style.lineHeight = bestLineHeight.toString()
+
+      // 如果文字仍然过长，尝试添加换行
+      if (element.scrollWidth > containerWidth) {
+        this.addSmartLineBreaks(element, containerWidth)
+      }
+    },
+
+    // 智能添加换行
+    addSmartLineBreaks(element, containerWidth) {
+      const text = element.textContent
+      const words = text.split(/(\s+|[、，。！？；：])/g)
+      let lines = []
+      let currentLine = ''
+
+      for (const word of words) {
+        const testLine = currentLine + word
+        element.textContent = testLine
+        element.offsetHeight // 强制重排
+
+        if (element.scrollWidth > containerWidth && currentLine.length > 0) {
+          lines.push(currentLine.trim())
+          currentLine = word
+        } else {
+          currentLine = testLine
+        }
+      }
+
+      if (currentLine.trim().length > 0) {
+        lines.push(currentLine.trim())
+      }
+
+      element.textContent = lines.join('\n')
+    },
+    
+    // 清理文字适配状态
+    clearTextFitStates() {
+      
+      // 清理智能适配状态，但保留元素引用
+      if (this.textFitElements) {
+        Object.keys(this.textFitElements).forEach(index => {
+          const element = this.textFitElements[index]
+          if (element) {
+            element.style.fontSize = ''
+            element.style.lineHeight = ''
+            element.style.opacity = '0'
+          }
+        })
+      }
+      
+      // 只清理ready状态，保留元素引用
+      this.textFitReadyStates = {} // 清理ready状态
+    },
+
+    // 完全清理文字适配状态（退出模式时使用）
+    fullClearTextFitStates() {
+      
+      // 清理智能适配状态
+      if (this.textFitElements) {
+        Object.keys(this.textFitElements).forEach(index => {
+          const element = this.textFitElements[index]
+          if (element) {
+            element.style.fontSize = ''
+            element.style.lineHeight = ''
+            element.style.opacity = '0'
+          }
+        })
+      }
+      
+      this.textFitElements = {} // 完全清理元素引用
+      this.textFitReadyStates = {} // 清理ready状态
     },
 
     // 文字替换模式相关方法
@@ -844,7 +1057,7 @@ export default {
       if (this.textReplaceMode) {
         // 退出文字替换模式
         this.textReplaceMode = false
-        this.clearFittyInstances()
+        this.fullClearTextFitStates()
         this.setStatus('已退出文字替换模式', 'info')
       } else {
         // 进入文字替换模式
@@ -853,13 +1066,27 @@ export default {
           return
         }
         this.textReplaceMode = true
-        this.setStatus('已进入文字替换模式', 'success')
+        this.setStatus('已进入智能文字替换模式', 'success')
         
-        // 延迟初始化Fitty，确保DOM完全渲染
+        // 延迟初始化智能文字适配，确保DOM完全渲染
         setTimeout(() => {
-          this.initializeFitty()
-        }, 50)
+          this.initializeSmartTextFit()
+        }, 100)
       }
+    },
+
+    // 切换文字排列方向
+    toggleTextOrientation() {
+      if (!this.textReplaceMode) return
+      
+      this.isVerticalText = !this.isVerticalText
+      const orientationText = this.isVerticalText ? '竖排' : '横排'
+      this.setStatus(`已切换到${orientationText}模式`, 'info')
+      
+      // 重新应用文字适配
+      setTimeout(() => {
+        this.initializeSmartTextFit()
+      }, 50)
     }
   },
   
@@ -867,8 +1094,8 @@ export default {
     // 清理资源
     this.ocrResults = []
     
-    // 清理Fitty实例
-    this.clearFittyInstances()
+    // 清理文字适配状态
+    this.fullClearTextFitStates()
     
     // 移除窗口大小变化监听器
     window.removeEventListener('resize', this.handleWindowResize)

@@ -900,7 +900,58 @@
   box-shadow: none !important;
 }
 
-/* 替换文字样式 - 为Fitty优化（水平布局） */
+/* 文字方向切换按钮样式 */
+.text-orientation-btn {
+  background: #6366f1;
+  border: 2px solid #6366f1;
+  color: white;
+  font-weight: 600;
+  min-width: 80px;
+}
+
+.text-orientation-btn:hover:not(:disabled) {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  transform: translateY(-1px);
+}
+
+.text-orientation-btn.active {
+  background: #8b5cf6;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+}
+
+.text-orientation-btn:disabled {
+  background: #d1d5db;
+  border-color: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* 深色主题下的文字方向按钮 */
+.my-app-dark .text-orientation-btn {
+  background: #7c3aed;
+  border-color: #7c3aed;
+}
+
+.my-app-dark .text-orientation-btn:hover:not(:disabled) {
+  background: #6d28d9;
+  border-color: #6d28d9;
+}
+
+.my-app-dark .text-orientation-btn.active {
+  background: #a855f7;
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3);
+}
+
+.my-app-dark .text-orientation-btn:disabled {
+  background: #374151;
+  border-color: #374151;
+  color: #6b7280;
+}
+
+/* 替换文字样式 - 智能双向适配优化 */
 .replacement-text {
   color: #000;
   font-weight: 500;
@@ -908,10 +959,10 @@
   background: transparent;
   border: none;
   outline: none;
-  font-family: Arial, sans-serif, "Microsoft YaHei", "微软雅黑";
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
   box-sizing: border-box;
   
-  /* 水平文字排列 - Fitty最适合的布局方式 */
+  /* 智能双向适配布局 */
   writing-mode: horizontal-tb;
   direction: ltr;
   
@@ -919,26 +970,37 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  text-align: center;
   
   /* 尺寸 */
   width: 100%;
   height: 100%;
   
-  /* 文字样式 - 让Fitty处理 */
-  white-space: normal;
-  text-align: center;
-  line-height: 1.1;
-  word-break: break-all;
+  /* 支持智能换行和文字适配 */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  overflow: hidden;
   
-  /* 防止动画 - 设置小的初始字体值，初始隐藏避免跳跃 */
-  font-size: 8px;
+  /* 文字渲染优化 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  
+  /* 容器内边距以防文字贴边 */
+  padding: 2px;
+  margin: 0;
+  
+  /* 初始状态隐藏，等智能适配完成后显示 */
+  font-size: 12px;
   opacity: 0;
-  transition: opacity 0.1s ease;
+  transition: opacity 0.4s ease;
 }
 
-/* Fitty调整完成后显示文字 */
-.replacement-text.fitty-ready {
+
+/* 智能适配完成后显示文字 */
+.replacement-text.text-fit-ready {
   opacity: 1;
 }
 
