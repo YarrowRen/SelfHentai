@@ -123,16 +123,6 @@
                 <span v-else>文字替换</span>
               </button>
               
-              <button 
-                class="action-btn text-orientation-btn" 
-                @click="toggleTextOrientation"
-                :disabled="!textReplaceMode"
-                :class="{ active: isVerticalText }"
-                :title="isVerticalText ? '切换到横排' : '切换到竖排'"
-              >
-                <span v-if="isVerticalText">竖排</span>
-                <span v-else>横排</span>
-              </button>
             </div>
 
             <!-- 语言选择 -->
@@ -301,7 +291,6 @@ export default {
       // 分页相关
       currentPage: 0,
       totalPages: 0,
-      imageList: [],
       pageInput: 1,
       
       // 图片相关
@@ -327,7 +316,6 @@ export default {
       
       // 文字替换模式相关
       textReplaceMode: false,
-      isVerticalText: false, // 文字排列方向：false=横排，true=竖排
       textFitElements: {}, // 存储文字元素引用
       textFitReadyStates: {}, // 记录每个文字是否已经调整完成
       
@@ -344,10 +332,6 @@ export default {
       processingStatus: '',
       statusType: 'info', // info, success, error
       
-      // UI 相关
-      imageScale: 1,
-      imageOffset: { x: 0, y: 0 },
-      
       // 响应式支持
       windowResizeTimer: null
     }
@@ -359,17 +343,17 @@ export default {
     
     hasTranslations() {
       return this.ocrResults.some(result => result.translation && result.translation.trim())
-    },
-    
-    currentImageData() {
-      return this.imageList[this.currentPage] || null
     }
   },
   async mounted() {
     await this.initializeComponent()
     
-    // 添加窗口大小变化监听器
+    // 监听窗口和全屏状态变化
     window.addEventListener('resize', this.handleWindowResize)
+    document.addEventListener('fullscreenchange', this.handleWindowResize)
+    document.addEventListener('webkitfullscreenchange', this.handleWindowResize)
+    document.addEventListener('mozfullscreenchange', this.handleWindowResize)
+    document.addEventListener('MSFullscreenChange', this.handleWindowResize)
   },
   methods: {
     async initializeComponent() {
@@ -743,11 +727,14 @@ export default {
       this.windowResizeTimer = setTimeout(() => {
         this.redrawTextBoxes()
         
-        // 如果在文字替换模式下，重新进行智能适配
-        if (this.textReplaceMode) {
-          this.initializeSmartTextFit()
+        // 文字替换模式下重新适配文字大小
+        if (this.textReplaceMode && this.hasTranslations) {
+          // 等待DOM重新渲染完成后再进行文字适配
+          setTimeout(() => {
+            this.initializeSmartTextFit()
+          }, 150)
         }
-      }, 150)
+      }, 100)
     },
     
     redrawTextBoxes() {
@@ -782,7 +769,6 @@ export default {
 
     // 初始化智能文字适配
     initializeSmartTextFit() {
-      // 确保对象已初始化
       if (!this.textFitElements) {
         this.textFitElements = {}
       }
@@ -790,31 +776,47 @@ export default {
         this.textFitReadyStates = {}
       }
       
-      // 清理之前的适配状态
       this.clearTextFitStates()
       
       this.$nextTick(() => {
-        // 为每个替换文字进行智能适配
-        this.ocrResults.forEach((result, index) => {
-          if (result.translation) {
-            const element = this.textFitElements[index]
-            
-            if (element) {
-              this.fitTextToContainer(element, result.translation, index)
-            } else {
-              console.warn(`未找到索引${index}的DOM元素`)
+        setTimeout(() => {
+          // 重新获取所有元素引用，确保引用有效
+          this.refreshTextFitElements()
+          
+          this.ocrResults.forEach((result, index) => {
+            if (result.translation) {
+              const element = this.textFitElements[index]
+              
+              if (element) {
+                this.fitTextToContainer(element, result.translation, index)
+              }
             }
-          }
-        })
+          })
+        }, 50)
       })
     },
 
-    // 智能文字适配算法 - 支持横排和竖排
+    // 刷新文字元素引用
+    refreshTextFitElements() {
+      this.ocrResults.forEach((result, index) => {
+        if (result.translation) {
+          const elementByRef = this.$refs.imageContainer?.querySelector(`[data-index="${index}"]`)
+          if (elementByRef) {
+            this.textFitElements[index] = elementByRef
+          }
+        }
+      })
+    },
+
+    // 智能文字适配算法 - 横排模式
     fitTextToContainer(element, text, index) {
       try {
         const container = element.parentElement
         if (!container) return
 
+        // 强制重新布局，确保获取到最新的尺寸
+        container.offsetHeight
+        
         // 获取容器尺寸（减去padding）
         const containerStyle = window.getComputedStyle(container)
         const containerWidth = container.clientWidth - 
@@ -824,8 +826,13 @@ export default {
           parseFloat(containerStyle.paddingTop) - 
           parseFloat(containerStyle.paddingBottom)
 
-
-        if (containerWidth <= 0 || containerHeight <= 0) return
+        if (containerWidth <= 0 || containerHeight <= 0) {
+          // 容器尺寸异常，延迟重试
+          setTimeout(() => {
+            this.fitTextToContainer(element, text, index)
+          }, 100)
+          return
+        }
 
         // 设置文本内容和基础样式
         element.textContent = text
@@ -837,19 +844,10 @@ export default {
         element.style.justifyContent = 'center'
         element.style.textAlign = 'center'
 
-        // 根据用户选择设置文字方向
-        if (this.isVerticalText) {
-          // 竖排模式
-          element.style.writingMode = 'vertical-rl'
-          element.style.textOrientation = 'mixed'
-          element.style.whiteSpace = 'pre-wrap'
-          element.style.wordBreak = 'keep-all'
-        } else {
-          // 横排模式
-          element.style.writingMode = 'horizontal-tb'
-          element.style.whiteSpace = 'pre-wrap'
-          element.style.wordBreak = 'break-word'
-        }
+        // 横排模式
+        element.style.writingMode = 'horizontal-tb'
+        element.style.whiteSpace = 'pre-wrap'
+        element.style.wordBreak = 'break-word'
 
         // 使用二分查找找到最佳字体大小
         let minSize = 6
@@ -863,14 +861,9 @@ export default {
           const currentSize = Math.floor((minSize + maxSize) / 2)
           element.style.fontSize = currentSize + 'px'
           
-          // 根据排列方向调整行间距
-          if (this.isVerticalText) {
-            element.style.lineHeight = '1.0'
-            element.style.letterSpacing = '0.1em'
-          } else {
-            element.style.lineHeight = '1.2'
-            element.style.letterSpacing = 'normal'
-          }
+          // 设置行间距
+          element.style.lineHeight = '1.2'
+          element.style.letterSpacing = 'normal'
 
           // 强制重排获取准确尺寸
           element.offsetHeight
@@ -891,12 +884,8 @@ export default {
         // 应用最佳字体大小
         element.style.fontSize = bestSize + 'px'
 
-        // 竖排模式下的特殊优化
-        if (this.isVerticalText) {
-          this.optimizeVerticalTextLayout(element, containerWidth, containerHeight, bestSize)
-        } else {
-          this.optimizeTextLayout(element, containerWidth, containerHeight, bestSize)
-        }
+        // 优化文字布局
+        this.optimizeTextLayout(element, containerWidth, containerHeight, bestSize)
 
         // 标记为准备就绪
         this.textFitReadyStates[index] = true
@@ -907,59 +896,6 @@ export default {
       }
     },
 
-    // 竖排文字的特殊优化
-    optimizeVerticalTextLayout(element, containerWidth, containerHeight, fontSize) {
-      // 尝试不同的字符间距
-      const letterSpacings = ['0', '0.05em', '0.1em', '0.15em', '0.2em']
-      let bestSpacing = '0.1em'
-
-      for (const spacing of letterSpacings) {
-        element.style.letterSpacing = spacing
-        element.offsetHeight // 强制重排
-
-        if (element.scrollWidth <= containerWidth && 
-            element.scrollHeight <= containerHeight) {
-          bestSpacing = spacing
-        } else {
-          break // 超出容器，停止尝试
-        }
-      }
-
-      element.style.letterSpacing = bestSpacing
-
-      // 竖排文字换行处理
-      if (element.scrollHeight > containerHeight) {
-        this.addVerticalLineBreaks(element, containerHeight)
-      }
-    },
-
-    // 竖排文字的智能换行
-    addVerticalLineBreaks(element, containerHeight) {
-      const text = element.textContent
-      const chars = text.split('')
-      let lines = []
-      let currentLine = ''
-
-      for (const char of chars) {
-        const testLine = currentLine + char
-        element.textContent = testLine
-        element.offsetHeight // 强制重排
-
-        if (element.scrollHeight > containerHeight && currentLine.length > 0) {
-          lines.push(currentLine)
-          currentLine = char
-        } else {
-          currentLine = testLine
-        }
-      }
-
-      if (currentLine.length > 0) {
-        lines.push(currentLine)
-      }
-
-      // 对于竖排，每列用换行分隔
-      element.textContent = lines.join('\n')
-    },
 
     // 优化文字布局
     optimizeTextLayout(element, containerWidth, containerHeight, fontSize) {
@@ -1016,8 +952,6 @@ export default {
     
     // 清理文字适配状态
     clearTextFitStates() {
-      
-      // 清理智能适配状态，但保留元素引用
       if (this.textFitElements) {
         Object.keys(this.textFitElements).forEach(index => {
           const element = this.textFitElements[index]
@@ -1029,14 +963,11 @@ export default {
         })
       }
       
-      // 只清理ready状态，保留元素引用
-      this.textFitReadyStates = {} // 清理ready状态
+      this.textFitReadyStates = {}
     },
 
     // 完全清理文字适配状态（退出模式时使用）
     fullClearTextFitStates() {
-      
-      // 清理智能适配状态
       if (this.textFitElements) {
         Object.keys(this.textFitElements).forEach(index => {
           const element = this.textFitElements[index]
@@ -1048,19 +979,17 @@ export default {
         })
       }
       
-      this.textFitElements = {} // 完全清理元素引用
-      this.textFitReadyStates = {} // 清理ready状态
+      this.textFitElements = {}
+      this.textFitReadyStates = {}
     },
 
-    // 文字替换模式相关方法
+    // 切换文字替换模式
     toggleTextReplaceMode() {
       if (this.textReplaceMode) {
-        // 退出文字替换模式
         this.textReplaceMode = false
         this.fullClearTextFitStates()
         this.setStatus('已退出文字替换模式', 'info')
       } else {
-        // 进入文字替换模式
         if (!this.hasTranslations) {
           this.setStatus('请先完成翻译后再使用文字替换功能', 'error')
           return
@@ -1068,39 +997,26 @@ export default {
         this.textReplaceMode = true
         this.setStatus('已进入智能文字替换模式', 'success')
         
-        // 延迟初始化智能文字适配，确保DOM完全渲染
+        // 延迟初始化确保DOM渲染完成
         setTimeout(() => {
           this.initializeSmartTextFit()
         }, 100)
       }
     },
 
-    // 切换文字排列方向
-    toggleTextOrientation() {
-      if (!this.textReplaceMode) return
-      
-      this.isVerticalText = !this.isVerticalText
-      const orientationText = this.isVerticalText ? '竖排' : '横排'
-      this.setStatus(`已切换到${orientationText}模式`, 'info')
-      
-      // 重新应用文字适配
-      setTimeout(() => {
-        this.initializeSmartTextFit()
-      }, 50)
-    }
   },
   
   beforeUnmount() {
-    // 清理资源
     this.ocrResults = []
-    
-    // 清理文字适配状态
     this.fullClearTextFitStates()
     
-    // 移除窗口大小变化监听器
+    // 移除事件监听器
     window.removeEventListener('resize', this.handleWindowResize)
+    document.removeEventListener('fullscreenchange', this.handleWindowResize)
+    document.removeEventListener('webkitfullscreenchange', this.handleWindowResize)
+    document.removeEventListener('mozfullscreenchange', this.handleWindowResize)
+    document.removeEventListener('MSFullscreenChange', this.handleWindowResize)
     
-    // 清理定时器
     if (this.windowResizeTimer) {
       clearTimeout(this.windowResizeTimer)
     }
