@@ -1,239 +1,214 @@
 # SelfHentai
 
-[中文版 README](./README_CN.md) | English
+中文版 | [English README](./README.md)
 
-📚 **SelfHentai**: A self-hosted manga collection manager for ExHentai with advanced OCR and AI translation capabilities.
+📚 **SelfHentai**: 专门针对 ExHentai 平台的自托管漫画收藏管理器，集成 OCR 和 AI 翻译功能。
 
 ---
 
-## ✨ Features
+## ✨ 功能特性
 
-### 📚 Collection Management
-- 🖼️ **Browse & Search**: View your manga collection with titles, tags, categories, ratings, and more
-- 🔍 **Advanced Filtering**: Keyword search, category filtering, and paginated browsing
-- 🔁 **One-Click Sync**: Automatically sync your ExHentai favorites with metadata backup
-- 🏷️ **Tag Translation**: Support for Chinese/English tag recognition and translation
-- 📊 **Statistics**: Comprehensive analytics with charts and quarterly reports
+### 📚 收藏管理
+- 🖼️ **浏览与搜索**: 查看您的漫画收藏，包含标题、标签、分类、评分等信息
+- 🔍 **高级过滤**: 关键词搜索、分类过滤和分页浏览
+- 🔁 **一键同步**: 自动同步 ExHentai 收藏，支持元数据备份
+- 🏷️ **标签翻译**: 支持中英文标签识别和翻译
+- 📊 **数据统计**: 全面的数据分析，包含图表和季度报告
 
-### 🖼️ Image Viewing & Translation
-- 👁️ **OCR Recognition**: PaddleOCR powered automatic text recognition
-- 🌐 **AI Translation**: Professional Japanese-to-Chinese translation via Volcano Engine API
-- 🤖 **Auto Translation**: PaddleOCR-powered automatic text detection and translation workflow
-- 🔍 **Full-Image Viewer**: High-quality image viewing with pagination controls
-- 👶 **Mom Mode**: Configurable blur effects for sensitive content (20px default)
+### 🖼️ 图片查看与翻译
+- 📷 **智能截图**: 交互式图片区域选择，实时预览
+- 👁️ **OCR 识别**: 基于 PaddleOCR 的自动文本识别
+- 🌐 **AI 翻译**: 通过 API 提供专业的日中翻译
+- 🔍 **全屏查看器**: 高质量图片查看，支持分页控制
+- 👶 **妈妈模式**: 可配置的敏感内容模糊效果（默认 20px）
 
-### 🎨 User Experience
-- 🎨 **Dual Theme**: Dark and light mode support with smooth transitions
-- ⚙️ **Web Configuration**: Easy setup of ExHentai credentials through web interface
-- 🔄 **Real-time Updates**: WebSocket-powered live sync progress tracking
-- 📱 **Responsive Design**: Mobile-friendly interface with touch support
+### 🎨 用户体验
+- 🎨 **双主题**: 深色和浅色模式支持，平滑过渡效果
+- ⚙️ **网页配置**: 通过网页界面轻松设置 ExHentai 凭据
+- 🔄 **实时更新**: WebSocket 驱动的实时同步进度跟踪
+- 📱 **响应式设计**: 移动端友好界面，支持触摸操作
 
-## 🏗️ Architecture
+## 🏗️ 架构
 
-### Backend (FastAPI)
-- **Python FastAPI** with async/await support
-- **ExHentai Support**: Dedicated ExHentai integration
-- **OCR Support**: PaddleOCR with configurable parameters
-- **AI Translation**: Volcano Engine API integration with professional prompts
-- **Real-time Communication**: WebSocket for live updates
-- **Auto Backup**: Automatic metadata backup before sync operations
-- **Thread-safe Sync**: Concurrent processing with proper locking
+### 后端 (FastAPI)
+- **Python FastAPI** 支持 async/await
+- **ExHentai 平台**: 专门针对 ExHentai 平台的深度集成
+- **OCR 服务**: PaddleOCR 集成，自动文本检测
+- **AI 翻译**: API 集成，专业提示词
+- **实时通信**: WebSocket 实时更新
+- **自动备份**: 同步操作前自动元数据备份
+- **线程安全**: 并发处理，适当的锁机制
 
-### Frontend (Vue 3 + TypeScript)
-- **Vue 3** with Composition API and TypeScript
-- **PrimeVue** UI components with custom styling  
-- **Chart.js** for data visualization
-- **Canvas API**: Interactive screenshot selection and image processing
-- **Responsive Design**: Mobile-friendly interface
-- **Theme System**: Global dark/light mode switching with CSS variables
+### 前端 (Vue 3 + TypeScript)
+- **Vue 3** 组合式 API 和 TypeScript
+- **PrimeVue** UI 组件库，自定义样式
+- **Chart.js** 数据可视化
+- **Canvas API**: 交互式截图选择和图像处理
+- **响应式设计**: 移动端友好界面
+- **主题系统**: 全局深色/浅色模式切换，支持 CSS 变量
 
-## 🚀 Quick Start
+## 🚀 快速开始
 
-### Prerequisites
+### 系统要求
 - **Python 3.8+**
 - **Node.js 16+**
-- **ExHentai/E-Hentai account** (for ExHentai sync)
-- **Volcano Engine API Key** (for AI translation, optional)
+- **ExHentai/E-Hentai 账户** （用于 ExHentai 同步）
+- **火山引擎 API Key** （用于 AI 翻译，可选）
 
-### Backend Setup
+### 后端设置
 ```bash
 cd app
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env with your configuration
+# 编辑 .env 填入您的配置信息
 python main.py
 ```
-The backend will run on `http://localhost:5001`
+后端将运行在 `http://localhost:5001`
 
-### Frontend Setup
+### 前端设置
 ```bash
 cd web
 npm install
 cp .env.example .env
-# Edit .env if needed (optional)
+# 如需要可编辑 .env（可选）
 npm run dev
 ```
-The frontend will run on `http://localhost:5173`
+前端将运行在 `http://localhost:5173`
 
-### Configuration
-1. Visit `http://localhost:5173/settings` 
-2. Configure your ExHentai cookies
-3. Test the connection and save your settings
-4. Start syncing your favorites!
+### 配置
+1. 访问 `http://localhost:5173/settings`
+2. 配置您的 ExHentai cookies
+3. 测试连接并保存设置
+4. 开始同步您的收藏！
 
-## ⚙️ Configuration
+## ⚙️ 配置
 
-### Environment Variables
+### 环境变量
 
-#### Backend (.env)
+#### 后端 (.env)
 ```bash
-# ExHentai Configuration
-EXHENTAI_COOKIE_MEMBER_ID=your_member_id
-EXHENTAI_COOKIE_PASS_HASH=your_pass_hash
-EXHENTAI_COOKIE_IGNEOUS=your_igneous
+# ExHentai 配置
+EXHENTAI_COOKIE_MEMBER_ID=你的member_id
+EXHENTAI_COOKIE_PASS_HASH=你的pass_hash
+EXHENTAI_COOKIE_IGNEOUS=你的igneous
 
-# AI Translation (Optional)
-ARK_API_KEY=your_volcano_api_key
+# AI 翻译（可选）
+ARK_API_KEY=你的火山引擎api_key
 
-# OCR Configuration
-MANGA_OCR_ENABLED=true    # Manual translation OCR
-PADDLE_OCR_ENABLED=true   # Auto translation OCR
-
-# Server
+# 服务器
 PORT=5001
 ```
 
-#### Frontend (.env)
+#### 前端 (.env)
 ```bash
-# API Configuration
+# API 配置
 VITE_API_BASE=http://localhost:5001
 VITE_WS_BASE=ws://localhost:5001
 
-# Mom Mode Blur Effect
+# 妈妈模式模糊效果
 VITE_MOM_MODE_BLUR=20px
 ```
 
-### Platform Setup
-#### ExHentai Setup
-- **Base URL**: Choose between ExHentai (requires account) or E-Hentai (public)
-- **Member ID**: Your ExHentai member ID from cookies
-- **Pass Hash**: Your ExHentai pass hash from cookies  
-- **Igneous**: Your igneous cookie (optional, for enhanced access)
+### 平台设置
+#### ExHentai 设置
+- **Base URL**: 在 ExHentai（需要账户）或 E-Hentai（公共访问）之间选择
+- **Member ID**: 从 cookies 获取的 ExHentai member ID
+- **Pass Hash**: 从 cookies 获取的 ExHentai pass hash
+- **Igneous**: igneous cookie（可选，用于增强访问）
 
-## 🔧 OCR & Translation Setup
+## 🔧 OCR 与翻译设置
 
-### OCR Engines Installation
-
-#### PaddleOCR (Auto Translation)
+### PaddleOCR 安装
 ```bash
-# Install PaddleOCR for automatic text recognition
+# 安装 PaddleOCR
 pip install paddlepaddle paddleocr
 ```
 
-**Note**: For Python 3.8 users, create conda environment with Python 3.10+:
-```bash
-conda create -n paddleocr python=3.10
-conda activate paddleocr
-pip install paddlepaddle paddleocr
-```
+### 火山引擎 API
+1. 在 [火山引擎](https://console.volcengine.com/) 注册
+2. 为翻译服务创建 API key
+3. 将您的 API key 添加到 `.env` 文件的 `ARK_API_KEY`
 
-### Volcano Engine API
-1. Sign up at [Volcano Engine](https://console.volcengine.com/)
-2. Create an API key for translation services
-3. Add your API key to `.env` as `ARK_API_KEY`
-
-## 📁 Data Storage
+## 📁 数据存储
 
 ```
 app/data/
-├── exhentai_favs_metadata.json    # ExHentai gallery data
-├── jm_favs_metadata.json          # JM gallery data
-├── db.text.json                   # Tag translation database
-├── ex_backup_favs/                # ExHentai backups
-└── jm_backup_favs/                # JM backups
+├── exhentai_favs_metadata.json    # ExHentai 画廊数据
+├── db.text.json                   # 标签翻译数据库
+└── backup_favs/                   # ExHentai 备份
 
 app/logs/
-└── app.log                        # Application logs
+└── app.log                        # 应用日志
 ```
 
-## 🎯 Key Features Deep Dive
+## 🎯 核心功能深度解析
 
-### OCR & Translation Workflows
+### OCR 与翻译工作流程
+1. **截图**: 使用交互式选择框选择漫画页面的任意区域
+2. **OCR**: PaddleOCR 自动识别文本，支持多语言
+3. **翻译**: 针对漫画内容优化的专业 AI 翻译
+4. **结果**: 可编辑 OCR 结果，一键复制翻译
 
-#### Manual Translation (Screenshot-based)
-1. **Screenshot**: Select any area of a manga page with interactive selection box
-2. **OCR**: PaddleOCR automatically recognizes text with high accuracy
-3. **Translation**: Professional AI translation optimized for manga content
-4. **Results**: Edit OCR results if needed, copy translations instantly
+### 妈妈模式（内容安全）
+- 可配置模糊效果（5px-25px）用于敏感内容
+- 环境变量控制：`VITE_MOM_MODE_BLUR`
+- 悬停显示功能
+- 不同图片类型的独立设置
 
-#### Auto Translation (Full-page)
-1. **Access**: Click "自动翻译" button from gallery detail page
-2. **OCR Detection**: PaddleOCR automatically detects all text regions with configurable parameters
-3. **Coordinate Overlay**: Visual text boxes drawn on detected coordinates
-4. **Batch Translation**: Translate all detected texts simultaneously
-5. **Page Navigation**: Support for full manga reading with page-by-page translation
+### 统计与分析
+- 收藏增长趋势
+- 热门标签和分类
+- 阅读模式和偏好
+- 季度活动报告
+- Chart.js 可视化图表
 
-### Mom Mode (Content Safety)
-- Configurable blur effects (5px-25px) for sensitive content
-- Environment variable control: `VITE_MOM_MODE_BLUR`
-- Hover-to-reveal functionality
-- Separate settings for different image types
+## 🔧 开发
 
-### Statistics & Analytics
-- Collection growth over time
-- Top tags and categories
-- Reading patterns and preferences
-- Quarterly activity reports
-- Visual charts with Chart.js
-
-## 🔧 Development
-
-### Project Structure
+### 项目结构
 ```
 SelfHentai/
-├── app/                    # FastAPI backend
-│   ├── api/               # API routes (gallery, settings, OCR, translation)
-│   ├── core/              # Core configurations and logging
-│   ├── services/          # Business logic (sync, OCR, translation)
-│   ├── utils/             # Utility functions (ExHentai, WebSocket)
-│   └── main.py           # Application entry point
-├── web/                   # Vue 3 frontend
+├── app/                    # FastAPI 后端
+│   ├── api/               # API 路由 (gallery, settings, OCR, translation)
+│   ├── core/              # 核心配置和日志
+│   ├── services/          # 业务逻辑 (sync, OCR, translation)
+│   ├── utils/             # 工具函数 (ExHentai, WebSocket)
+│   └── main.py           # 应用程序入口
+├── web/                   # Vue 3 前端
 │   ├── src/
-│   │   ├── components/    # Vue components (ImageViewer, Gallery, etc.)
-│   │   ├── assets/        # CSS and static assets
-│   │   ├── composables/   # Vue composables (theme, etc.)
-│   │   └── router/        # Vue Router configuration
+│   │   ├── components/    # Vue 组件 (ImageViewer, Gallery, etc.)
+│   │   ├── assets/        # CSS 和静态资源
+│   │   ├── composables/   # Vue 组合式函数 (theme, etc.)
+│   │   └── router/        # Vue Router 配置
 │   └── package.json
 └── README.md
 ```
 
-### Key Technologies
-- **Backend**: FastAPI, Python asyncio, WebSocket, PaddleOCR, Volcano Engine API
-- **Frontend**: Vue 3, TypeScript, Vite, PrimeVue, Canvas API
-- **Data**: JSON file storage with automatic backup
-- **Sync**: Multi-threaded concurrent processing with real-time progress
-- **UI**: Responsive design with theme support and accessibility features
+### 核心技术
+- **后端**: FastAPI, Python asyncio, WebSocket, PaddleOCR, 火山引擎 API
+- **前端**: Vue 3, TypeScript, Vite, PrimeVue, Canvas API
+- **数据**: JSON 文件存储，自动备份
+- **同步**: 多线程并发处理，实时进度
+- **界面**: 响应式设计，主题支持，可访问性功能
 
-### Development Commands
+### 开发命令
 ```bash
-# Backend development
+# 后端开发
 cd app && python main.py
 
-# Frontend development  
+# 前端开发
 cd web && npm run dev
 
-# Build for production
+# 生产构建
 cd web && npm run build
 ```
 
-## 🌟 Screenshots & Usage
+## 🌟 界面截图与使用
 
-The application features:
-- **Gallery Browser**: Clean, organized view of your manga collection
-- **Image Viewer**: Full-screen viewing with OCR and translation tools
-- **Screenshot Tool**: Interactive area selection with real-time preview (Manual Translation)
-- **Auto Translation Interface**: Full-page automatic OCR and translation workflow with coordinate overlay
-- **Translation Interface**: Professional manga text translation workflow
-- **Statistics Dashboard**: Visual analytics of your collection
-- **Sync Interface**: Real-time progress tracking with terminal-style output
-- **Settings Panel**: Easy configuration management for all platforms
+应用程序功能包括：
+- **画廊浏览器**: 清晰、有组织的漫画收藏视图
+- **图片查看器**: 全屏查看，集成 OCR 和翻译工具
+- **截图工具**: 交互式区域选择，实时预览
+- **翻译界面**: 专业的漫画文本翻译工作流程
+- **统计仪表板**: 收藏的可视化分析
+- **同步界面**: 终端风格输出的实时进度跟踪
+- **设置面板**: ExHentai 平台的简易配置管理

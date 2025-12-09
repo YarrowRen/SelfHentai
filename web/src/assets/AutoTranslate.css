@@ -900,58 +900,8 @@
   box-shadow: none !important;
 }
 
-/* 文字方向切换按钮样式 */
-.text-orientation-btn {
-  background: #6366f1;
-  border: 2px solid #6366f1;
-  color: white;
-  font-weight: 600;
-  min-width: 80px;
-}
 
-.text-orientation-btn:hover:not(:disabled) {
-  background: #4f46e5;
-  border-color: #4f46e5;
-  transform: translateY(-1px);
-}
-
-.text-orientation-btn.active {
-  background: #8b5cf6;
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
-}
-
-.text-orientation-btn:disabled {
-  background: #d1d5db;
-  border-color: #d1d5db;
-  color: #9ca3af;
-  cursor: not-allowed;
-}
-
-/* 深色主题下的文字方向按钮 */
-.my-app-dark .text-orientation-btn {
-  background: #7c3aed;
-  border-color: #7c3aed;
-}
-
-.my-app-dark .text-orientation-btn:hover:not(:disabled) {
-  background: #6d28d9;
-  border-color: #6d28d9;
-}
-
-.my-app-dark .text-orientation-btn.active {
-  background: #a855f7;
-  border-color: #a855f7;
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3);
-}
-
-.my-app-dark .text-orientation-btn:disabled {
-  background: #374151;
-  border-color: #374151;
-  color: #6b7280;
-}
-
-/* 替换文字样式 - 智能双向适配优化 */
+/* 替换文字样式 - 横排模式优化 */
 .replacement-text {
   color: #000;
   font-weight: 500;
@@ -962,7 +912,7 @@
   font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
   box-sizing: border-box;
   
-  /* 智能双向适配布局 */
+  /* 横排布局 */
   writing-mode: horizontal-tb;
   direction: ltr;
   
